@@ -1,5 +1,5 @@
 # The DataAnalysis GitHub repository
-© 2018, Ricardo J. Fernández-Terán (ricardo.fernandez@chem.uzh.ch)
+© 2018, Ricardo J. Fernández-Terán (ricardo.fernandez [at] chem.uzh.ch)
 
 # 1. Description and contents
 This project contains all the files that constitute two separate main graphical user interfaces (GUIs).
