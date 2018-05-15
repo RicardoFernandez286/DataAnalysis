@@ -7,7 +7,7 @@ This project contains all the files that constitute two separate main graphical 
 The first one, **DataAnalysis_GUI** is designed to process, analyse and plot time-resolved data from pump-probe experiments
 and time-resolved fluorescence spectra (obtained by combining several single-wavelength TCSPC measurements). Support for streak camera and general time-resolved data will be implemented in a future release.
 
-The second one, **InterfDataAnalysis_GUI** is designed to process, phase, plot and analyse coherent two-dimensional IR (2D-IR) spectra acquired by spectral interferometry in the pump-probe geometry. The details of the setup used to acquire the data and the main processing algorithm are described in *J. Opt. Soc. Am. B **28**, 171-178 (2011)* (https://doi.org/10.1364/JOSAB.28.000171).
+The second one, **InterfDataAnalysis_GUI** is designed to process, phase, plot and analyse coherent two-dimensional IR (2D-IR) spectra acquired by spectral interferometry in the pump-probe geometry. The details of the setup used to acquire the data and the main processing algorithm are described in *J. Opt. Soc. Am. B **28**, 171-178 (2011)* [doi: 10.1364/JOSAB.28.000171](https://doi.org/10.1364/JOSAB.28.000171).
 
 
 # 2. Basic requirements
