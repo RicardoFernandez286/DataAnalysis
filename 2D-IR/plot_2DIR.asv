@@ -32,7 +32,7 @@ end
 
 %% READ from handles
 % Hardcoded values
-    cut_threshold       = 15; % Percentage of max intensity to cut for plotting
+    cut                 = handles.CutPlot_tick.Value;
     LineWidth           = 0.5;
     plot_limittype      = 'Local'; % 'Global' will take min/max of the whole 2D set, while 'Local' will take only the selected region
 
@@ -40,11 +40,9 @@ end
     ProbeAxis           = handles.ProbeAxis;
     PumpAxis            = handles.PumpAxis;
     PROC_2D_DATA        = handles.PROC_2D_DATA;
-    PumpSpectrum        = handles.phased_FFTZPint;
     
 if debug==0
   % Read from GUI
-    cut                 = handles.CutPlot_tick.Value;
     minWL               = str2double(handles.editWLmin.String);
     maxWL               = str2double(handles.editWLmax.String);
     plot_pumpdirection  = char(handles.plot_pumpdirection.String{handles.plot_pumpdirection.Value});
@@ -78,37 +76,35 @@ k = 1;
 L                   = round(length(PumpAxis{m,k})/2);
 PROC_2D_DATA{m,k}   = PROC_2D_DATA{m,k}(1:L,:);
 PumpAxis{m,k}       = PumpAxis{m,k}(1:L,:);
-PumpSpectrum        = PumpSpectrum{m,k}(1:L,:);
 
 % Cut the datasets along the pump direction (if selected)
-if cut == 1
-    cut_method = 'Axis';
-else
-    cut_method = 'Intensity';
-end
-
 switch cut_method
     case 'Intensity'
-        accepted_pts    = PumpSpectrum >= (cut_threshold/100).*max(PumpSpectrum);
-        minindex        = find(accepted_pts,1,'first');
-        maxindex        = find(accepted_pts,1,'last');
+        minindex
     case 'Axis'
         minindex    = findClosestId2Val(PumpAxis{m,k},min(ProbeAxis))-1;
         maxindex    = findClosestId2Val(PumpAxis{m,k},max(ProbeAxis))+1;
 end
+if cut == 1
+    PROC_2D_DATA{m,k}   = PROC_2D_DATA{m,k}(minindex:maxindex,:);
+    PumpAxis{m,k}       = PumpAxis{m,k}(minindex:maxindex,:);
+end
 
 switch plot_limittype
     case 'Local'
-        maxabs=max(max(PROC_2D_DATA{m,k}(minindex:maxindex,:)));
-        minabs=min(min(PROC_2D_DATA{m,k}(minindex:maxindex,:)));
+        if cut == 0
+            % Get the LOCAL intensity min/max
+            maxabs=max(max(PROC_2D_DATA{m,k}(minindex:maxindex,:)));
+            minabs=min(min(PROC_2D_DATA{m,k}(minindex:maxindex,:)));
+        elseif cut == 1
+            % Get the GLOBAL intensity min/max (the dataset is already cut)
+            maxabs=max(max(PROC_2D_DATA{m,k}));
+            minabs=min(min(PROC_2D_DATA{m,k}));
+        end
     case 'Global'
-        maxabs=max(max(PROC_2D_DATA{m,k}));
-        minabs=min(min(PROC_2D_DATA{m,k}));
+            maxabs=max(max(PROC_2D_DATA{m,k}));
+            minabs=min(min(PROC_2D_DATA{m,k}));
 end
-
-% Trim the data
-PROC_2D_DATA{m,k}   = PROC_2D_DATA{m,k}(minindex:maxindex,:);
-PumpAxis{m,k}       = PumpAxis{m,k}(minindex:maxindex,:);
 
 % Get overall maxmimum of positive and negative deltaAbs
 maxDabs = max([abs(minabs),abs(maxabs)]);

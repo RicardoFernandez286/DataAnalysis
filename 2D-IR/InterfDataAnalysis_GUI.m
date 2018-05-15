@@ -79,8 +79,9 @@ end
 
 handles.VersionText.String = "v2.5c - 10.05.2018";
 
-% Disable warning about negative limits on log plots
-warning('off','MATLAB:Axes:NegativeLimitsInLogAxis')
+% Disable annoying warnings
+warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
+warning('off','MATLAB:legend:IgnoringExtraEntries');
 
 % UIWAIT makes InterfDataAnalysis_GUI wait for user response (see UIRESUME)
 % uiwait(handles.figure1);

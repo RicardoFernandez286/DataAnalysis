@@ -99,8 +99,9 @@ handles.IRloaded = 0;
 % By default, do not save kinetic traces
 handles.DoSaveTraces = 0;
 
-% Disable warning about negative limits on log plots
-warning('off','MATLAB:Axes:NegativeLimitsInLogAxis')
+% Disable annoying warnings
+warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
+warning('off','MATLAB:legend:IgnoringExtraEntries');
 
 % Update handles structure
 guidata(hObject, handles);

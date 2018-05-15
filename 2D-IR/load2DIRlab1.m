@@ -137,6 +137,8 @@ if exist(tempdir,'dir') ~= 0
     % If no delays have finished, warn the user
     if Ndelays == 0
         warndlg('No delays completed yet!','No data');
+        delete(handles.WaitBar)
+        return
     end
 else % Can't determine whether it's a preview or not - TEMP folder absent
     Ndelays         = length(t2delays);
