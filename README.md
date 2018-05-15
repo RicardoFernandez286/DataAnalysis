@@ -77,10 +77,9 @@ BinScans	<number of scans to bin for the scan-dependent kinetic or spectral trac
 ```
 
 ## License
-
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
 
 ## Acknowledgments
-* Prof. Dr. Peter Hamm (for the project and helpful discussions).
+* Prof. Dr. Peter Hamm (for being my Ph.D. advisor, assigning the 2D-IR project and helpful discussions).
 * Dr. Jan Helbing (for helpful discussions).
-* Dr. Kerstin Oppelt (for use, discussions and debugging).
+* Dr. Kerstin Oppelt (for using this software, helpful discussions and debugging).
