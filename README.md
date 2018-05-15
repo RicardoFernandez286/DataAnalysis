@@ -76,10 +76,10 @@ LinLogScale	<lin or log>
 BinScans	<number of scans to bin for the scan-dependent kinetic or spectral traces>
 ```
 
-## License
+# License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
 
-## Acknowledgments
+# Acknowledgments
 * Prof. Dr. Peter Hamm (for being my Ph.D. advisor, assigning the 2D-IR project and helpful discussions).
 * Dr. Jan Helbing (for helpful discussions).
 * Dr. Kerstin Oppelt (for using this software, helpful discussions and debugging).
