@@ -16,7 +16,7 @@ The first implementation of the program was done in MATLAB R2016a, but current d
 
 Both GUIs need a file, **"GUIoptions.txt"**, to be present in the root of the __C:__ drive.
 This could be changed to a more general location in a later release.
-See the [About the GUIoptions.txt file](README.md#5-about-the-guioptionstxt-file) section below for more details].
+See the [About the GUIoptions.txt file](README.md#5-about-the-guioptionstxt-file) section below for more details.
 
 ### 2.2 Initial setup
 To correctly run the scripts for the first time, download all folders and files and add them (including all subfolders) to the MATLAB path.
