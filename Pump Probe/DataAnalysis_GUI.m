@@ -310,9 +310,10 @@ case 'normal' % Single click
         end
     end
 case 'open'
-    if handles.is_dir(handles.sorted_index(index_selected))
         % Go to the selected folder
         index_selected  = handles.DatafoldersList.Value;
+        
+    if handles.is_dir(handles.sorted_index(index_selected))
         file_list       = handles.DatafoldersList.String;
         datafilename    = cellstr(file_list{index_selected}); % Item selected in list box
         % Write datafilename to handles(datafilename) and update
