@@ -48,6 +48,10 @@ if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
 
+% Disable annoying warnings
+warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
+warning('off','MATLAB:legend:IgnoringExtraEntries');
+
 if nargout
     [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
 else
@@ -98,10 +102,6 @@ handles.SymmetricColourRange_tick.Value=1;
 handles.IRloaded = 0;
 % By default, do not save kinetic traces
 handles.DoSaveTraces = 0;
-
-% Disable annoying warnings
-warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
-warning('off','MATLAB:legend:IgnoringExtraEntries');
 
 % Update handles structure
 guidata(hObject, handles);
@@ -1017,9 +1017,6 @@ end
 
 % --- Executes on button press in plotKin.
 function plotKin_Callback(hObject, eventdata, handles)
-% hObject    handle to plotKin (see GCBO)-
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 interactive = get(handles.InteractiveModeTick,'Value');
 handles.SelTraces = [];
 switch interactive
@@ -1238,7 +1235,8 @@ if L >= 15
     end
 end
 legend(gca,{},'FontSize',12)
-
+% Disable warning of negative X limits
+warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
 % Refline
 hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
 set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')

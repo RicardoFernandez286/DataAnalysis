@@ -35,7 +35,7 @@ end
     cut_threshold       = 15; % Percentage of max intensity to cut for plotting
     LineWidth           = 0.5;
     plot_limittype      = 'Local'; % 'Global' will take min/max of the whole 2D set, while 'Local' will take only the selected region
-
+    interpolate         = 0;
 % Read data
     ProbeAxis           = handles.ProbeAxis;
     PumpAxis            = handles.PumpAxis;
@@ -107,11 +107,16 @@ switch plot_limittype
 end
 
 % Trim the data
-PROC_2D_DATA{m,k}   = PROC_2D_DATA{m,k}(minindex:maxindex,:);
+proc2Ddata          = PROC_2D_DATA{m,k}(minindex:maxindex,:);
 PumpAxis{m,k}       = PumpAxis{m,k}(minindex:maxindex,:);
 
 % Get overall maxmimum of positive and negative deltaAbs
 maxDabs = max([abs(minabs),abs(maxabs)]);
+
+% if clip == 1
+%     PROC_2D_DATA{m,k}(PROC_2D_DATA{m,k} > max_cut) = max_cut;
+%     PROC_2D_DATA{m,k}(PROC_2D_DATA{m,k} < min_cut) = min_cut;
+% end
 
 % Cut the intensities
 if symcolrange == 1
@@ -121,11 +126,6 @@ else
     max_cut = maxabs*plot_colorrange/100;
     min_cut = minabs*plot_colorrange/100;
 end
-
-% if clip == 1
-%     PROC_2D_DATA{m,k}(PROC_2D_DATA{m,k} > max_cut) = max_cut;
-%     PROC_2D_DATA{m,k}(PROC_2D_DATA{m,k} < min_cut) = min_cut;
-% end
 
 % Define the contours to plot
 step = (max_cut - min_cut)./Ncontours;
@@ -137,7 +137,11 @@ case 'Vertical' % Old way
         % Save XYZ
         X = ProbeAxis;
         Y = PumpAxis{m,k};
-        Z{m,k}= PROC_2D_DATA{m,k};
+        Z = proc2Ddata;
+        % Interpolate the data
+        if interpolate == 1
+            Z  = interp2(X,Y,Z,xi,yi,'bicubic');
+        end
         % Save axes labels
         omegaX = '\omega_{3} (cm^{-1})';
         omegaY = '\omega_{1} (cm^{-1})';
@@ -149,7 +153,11 @@ case 'Horizontal' % New way
       % Save XYZ
         X = PumpAxis{m,k};
         Y = ProbeAxis;
-        Z{m,k} = transpose(PROC_2D_DATA{m,k});
+        Z = transpose(proc2Ddata);
+        % Interpolate the data
+        if interpolate == 1
+            Z  = interp2(x,y,z,xi,yi,'bicubic');
+        end
       % Save axes labels
         omegaX = '\omega_{1} (cm^{-1})';
         omegaY = '\omega_{3} (cm^{-1})';
@@ -165,9 +173,9 @@ LineColor       = 'flat';
        
 switch plot_contourfill
     case 1
-        [~,hContour]=contourf(plotaxis,X,Y,Z{m,k},plot_contours,'LineColor',LineColor,'LineStyle',LineStyle,'LineWidth',LineWidth);
+        [~,hContour]=contourf(plotaxis,X,Y,Z,plot_contours,'LineColor',LineColor,'LineStyle',LineStyle,'LineWidth',LineWidth);
     case 0
-        [~,hContour]=contour(plotaxis,X,Y,Z{m,k},plot_contours,'LineColor',LineColor,'LineStyle',LineStyle,'LineWidth',LineWidth);
+        [~,hContour]=contour(plotaxis,X,Y,Z,plot_contours,'LineColor',LineColor,'LineStyle',LineStyle,'LineWidth',LineWidth);
 end
 
 %% Make the plot format nice
