@@ -574,7 +574,7 @@ handles.axes2 = axes('Parent',fh);
 axes(handles.axes2);
 
 % Plot the data
-cmap=colormap(jet(L));
+cmap=colormap(othercolor('Mrainbow',L));
 for n=1:L
    plot(handles.t2delays,kindata(:,n),'LineWidth',2,'Marker','o','MarkerSize',2,'color',cmap(n,:));
    hold on
@@ -651,7 +651,7 @@ switch slice_options{sice_typeindx}
         handles.axes2 = axes(fh);
         
         % Plot the data
-        cmap=colormap(jet(Ndelays));
+        cmap=colormap(othercolor('Mrainbow',Ndelays));
         for m=1:Ndelays
            plot(handles.axes2,ProbeAxis,data(:,m),'-','LineWidth',2,'MarkerSize',2,'color',cmap(m,:),'DisplayName',['t_{2} = ' num2str(t2delays(m),'%.3g') ' ps']);
            hold on
@@ -734,7 +734,7 @@ switch slice_options{sice_typeindx}
             handles.axes2 = axes(fh);
 
             % Plot the data
-            cmap=colormap(jet(Ndelays));
+            cmap=colormap(othercolor('Mrainbow',Ndelays));
             for m=1:Ndelays
                plot(handles.axes2,ProbeAxis,data(:,m,p),'-','LineWidth',2,'MarkerSize',2,'color',cmap(m,:),'DisplayName',['t_{2} = ' num2str(t2delays(m),'%.3g') ' ps']);
                hold on
@@ -827,7 +827,7 @@ switch slice_options{sice_typeindx}
             handles.axes2 = axes(fh);
 
             % Plot the data
-            cmap=colormap(jet(Ndelays));
+            cmap=colormap(othercolor('Mrainbow',Ndelays));
             for m=1:Ndelays
                plot(handles.axes2,PumpAxis{m,1}(pump_indexes{m}),data(:,m,p),'-','LineWidth',2,'MarkerSize',2,'color',cmap(m,:),'DisplayName',['t_{2} = ' num2str(t2delays(m),'%.3g') ' ps']);
                hold on
@@ -893,7 +893,7 @@ switch slice_options{sice_typeindx}
         handles.axes2 = axes(fh);
 
         % Plot the data
-        cmap=colormap(jet(Ndelays));
+        cmap=colormap(othercolor('Mrainbow',Ndelays));
         for m=1:Ndelays
            plot(handles.axes2,ProbeAxis,data(:,m),'-','LineWidth',2,'MarkerSize',2,'color',cmap(m,:),'DisplayName',['t_{2} = ' num2str(t2delays(m),'%.3g') ' ps']);
            hold on
@@ -958,7 +958,7 @@ switch slice_options{sice_typeindx}
         handles.axes2 = axes(fh);
 
         % Plot the data
-        cmap=colormap(jet(Ndelays));
+        cmap=colormap(othercolor('Mrainbow',Ndelays));
         for m=1:Ndelays
            plot(handles.axes2,PumpAxis{1,1}(min(pump_indexes):max(pump_indexes)),data(:,m),'-','LineWidth',2,'MarkerSize',2,'color',cmap(m,:),'DisplayName',['t_{2} = ' num2str(t2delays(m),'%.3g') ' ps']);
            hold on

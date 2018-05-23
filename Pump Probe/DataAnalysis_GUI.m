@@ -1576,7 +1576,7 @@ handles.axes2.Units     = 'pixels';
 handles.axes2.Position  = [75 55 800 320];
 
 % Plot the data
-cm=colormap(jet(Nplots));
+cm=colormap(othercolor('Mrainbow',Nplots));
 for n=1:Nplots
    plot(handles.delays,ScanData(:,n),'color',cm(n,:));
    hold on
@@ -1729,7 +1729,7 @@ axes(handles.axes2);
 handles.axes2.Units     = 'pixels';
 handles.axes2.Position  = [75 55 800 320];
 % Plot the data
-cm=colormap(jet(Nplots));
+cm=colormap(othercolor('Mrainbow',Nplots));
 for n=1:Nplots
    plot(handles.cmprobe,ScanData(n,:),'color',cm(n,:));
    hold on
