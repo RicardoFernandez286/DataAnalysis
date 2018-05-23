@@ -1754,25 +1754,11 @@ guidata(hObject,handles)
 
 % --- Executes on button press in InteractiveModeTick.
 function InteractiveModeTick_Callback(hObject, eventdata, handles)
-% hObject    handle to InteractiveModeTick (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% THIS TICK SHOULD NOT DO ANYTHING HERE
-
-% Hint: get(hObject,'Value') returns toggle state of InteractiveModeTick
-
+% THIS TICK SHOULD NOT DO ANYTHING
 
 % --- Executes on button press in NormKin.
 function NormKin_Callback(hObject, eventdata, handles)
-% hObject    handle to NormKin (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% THIS TICK SHOULD NOT DO ANYTHING HERE
-
-% Hint: get(hObject,'Value') returns toggle state of NormKin
-
+% THIS TICK SHOULD NOT DO ANYTHING
 
 % --- Executes on button press in Refresh.
 function Refresh_Callback(hObject, eventdata, handles)
@@ -1836,12 +1822,12 @@ function PowerDependence_Callback(hObject, eventdata, handles)
 AllFolderList = handles.DatafoldersList.String;
 rootdir = handles.CurrDir.String;
 % Ask user for the wavenumber to plot and the times to plot it
-prompt = {'Enter desired wavenumber:','Enter time range to average (min):','Enter time range to average (max):'};
-dlg_title = 'Plot of power dependence of signal';
-num_lines = [1 20];
-SelTraces = inputdlg(prompt,dlg_title,num_lines);
-WL = str2double(SelTraces(1));
-Times = transpose(str2double(SelTraces(2:3)));
+prompt      = {'Enter desired wavenumber:','Enter time range to average (min):','Enter time range to average (max):'};
+dlg_title   = 'Plot of power dependence of signal';
+num_lines   = [1 20];
+SelTraces   = inputdlg(prompt,dlg_title,num_lines);
+WL          = str2double(SelTraces(1));
+Times       = transpose(str2double(SelTraces(2:3)));
 % Once we have the point, look for the index
 % WLindex = index of the closest match for the selected trace in the WL vector
 WLindex = findClosestId2Val(handles.cmprobe,WL);
@@ -2007,6 +1993,7 @@ for WLn=1:length(WL)
     hold(gca,'off')
     ax = gca;
     ax.Legend.String(end)=[];
+    
     % Make the plot format constant
     % Create a new figure with consistent format
     fh.Units        = 'pixels';
