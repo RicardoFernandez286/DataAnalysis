@@ -2,7 +2,12 @@ function handles = LoadSteadyIR(handles)
 % Get file
 fileexist = exist('C:\GUIoptions.txt','file');
 if fileexist == 2
-    defaultIRdir = readParam('defaultIRdir','C:\GUIoptions.txt');
+    try 
+        defaultIRdir = readParam('defaultIRdir','C:\GUIoptions.txt');
+    catch
+        warning('Detault IR directory not defined in GUIoptions.txt');
+        defaultIRdir = pwd;
+    end
     cd(defaultIRdir);
     [FileName,PathName,FilterIndex] = uigetfile(...
     {'*.dat;*.csv;*.dpt','ASCII spectra (*.dat,*.csv,*.dpt)';'*.??','Bruker OPUS files (*.??)'}, ...

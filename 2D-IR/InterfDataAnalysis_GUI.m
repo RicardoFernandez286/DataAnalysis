@@ -24,7 +24,7 @@ function varargout = InterfDataAnalysis_GUI(varargin)
 
 % Last Modified by GUIDE v2.5 26-Apr-2018 15:30:48
 
-% % Ricardo Fernández-Terán, v2.5c - 10.05.2018
+% Ricardo Fernández-Terán, v2.5c - 10.05.2018
 
 % ----CHANGELOG:
 % * Updated plotting routine: now the contour levels are defined based on min/max/# levels

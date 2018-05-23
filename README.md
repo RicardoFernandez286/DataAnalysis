@@ -73,13 +73,12 @@ defaultSPECdir	<route to the default directory for spectroelectrochemical data>
 AxisBreak	<limits to break the axis in a linear|log time scale - format: [start end] of the linear scale (first axis)>
 BreakRatio	<size of the linear part in a linear|log time graph - format: x, with 0<x<1>
 LinLogScale	<lin or log>
-BinScans	<number of scans to bin for the scan-dependent kinetic or spectral traces>
 ```
 
 # License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
 
 # Acknowledgments
-* Prof. Dr. Peter Hamm (for being my Ph.D. advisor, assigning the 2D-IR project and helpful discussions).
+* Prof. Dr. Peter Hamm (for being my Ph.D. advisor and helpful discussions).
 * Dr. Jan Helbing (for helpful discussions).
 * Dr. Kerstin Oppelt (for using this software, helpful discussions and debugging).

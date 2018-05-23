@@ -8,6 +8,10 @@ datafilename    = char(handles.datafilename);
 %% Prepare the filenames for each file to read
 filename        = [rootdir filesep datafilename filesep datafilename];
 
+%% Check that all files exist and read them
+
+% Read the files
+if exist([filename '_delays.csv'],'file') ~= 0 % If all files exist
 % COMMENT:
 %   SP = Fast modulation spectra
 %   SM = Slow modulation (as defined in the SlowMod cluster)
@@ -75,7 +79,6 @@ for i=1:mod
 end
 handles.SlowMod_selector.String     = SM_selString;
 
-
 %% Define the measurement scheme
 switch Ndatastates
     case 1
@@ -91,133 +94,129 @@ switch N_4PM
         piezomod = '4PM';
 end
 
-%% Check that all files exist and read them
-existcondition  = 1; % FIX IT!
-
-% Read the files
-if existcondition == 1 % If all files exist
-    delays          = csvread([filename '_delays.csv']);
-    % If there is a calibrated probe file, use it. Otherwise, use the normal one
-    if exist([rootdir filesep 'CalibratedProbe.csv'],'file') == 2
-        wavenumberfile='CalibratedProbe.csv';
-        cmprobe=csvread([rootdir filesep wavenumberfile]);
-    else
-        cmprobe         = csvread([filename '_wavenumbers.csv']);
-    end
-    
-    
-    % Read the actual data
-    rawsignal={}; noise={};
-    for m=1:Nslowmod
-        for k=1:Nspectra
-            ending            = ['_sp' num2str(k-1) '_sm' num2str(m-1) '_du0.csv'];
-            tempsignal{m,k}   = csvread([filename '_signal' ending]);
-            tempnoise{m,k}    = csvread([filename '_signal_noise' ending]);
-        end
-    end
-    
-    switch piezomod
-        case 'OFF' % The signal is the signal, just read it from the cell array
-            rawsignal         = tempsignal{SpectrumToDisplay,1};
-            noise             = tempnoise{SpectrumToDisplay,1};
-        case '4PM' % The signal comes from a four point modulation, average the four points
-            rawsignal         = sum(cat(3,tempsignal{:}),3)/4;
-            noise             = sum(cat(3,tempnoise{:}),3)/4;
-    end
-    
-    % If Nspec = 0, then we have ONE spectrometer state (i.e. the spectrometer doesn't move)
-    % Otherwise, we have Nspec spectrometer states
-    % Recalculate the wavenumber axis according to which state is read
-    if N_modSpec >= 2
-        WL_nm       = 10^7./cmprobe;
-        NewCentreWL = SpectrometerWL(SpectrumToDisplay);
-        ShiftWL     = NewCentreWL-WL_nm(floor(length(WL_nm)/2));
-        cmprobe     = 10^7./(WL_nm + ShiftWL);
-    end
-    
-    % Timescale is in picoseconds! (nicer to understand)
-    delays = delays/1000;
-    handles.timescale = 'ps';
-    handles.timescalemenu.Value = 2;
-
-    % Read the plot ranges
-    mintime = -0.5;
-    maxtime = max(delays);
-    flatbl=findClosestId2Val(delays,mintime);
-    minabs = min(rawsignal(flatbl:end,:));
-    maxabs = max(rawsignal(flatbl:end,:));
-    zminmax = round(max([abs(minabs) abs(maxabs)]),3);
-    minwl = min(cmprobe);
-    maxwl = max(cmprobe);
-    Ncontours = 50; % 10 contours by default is OK; need 50 contours to plot nicely with pFID
-    plotranges = [mintime maxtime minwl maxwl zminmax Ncontours minabs maxabs];
-
-         % Average rows 1:n and subtract them (n=5)
-        n=3; 
-        delays(1:n-1)=[];
-        rawsignal =  rawsignal(n:end,:) - mean(rawsignal(1:n-1,:),1);
-        noise =  noise(n:end,:) - mean(noise(1:n-1,:),1);
-    if handles.removeduplicates == 0
-        % Average last 3 rows and collapse into a single row
-        delays(end-1:end)=[];
-        rawsignal(end-2,:) = mean(rawsignal(end-2:end,:),1);
-        rawsignal(end-1:end,:)=[];
-        noise(end-3,:) =  mean(noise(end-2:end,:),1);
-        noise(end-1:end,:)=[];
-    end
-
-    % Write to handles
-    handles.delays      = delays;
-    handles.cmprobe     = cmprobe;
-    handles.rawsignal   = rawsignal;
-    handles.noise       = noise;
-    handles.plotranges  = plotranges;
-    handles.Nscans      = Nscans;
-    
-    % Enable all controls that are greyed out by default
-    handles = EnableControls(handles,'IRLab1');
-
-    % Set default values for certain controls
-    set(handles.maxDeltaAbs_text,'String',zminmax);
-    handles.AddReplace1Dplot.Value = 1;
-    handles.SVD = 0;
-    percentwhites = 5;
-    handles.percentwhites = percentwhites;
-    set(handles.percent_whites,'String',num2str(percentwhites));
-
-    % Set tmin/max
-    handles.editTmin.String = num2str(min(delays));
-    handles.editTmax.String = num2str(max(delays));
-
-    % Show noise statistics
-    AvgNoise = mean(mean(noise));
-    MaxNoise = max(max(noise));
-    SNR = abs(round(zminmax/AvgNoise,3));
-    set(handles.AvgNoise_text,'String',AvgNoise);
-    set(handles.MaxNoise_text,'String',MaxNoise);
-    set(handles.SNRnumber,'String',SNR);
-
-    % Set defaults for background subtraction subunit
-    handles.BkgSubTick.Value = 0;
-        % Show by default the background subtraction limits
-        % from the first data point till just before time zero
-        k = 1;
-        t = handles.delays(k);
-        while t < -1
-            k = k+1;
-            t = handles.delays(k+1);
-        end
-        handles.j = 1;
-        handles.k = k;
-        set(handles.mintimeBkg,'String',num2str(handles.delays(1)));
-        set(handles.maxtimeBkg,'String',num2str(handles.delays(k)));
-
-        % Do the background subtraction and change status in handles.rawcorr
-        handles.bkg = mean(handles.rawsignal(1:k,:));
-        handles.corrdata = handles.rawsignal - handles.bkg;
-        % For Lab 1, due to perturbed FID, don't do BG sub
-        handles.rawcorr = 'RAW';
+delays          = csvread([filename '_delays.csv']);
+% If there is a calibrated probe file, use it. Otherwise, use the normal one
+if exist([rootdir filesep 'CalibratedProbe.csv'],'file') == 2
+    wavenumberfile='CalibratedProbe.csv';
+    cmprobe=csvread([rootdir filesep wavenumberfile]);
 else
-    assert(existcondition,'Selected directory is empty or files are corrupt!')
+    cmprobe         = csvread([filename '_wavenumbers.csv']);
+end
+
+
+% Read the actual data
+rawsignal={}; noise={};
+for m=1:Nslowmod
+    for k=1:Nspectra
+        ending            = ['_sp' num2str(k-1) '_sm' num2str(m-1) '_du0.csv'];
+        tempsignal{m,k}   = csvread([filename '_signal' ending]);
+        tempnoise{m,k}    = csvread([filename '_signal_noise' ending]);
+    end
+end
+
+switch piezomod
+    case 'OFF' % The signal is the signal, just read it from the cell array
+        rawsignal         = tempsignal{SpectrumToDisplay,1};
+        noise             = tempnoise{SpectrumToDisplay,1};
+    case '4PM' % The signal comes from a four point modulation, average the four points
+        rawsignal         = sum(cat(3,tempsignal{:}),3)/4;
+        noise             = sum(cat(3,tempnoise{:}),3)/4;
+end
+
+% If Nspec = 0, then we have ONE spectrometer state (i.e. the spectrometer doesn't move)
+% Otherwise, we have Nspec spectrometer states
+% Recalculate the wavenumber axis according to which state is read
+if N_modSpec >= 2
+    WL_nm       = 10^7./cmprobe;
+    NewCentreWL = SpectrometerWL(SpectrumToDisplay);
+    ShiftWL     = NewCentreWL-WL_nm(floor(length(WL_nm)/2));
+    cmprobe     = 10^7./(WL_nm + ShiftWL);
+end
+
+% Timescale is in picoseconds! (nicer to understand)
+delays = delays/1000;
+handles.timescale = 'ps';
+handles.timescalemenu.Value = 2;
+
+% Read the plot ranges
+mintime = -0.5;
+maxtime = max(delays);
+flatbl=findClosestId2Val(delays,mintime);
+minabs = min(rawsignal(flatbl:end,:));
+maxabs = max(rawsignal(flatbl:end,:));
+zminmax = round(max([abs(minabs) abs(maxabs)]),3);
+minwl = min(cmprobe);
+maxwl = max(cmprobe);
+Ncontours = 50; % 10 contours by default is OK; need 50 contours to plot nicely with pFID
+plotranges = [mintime maxtime minwl maxwl zminmax Ncontours minabs maxabs];
+
+     % Average rows 1:n and subtract them (n=5)
+    n=3; 
+    delays(1:n-1)=[];
+    rawsignal =  rawsignal(n:end,:) - mean(rawsignal(1:n-1,:),1);
+    noise =  noise(n:end,:) - mean(noise(1:n-1,:),1);
+if handles.removeduplicates == 0
+    % Average last 3 rows and collapse into a single row
+    delays(end-1:end)=[];
+    rawsignal(end-2,:) = mean(rawsignal(end-2:end,:),1);
+    rawsignal(end-1:end,:)=[];
+    noise(end-3,:) =  mean(noise(end-2:end,:),1);
+    noise(end-1:end,:)=[];
+end
+
+% Write to handles
+handles.delays      = delays;
+handles.cmprobe     = cmprobe;
+handles.rawsignal   = rawsignal;
+handles.noise       = noise;
+handles.plotranges  = plotranges;
+handles.Nscans      = Nscans;
+
+% Enable all controls that are greyed out by default
+handles = EnableControls(handles,'IRLab1');
+
+% Set default values for certain controls
+set(handles.maxDeltaAbs_text,'String',zminmax);
+handles.AddReplace1Dplot.Value = 1;
+handles.linlogtick.Value = 0;
+handles.SVD = 0;
+percentwhites = 5;
+handles.percentwhites = percentwhites;
+set(handles.percent_whites,'String',num2str(percentwhites));
+
+% Set tmin/max
+handles.editTmin.String = num2str(min(delays));
+handles.editTmax.String = num2str(max(delays));
+
+% Show noise statistics
+AvgNoise = mean(mean(noise));
+MaxNoise = max(max(noise));
+SNR = abs(round(zminmax/AvgNoise,3));
+set(handles.AvgNoise_text,'String',AvgNoise);
+set(handles.MaxNoise_text,'String',MaxNoise);
+set(handles.SNRnumber,'String',SNR);
+
+% Set defaults for background subtraction subunit
+handles.BkgSubTick.Value = 0;
+    % Show by default the background subtraction limits
+    % from the first data point till just before time zero
+    k = 1;
+    t = handles.delays(k);
+    while t < -1
+        k = k+1;
+        t = handles.delays(k+1);
+    end
+    handles.j = 1;
+    handles.k = k;
+    set(handles.mintimeBkg,'String',num2str(handles.delays(1)));
+    set(handles.maxtimeBkg,'String',num2str(handles.delays(k)));
+
+    % Do the background subtraction and change status in handles.rawcorr
+    handles.bkg = mean(handles.rawsignal(1:k,:));
+    handles.corrdata = handles.rawsignal - handles.bkg;
+    % For Lab 1, due to perturbed FID, don't do BG sub
+    handles.rawcorr = 'RAW';
+else
+    assert(exist([filename '_delays.csv'],'file') ~= 0,'Selected directory is empty or files are corrupt!')
 end
 

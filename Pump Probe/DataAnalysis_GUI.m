@@ -22,16 +22,14 @@ function varargout = DataAnalysis_GUI(varargin)
 
 % Edit the above text to modify the response to help DataAnalysis_GUI
 
-% Last Modified by GUIDE v2.5 08-May-2018 16:29:58
+% Last Modified by GUIDE v2.5 23-May-2018 15:03:46
 
-% Ricardo Fernández-Terán - v3.5a - 14.05.2018
+% Ricardo Fernández-Terán - v3.8b - 23.05.2018
 % ----CHANGELOG:
+% * Updated all plotting routines to make plot format consistent. Font sizes and styles should now be the same in all plots.
 % * Included loading routine for TRES data files (*.dat)
-% * Updated tWLshift so it doesn't overwrite the .bak file, only _wavenumbers.csv is overwritten
-% * Included loading routines for Lab 4 data (pump-probe)
-% * Update button is now working with Lab 4 data.
-% * Shift tZero is now working with Lab 4 data.
-% * Problem with delays when clicking more than once (Lab4) FIXED.
+% * Updated tWLshift so it doesn't overwrite the .bak file, only _wavenumbers.csv is overwritten!
+% * Included loading routines for Lab 4 data (old format)
 % 
 % ----PENDING:
 % * Add option to subtract solvent pFID and/or scattering surface (array - array) to get the "clean" signals
@@ -196,13 +194,21 @@ case 'normal' % Single click
                case 1 % Lab 2: UV-Vis Pump - IR Probe (ns)
                    handles = LoadDataIR2(handles);
                    tempdir = [char(handles.CurrDir.String) filesep char(datafilename) filesep 'temp'];
-                   if exist(tempdir{1},'dir') == 7
-                       cd(tempdir{1});
+                   if exist(tempdir,'dir') == 7
+                       cd(tempdir);
                        filelist = dir('*signal*.csv');
                        handles.Nscans = floor(length(filelist)./2);
                        handles.Nscans_number.String = num2str(handles.Nscans);
                    else
                        handles.Nscans_number.String = 'N/A';
+                       handles.KineticsPerScan.Enable      = 'Off';
+                       handles.SpectraPerScan.Enable       = 'Off';
+                       handles.BinScans.Visible            = 'Off';
+                       handles.BinScans.Enable             = 'Off';
+                       handles.text35.Visible              = 'Off';
+                       handles.text36.Visible              = 'Off';
+                       handles.text35.Enable               = 'Off';
+                       handles.text36.Enable               = 'Off';
                    end
                    set(handles.ErrorText,'String', '');
                    handles.SymmetricColourRange_tick.Value = 1;
@@ -220,7 +226,15 @@ case 'normal' % Single click
                    if exist(tempdir,'dir') == 7
                        handles.Nscans_number.String = num2str(handles.Nscans);
                    else
-                       handles.Nscans_number.String = 'N/A';
+                       handles.Nscans_number.String        = 'N/A';
+                       handles.KineticsPerScan.Enable      = 'Off';
+                       handles.SpectraPerScan.Enable       = 'Off';
+                       handles.BinScans.Visible            = 'Off';
+                       handles.BinScans.Enable             = 'Off';
+                       handles.text35.Visible              = 'Off';
+                       handles.text36.Visible              = 'Off';
+                       handles.text35.Enable               = 'Off';
+                       handles.text36.Enable               = 'Off';
                    end
                    % Clear error string
                    set(handles.ErrorText,'String', '');
@@ -317,9 +331,10 @@ case 'open'
         file_list       = handles.DatafoldersList.String;
         datafilename    = cellstr(file_list{index_selected}); % Item selected in list box
         % Write datafilename to handles(datafilename) and update
-        filenamech      = char(datafilename);
+        dirnamech       = char(datafilename);
         % Go to the selected dir
-        cd (filenamech);
+        currdir         = char(handles.CurrDir.String);
+        cd([currdir filesep dirnamech]);
         % Update the string
         handles.CurrDir.String      = pwd;
         handles.rootdir             = handles.CurrDir.String;
@@ -360,16 +375,24 @@ end
 
 % --- Executes on button press in PlotBkg.
 function PlotBkg_Callback(hObject, eventdata, handles)
-% hObject    handle to PlotBkg (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+% Create a new figure with consistent format
 fh = figure();
+fh.Position(3)  = 800;
+fh.Position(4)  = 420;
+fh.Color        = [1 1 1];
+% Define the axes
 handles.axes2 = axes('Parent',fh);
-plot(handles.cmprobe,handles.bkg,'LineWidth',2,'Color','r')
+axes(handles.axes2);
+handles.axes2.Units     = 'pixels';
+handles.axes2.Position  = [80 65 680 320];
+% Do the plot
+plot(handles.cmprobe,handles.bkg,'LineWidth',1.5,'Color','r')
+% Formatting
 axis tight
-xlabel(['Wavenumbers',' (cm^{-1})']);
-ylabel('Background (mOD)');
-title({['Background of ',handles.datafilename];''},'Interpreter','none');
+set(gca,'FontSize',12);
+xlabel(['Wavenumbers',' (cm^{-1})'],'FontSize',13,'FontWeight','bold');
+ylabel('Background signal (m\DeltaOD)','FontSize',13,'FontWeight','bold');
+title(['Background of ',char(handles.datafilename)],'Interpreter','none','FontSize',12);
 hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
 
 % --- Executes on button press in make2Dplot.
@@ -410,14 +433,32 @@ function make3Dplot_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 linlog = handles.linlog;
 fh = figure();
-handles.newaxes = axes('Parent',fh);
+fh.Color = [1 1 1];
+newaxes = axes('Parent',fh);
 switch handles.rawcorr
     case 'RAW'
-        plot3D(handles,handles.rawsignal,handles.newaxes)
+        plot3D(handles,handles.rawsignal,newaxes)
     case 'CORRECTED'
-        plot3D(handles,handles.corrdata,handles.newaxes)
+        plot3D(handles,handles.corrdata,newaxes)
 end
 set(handles.newaxes,'yscale',linlog)
+
+% Make the plot format constant
+fh.Units='pixels';
+fh.Position(2)=fh.Position(2).*0.7;
+fh.Position(3)=590; % Width in pixels
+fh.Position(4)=510; % Height in pixels
+fh.Color = [1 1 1];
+newaxes.FontSize = 12;
+newaxes.Units = 'pixels';
+newaxes.Position = [75 75 420 385];
+% Make uniform, consistent format
+newaxes.LineWidth = 1;
+newaxes.TickLength = [0.015 0.035];
+
+% Make the axes resizable
+newaxes.Units = 'normalized';
+
 guidata(hObject,handles)
 
 
@@ -514,7 +555,17 @@ FitType=2; % i.e. 1= LOCAL, 2 = GLOBAL SVD fit
     % Get the DAS
     SelWL = WL(:,SingVals);
     DAS = SelWL*C_matrix;  
-    fh = figure('Position', [100, 100, 800, 450]);
+    % Create a new figure with consistent format
+    fh = figure();
+    fh.Position(3)  = 800;
+    fh.Position(4)  = 420;
+    fh.Color        = [1 1 1];
+
+    % Define the axes
+    handles.axes2 			= axes('Parent',fh);
+    handles.axes2.Units     = 'pixels';
+    handles.axes2.Position  = [75 75 680 320];
+    axes(handles.axes2);
     % Plot the DAS
     cm=colormap(othercolor('Mrainbow',NumExp+1));
     legendlabel={};
@@ -523,21 +574,29 @@ FitType=2; % i.e. 1= LOCAL, 2 = GLOBAL SVD fit
        if Taus(n) > 1000
            switch handles.timescale
                 case 'ns'
-                    longtimescale = '\mus';
+                    newtimescale = [char(956) 's'];
                 case 'ps'
-                    longtimescale = 'ns';
+                    newtimescale = 'ns';
                 case 'fs'
-                    longtimescale = 'ps';
+                    newtimescale = 'ps';
            end
            f=1000;
+       elseif Taus(n) < 1
+           switch handles.timescale
+                case 'ns'
+                    newtimescale = 'ps';
+                case 'ps'
+                    newtimescale = 'fs';
+           end
+           f=1/1000;
        else
            f=1;
-           longtimescale = handles.timescale;
+           newtimescale = handles.timescale;
        end
        strTau      = num2str(Taus(n)/f,'%.3g');
        strTau_SD   = num2str(Taus_SD(n)/f,'%.3g');
        
-       legendlabel{n}=['\tau_{' num2str(n) '}' ' = ' strTau ' \pm ' strTau_SD ' ' longtimescale];
+       legendlabel{n}=['\tau_{' num2str(n) '}' ' = ' strTau ' \pm ' strTau_SD ' ' newtimescale];
        plot(handles.cmprobe,DAS(:,n),'LineWidth',2,'Marker','none','color',cm(n,:));
        hold on
     end
@@ -563,9 +622,9 @@ FitType=2; % i.e. 1= LOCAL, 2 = GLOBAL SVD fit
     % Formatting
     l=legend(legendlabel); legend('boxoff'); legend('Location','northeast');
     l.Interpreter = 'tex';
-    set(gca,'FontSize',14);
-    xlabel('Wavenumbers (cm^{-1})','FontSize',14,'FontWeight','bold')
-    ylabel('Amplitude','FontSize',14,'FontWeight','bold')
+    set(gca,'FontSize',12);
+    xlabel('Wavenumbers (cm^{-1})','FontSize',13,'FontWeight','bold')
+    ylabel('Amplitude','FontSize',13,'FontWeight','bold')
     axis tight
     hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
     set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
@@ -646,28 +705,15 @@ catch err
     errordlg(err.message,'Expression Error');
 end
 guidata(hObject,handles)
-% Hints: get(hObject,'String') returns contents of editWLmin as text
-%        str2double(get(hObject,'String')) returns contents of editWLmin as a double
-
 
 % --- Executes during object creation, after setting all properties.
 function editWLmin_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to editWLmin (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
 
-
 function editTmax_Callback(hObject, eventdata, handles)
-% hObject    handle to editTmax (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 handles.plotranges(2) = str2double(get(hObject,'String'));
 guidata(hObject,handles)
 delaylim = handles.plotranges(1:2);
@@ -1047,8 +1093,8 @@ end
 % Get the values to find in the WAVELENGTH vector
 value = handles.SelTraces(:,1); % column 1= Wavelength
 % k = index of the closest match for each selected trace
-k = findClosestId2Val(handles.cmprobe,transpose(value));
-L = size(handles.SelTraces,1);
+k = unique(findClosestId2Val(handles.cmprobe,transpose(value)));
+L = length(k);
 i = 0;
 while i < L
     % Get the actual vectors from the Z matrix (one by one)
@@ -1072,26 +1118,34 @@ while i < L
     end
     i=i+1;
 end
-% Create a new figure
+% Create a new figure with consistent format
 fh = figure();
+fh.Position(3)  = 880;
+fh.Position(4)  = 420;
+fh.Color        = [1 1 1];
+
 % Define the axes
 handles.axes2 = axes('Parent',fh);
 axes(handles.axes2);
+handles.axes2.Units     = 'pixels';
+handles.axes2.Position  = [75 60 800 320];
+
 % % Plot in two axes 
 % figure;
 % ax1 = axes('OuterPosition',[0 0 0.3 1],'Units','Normalized');
 % ax2 = axes('OuterPosition',[0.1 0 0.8 1],'Units','Normalized','YTickLabel',[]);
+
 % Plot the data
-cmap=colormap(jet(L));
+cmap=colormap((othercolor('Mrainbow',L)));
 for n=1:L
    plot(handles.delays,ydata(:,n),'LineWidth',2,'Marker','o','MarkerSize',2,'color',cmap(n,:));
    hold on
 end
 % Nice formatting
-set(gca,'FontSize',14)
-title({handles.datafilename;[handles.rawcorr,' DATA - KINETICS';'']},'Interpreter','none','FontSize',10)
-xlabel(['Delays',' (',handles.timescale,')'],'FontSize',14,'FontWeight','bold');
-ylabel(label,'FontSize',14,'FontWeight','bold')
+set(gca,'FontSize',12)
+title({handles.datafilename;[handles.rawcorr,' DATA - KINETICS';'']},'Interpreter','none','FontSize',12)
+xlabel(['Delays',' (',handles.timescale,')'],'FontSize',13,'FontWeight','bold');
+ylabel(label,'FontSize',13,'FontWeight','bold')
 axis tight
 if L == 1
     legend(gca,[string(strcat(num2str(round(handles.cmprobe(index),0)),' cm^{-1}')),''],'FontSize',12)
@@ -1099,7 +1153,7 @@ else
     legend(gca,caption,'FontSize',12)
 end
 legend('boxoff')
-legend('Location','northeast')
+legend('Location','bestoutside')
 set(handles.axes2,'xscale',handles.linlog)
 hline = refline(handles.axes2,[0 0]); hline.Color = [0.5 0.5 0.5];
 set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
@@ -1110,8 +1164,6 @@ if handles.DoSaveTraces==1
     filename=char(strcat(handles.CurrDir.String,filesep,handles.datafilename,'_traces.dat'));
     dlmwrite(filename,[[0;handles.delays] [wavenumbers;ydata]])
 end
-
-
 
 % --- Executes on button press in plotDeltaAbs.
 function plotDeltaAbs_Callback(hObject, eventdata, handles)
@@ -1179,20 +1231,27 @@ while i < L
     end
     i=i+1;
 end
-% Create a new figure
-fh = figure('Position', [100, 100, 800, 450]);
+% Create a new figure with consistent format
+fh = figure();
+fh.Position(3)  = 880;
+fh.Position(4)  = 420;
+fh.Color        = [1 1 1];
+
 switch handles.IncludeSteadyState.Value
     case 1
         ax1 = subplot(3,1,1);
         plot(handles.IRx,handles.IRy,'LineWidth',1.5,'Marker','none','color','black');
-        set(gca,'FontSize',14)
+        set(gca,'FontSize',12)
         title({handles.datafilename;[handles.rawcorr,' DATA - TRANSIENT SPECTRA';'']},'Interpreter','none')
-        ylabel('Abs (mOD)','FontWeight','bold')
+        ylabel('Abs (mOD)','FontWeight','bold','FontSize',13)
         ax2 = subplot(3,1,[2 3]);
         p = get(ax2,'pos'); p(2) = p(2)+0.05; set(ax2,'pos',p); linkaxes([ax1,ax2],'x');
     case 0
         % Define the axes
         handles.axes2 = axes('Parent',fh);
+        axes(handles.axes2);
+        handles.axes2.Units     = 'pixels';
+        handles.axes2.Position  = [75 75 800 320];
         axes(handles.axes2);
         title({handles.datafilename;[handles.rawcorr,' DATA - TRANSIENT SPECTRA';'']},'Interpreter','none')
 end
@@ -1200,26 +1259,34 @@ end
 cm=colormap(othercolor('Mrainbow',L));
 for n=1:L
    if handles.delays(k(n)) >= 1000
-       longdelays = handles.delays(k(n))/1000;
+       newdelays = handles.delays(k(n))/1000;
        switch handles.timescale
            case 'fs'
-               longtimescale = 'ps';
+               newtimescale = 'ps';
            case 'ps'
-               longtimescale = 'ns';
+               newtimescale = 'ns';
            case 'ns'
-               longtimescale = '?s';
+               newtimescale = [char(956) 's'];
+       end
+   elseif handles.delays(k(n)) < 1
+       newdelays = handles.delays(k(n)).*1000;
+       switch handles.timescale
+           case 'ps'
+               newtimescale = 'fs';
+           case 'ns'
+               newtimescale = 'ps';
        end
    else
-       longdelays = handles.delays(k(n));
-       longtimescale = handles.timescale;
+       newdelays    = handles.delays(k(n));
+       newtimescale = handles.timescale;
    end
-   plot(handles.cmprobe,ydata(:,n),'LineWidth',2,'Marker','none','color',cm(n,:),'DisplayName',[num2str(longdelays,'%.3g') ' ' longtimescale]);
+   plot(handles.cmprobe,ydata(:,n),'LineWidth',1.5,'Marker','none','color',cm(n,:),'DisplayName',[num2str(newdelays,'%.3g') ' ' newtimescale]);
    hold on
 end
 % Nice formatting
-set(gca,'FontSize',14)
-xlabel('Wavenumbers (cm^{-1})','FontSize',14,'FontWeight','bold')
-ylabel(label,'FontSize',14,'FontWeight','bold')
+set(gca,'FontSize',12)
+xlabel('Wavenumbers (cm^{-1})','FontSize',13,'FontWeight','bold')
+ylabel(label,'FontSize',13,'FontWeight','bold')
 axis tight
 if handles.IncludeSteadyState.Value == 1
     xl = xlim;
@@ -1228,7 +1295,7 @@ if handles.IncludeSteadyState.Value == 1
 end
 legend('show')
 legend('boxoff')
-legend('Location','northeast')
+legend('Location','bestoutside')
 if L >= 15
     for i=1:floor(L/3)
         handles.axes2.Children(2*i).Annotation.LegendInformation.IconDisplayStyle = 'off';
@@ -1325,10 +1392,27 @@ function PlotNoise_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 linlog = handles.linlog;
-fh = figure();
-handles.axes2 = axes('Parent',fh);
-plot3D(handles,handles.noise,handles.axes2)
-set(handles.axes2,'yscale',linlog)
+fh              = figure();
+newaxes         = axes('Parent',fh);
+plot3D(handles,handles.noise,newaxes)
+set(newaxes,'yscale',linlog)
+
+% Make the plot format constant
+fh.Units='pixels';
+fh.Position(2)=fh.Position(2).*0.7;
+fh.Position(3)=620; % Width in pixels
+fh.Position(4)=510; % Height in pixels
+fh.Color = [1 1 1];
+newaxes.FontSize = 12;
+newaxes.Units = 'pixels';
+newaxes.Position = [75 75 420 385];
+% Make uniform, consistent format
+newaxes.LineWidth = 1;
+newaxes.TickLength = [0.015 0.035];
+box(newaxes,'on')
+% Make the axes resizable
+newaxes.Units = 'normalized';
+
 % Customise the graph a bit
 maxnoise = abs(max(handles.noise));
 minnoise =  abs(min(handles.noise));
@@ -1444,7 +1528,7 @@ switch handles.DataTypeMenu.Value
 end
 Nplots = Nscans;
 % Bin the scans if BinScans > 1
-BinScans = str2double(readParam('BinScans','C:\GUIoptions.txt'));
+BinScans = str2double(handles.BinScans.String);
 if BinScans > 1
     s=1; i=1;
     BinScanData=zeros(length(handles.delays),ceil(Nscans/BinScans));
@@ -1461,9 +1545,9 @@ if BinScans > 1
         s=snew; i=i+1;
     end
     RawScanData = ScanData;
-    ScanData = BinScanData;
-    Nplots = ceil(Nscans/BinScans);
-    caption = BinCaption;
+    ScanData    = BinScanData;
+    Nplots      = ceil(Nscans/BinScans);
+    caption     = BinCaption;
 end
 
 % Normalise the data if NormKin = 1
@@ -1481,34 +1565,39 @@ end
 
 % Create a new figure
 fh = figure();
+fh.Position(3)  = 940;
+fh.Position(4)  = 420;
+fh.Color        = [1 1 1];
+
 % Define the axes
 handles.axes2 = axes('Parent',fh);
 axes(handles.axes2);
+handles.axes2.Units     = 'pixels';
+handles.axes2.Position  = [75 55 800 320];
+
 % Plot the data
 cm=colormap(jet(Nplots));
 for n=1:Nplots
    plot(handles.delays,ScanData(:,n),'color',cm(n,:));
    hold on
 end
+% Make the lines of the first and last scans thicker
+handles.axes2.Children(end).LineWidth = 1.5;
+handles.axes2.Children(1).LineWidth = 1.5;
+
 % Nice formatting
 title({handles.datafilename;['KINETICS PER SCAN AT ',num2str(round(handles.cmprobe(k),0)),' cm-1']},'Interpreter','none')
-xlabel(['Delays',' (',handles.timescale,')'],'FontWeight','bold')
-ylabel(label,'FontWeight','bold')
+xlabel(['Delays',' (',handles.timescale,')'],'FontSize',13,'FontWeight','bold')
+ylabel(label,'FontSize',13,'FontWeight','bold')
 axis tight
 legend(gca,caption);
+legend(gca,'Location','best');
+legend(gca,'boxoff');
 set(handles.axes2,'xscale',handles.linlog)
 hline = refline(handles.axes2,[0 0]);
 hline.Color = [0.5 0.5 0.5];
 set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
 guidata(hObject,handles)
-
-% TO DO:
-if handles.PlotPerScan.Value==1
-    % Ask user time interval (default 1 to 2 'timescale units')
-    % Mean from tstart to tstop
-    % Plot mean vs scan number
-end
-
 
 
 % --- Executes on button press in SpectraPerScan.
@@ -1569,6 +1658,7 @@ switch handles.DataTypeMenu.Value
             caption = "Scan 1";
             ScanData(:,1) = TempScanData(:,k);
         end
+        ScanData = transpose(ScanData);
     case 2 % Lab 1 & Lab 4
         % The first scan has no _n.csv termination
         ending = '_sp0_sm0_du0_';
@@ -1595,7 +1685,7 @@ end
 Nplots = Nscans;
 
 % Bin the scans if BinScans > 1
-BinScans = str2double(readParam('BinScans','C:\GUIoptions.txt'));
+BinScans = str2double(handles.BinScans.String);
 if BinScans > 1
     s=1; i=1;
     BinScanData=zeros(ceil(Nscans/BinScans),length(handles.cmprobe));
@@ -1627,25 +1717,38 @@ switch handles.NormKin.Value
             ScanData(j,:) = ScanData(j,:)./max(max(abs(ScanData(j,:))));
         end
 end
-% Create a new figure
+% Create a new figure with consistent format
 fh = figure();
+fh.Position(3)  = 880;
+fh.Position(4)  = 420;
+fh.Color        = [1 1 1];
+
 % Define the axes
 handles.axes2 = axes('Parent',fh);
 axes(handles.axes2);
+handles.axes2.Units     = 'pixels';
+handles.axes2.Position  = [75 55 800 320];
 % Plot the data
 cm=colormap(jet(Nplots));
 for n=1:Nplots
-   plot(handles.cmprobe,ScanData(:,n),'color',cm(n,:));
+   plot(handles.cmprobe,ScanData(n,:),'color',cm(n,:));
    hold on
 end
+% Make the lines of the first and last scans thicker
+handles.axes2.Children(end).LineWidth = 1.5;
+handles.axes2.Children(1).LineWidth = 1.5;
+
 % Nice formatting
-title({handles.datafilename;['TR. SPECTRA PER SCAN AT ',num2str(handles.delays(k),'%.3g'),' ' handles.timescale]},'Interpreter','none')
-xlabel('Wavenumbers (cm^{-1})','FontWeight','bold')
-ylabel(label,'FontWeight','bold')
+set(handles.axes2,'FontSize',12)
+title({handles.datafilename;['TR. SPECTRA PER SCAN AT ',num2str(handles.delays(k),'%.3g'),' ' handles.timescale]},'Interpreter','none','FontSize',12)
+xlabel('Wavenumbers (cm^{-1})','FontSize',13,'FontWeight','bold')
+ylabel(label,'FontSize',13,'FontWeight','bold')
 axis tight
 hline = refline(0,0); 
 hline.Color = [0.5 0.5 0.5];
 legend(gca,caption);
+legend(gca,'boxoff');
+legend(gca,'Location','bestoutside');
 guidata(hObject,handles)
 
 
@@ -1797,8 +1900,8 @@ plot(SelPowers,Avg,'Marker','o')
 nicetitle = {['POWER DEPENDENCE PLOT - SIGNAL AT ',num2str(handles.cmprobe(WLindex)),' cm^-^1'];['from ',num2str(tmin),' to ',num2str(tmax),' ',handles.timescale]}; 
 title(nicetitle,'FontSize',10)
 set(gca,'fontsize',12);
-xlabel('Energy (\muJ)')
-ylabel('\DeltaAbs (mOD)')
+xlabel(['Energy (' char(956) 'J)'],'FontSize',13)
+ylabel('\DeltaAbs (mOD)','FontSize',13)
 axis tight
 
 % --- Executes on button press in ConcentrationDep.
@@ -1813,7 +1916,7 @@ dlg_title = 'Concentration dependence of signal';
 num_lines = [1 30];
 defAns = {'',[num2str(handles.delays(1)) ' ' num2str(handles.delays(end))]};
 SelTraces = inputdlg(prompt,dlg_title,num_lines,defAns);
-WL = str2double(SelTraces{1});
+WL = str2num(SelTraces{1});
 Times = str2num(SelTraces{2});
 % Once we have the point, look for the index
 % WLindex = index of the closest match for the selected trace in the WL vector
@@ -1853,7 +1956,12 @@ for WLn=1:length(WL)
     end
     for p=1:Nconc
             datafilename = FolderList(I(p));
-            signalfile = strcat(rootdir,filesep,datafilename,filesep,datafilename,'_signal_sp0_sm0_du0.csv');
+        switch handles.DataTypeMenu.Value
+            case 1 % Lab 2
+                signalfile = strcat(rootdir,filesep,datafilename,filesep,datafilename,'_signal.csv');
+            case 2 % Lab 1 and Lab 4
+                signalfile = strcat(rootdir,filesep,datafilename,filesep,datafilename,'_signal_sp0_sm0_du0.csv');
+        end
             signalfilech = char(signalfile);
             tempsignal = csvread(signalfilech);
             % Auto subtract background
@@ -1876,39 +1984,39 @@ for WLn=1:length(WL)
             end
             % Plot the traces as a function of concentration for the current WL
             hold on
-            plot(handles.delays(tmin:tmax),trace,'Color',cm(p,:),'LineWidth',2,'DisplayName',[num2str(SelConc(I(p))) ' ' ConcUnits])
+            plot(handles.delays(tmin:tmax),trace,'Color',cm(p,:),'LineWidth',1.5,'DisplayName',[num2str(SelConc(I(p))) ' ' ConcUnits])
     end
     nicetitle = {['CONCENTRATION DEPENDENCE PLOT - SIGNAL AT ',num2str(handles.cmprobe(WLindex(WLn)),'%4.f'),' cm^-^1'];['from ',num2str(handles.delays(tmin)),' to ',num2str(handles.delays(tmax)),' ',handles.timescale]}; 
     title(nicetitle,'FontSize',10)
     set(gca,'fontsize',12);
-    xlabel(['Delays (' handles.timescale ')'],'FontWeight','bold')
+    xlabel(['Delays (' handles.timescale ')'],'FontWeight','bold','FontSize',13)
     if handles.NormKin.Value == 1
-        ylabel('Normalized \DeltaAbs','FontWeight','bold')
+        ylabel('Normalized \DeltaAbs','FontWeight','bold','FontSize',13)
     else
-        ylabel('\DeltaAbs (mOD)','FontWeight','bold')
+        ylabel('\DeltaAbs (mOD)','FontWeight','bold','FontSize',13)
     end
     axis tight
-    legend(gca,'Location','northeast');
+    legend(gca,'Location','best');
     legend('boxoff');
     set(gca,'xscale',handles.linlog);
     box(gca,'on');
-    limits=xlim(gca);;
+    limits=xlim(gca);
     % Add reference lines at zero
-    syms p;
-    zeroline = @(p) 0.0;
-    fplot(gca,zeroline,limits,'Color',[0.5 0.5 0.5],'MeshDensity',500);
+    hline=refline(0,0);
+    hline.Color = [0.5 0.5 0.5];
     hold(gca,'off')
     ax = gca;
     ax.Legend.String(end)=[];
     % Make the plot format constant
-    fh = gcf;
-%     fh.Units='pixels';
-%     fh.Position(3)=545; % Width in pixels
-%     fh.Position(4)=460; % Height in pixels
-    fh.Color = [1 1 1];
-%     ax.Units = 'pixels';
-%     ax.Position = [75 60 350 350];
+    % Create a new figure with consistent format
+    fh.Units        = 'pixels';
+    fh.Position(3)  = 800;
+    fh.Position(4)  = 420;
+    fh.Color        = [1 1 1];
+
     % Make uniform, consistent format
+    ax.Units     = 'pixels';
+    ax.Position  = [75 55 680 320];  
     ax.FontSize = 12;
     ax.LineWidth = 1;
     ax.TickLength = [0.015 0.035];
@@ -2124,10 +2232,10 @@ handles.axes2 = axes('Parent',fh);
 % Plot the data
 plot(handles.IRx,handles.IRy,'LineWidth',1.5,'Marker','none','color','b');
 % Nice formatting
-set(gca,'FontSize',14)
-title('FTIR SPECTRUM','FontSize',14)
-xlabel('Wavenumbers (cm^{-1})','FontSize',14,'FontWeight','bold')
-ylabel('Abs (mOD)','FontSize',14,'FontWeight','bold')
+set(gca,'FontSize',12)
+title('FTIR SPECTRUM','FontSize',12)
+xlabel('Wavenumbers (cm^{-1})','FontSize',13,'FontWeight','bold')
+ylabel('Abs (mOD)','FontSize',13,'FontWeight','bold')
 axis tight
 hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
 guidata(hObject,handles)
@@ -2170,16 +2278,6 @@ function SaveTraces_Callback(hObject, eventdata, handles)
 handles.DoSaveTraces = get(hObject,'Value');
 guidata(hObject,handles)
 
-
-% --- Executes on button press in PlotPerScan.
-function PlotPerScan_Callback(hObject, eventdata, handles)
-% hObject    handle to PlotPerScan (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of PlotPerScan
-
-
 % --- Executes on button press in PlotSumDiff.
 function PlotSumDiff_Callback(hObject, eventdata, handles)
 % hObject    handle to PlotSumDiff (see GCBO)
@@ -2219,11 +2317,19 @@ L = size(handles.SelTraces,1);
 if L==2
     ydata = data(:,k);
     caption = string(strcat(num2str(round(handles.cmprobe(k),0)),' cm^{-1}'));
-    % Create a new figure
-    fh = figure();
+    
+    % Create a new figure with consistent format
+    fig1=figure();
+    fig1.Position(3)  = 800;
+    fig1.Position(4)  = 420;
+    fig1.Color        = [1 1 1];
     % Define the axes
-    handles.axes2 = axes('Parent',fh);
-    axes(handles.axes2);
+    newaxes1           = axes('Parent',fig1);
+    axes(newaxes1);
+    newaxes1.Units     = 'pixels';
+    newaxes1.Position  = [75 60 680 320];
+    box(newaxes1,'on');
+    
     % % Plot in two axes 
     % figure;
     % ax1 = axes('OuterPosition',[0 0 0.3 1],'Units','Normalized');
@@ -2277,36 +2383,48 @@ if L==2
     plot(handles.delays,Tr2_Avg,'-*m','LineWidth',2,'MarkerSize',4,'DisplayName',[caption{2,1} ' - Global avg.']);
     hold off
     % Nice formatting
-    set(gca,'FontSize',14)
-    title({handles.datafilename;[handles.rawcorr,' DATA - KINETICS';'']},'Interpreter','none','FontSize',10)
-    xlabel(['Delays',' (',handles.timescale,')'],'FontSize',14,'FontWeight','bold');
-    ylabel(label,'FontSize',14,'FontWeight','bold')
+    set(gca,'FontSize',12)
+    title({handles.datafilename;[handles.rawcorr,' DATA - KINETICS';'']},'Interpreter','none','FontSize',12)
+    xlabel(['Delays',' (',handles.timescale,')'],'FontSize',13,'FontWeight','bold');
+    ylabel(label,'FontSize',13,'FontWeight','bold')
     axis tight
     legend('show')
     legend('boxoff')
-    legend('Location','northeast')
-    set(handles.axes2,'xscale',handles.linlog)
+    legend('Location','best')
+    set(newaxes1,'xscale',handles.linlog)
     title({handles.datafilename;[handles.rawcorr,' DATA';'']},'Interpreter','none')
-    hline = refline(handles.axes2,[0 0]); hline.Color = [0.5 0.5 0.5];
+    hline = refline(newaxes1,[0 0]); hline.Color = [0.5 0.5 0.5];
     set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
     guidata(hObject,handles)
+    
     % Plot the ratio between the molecular signals and the e- offset
     Ratio=Diff./Avg;
+    % Create a new figure with consistent format
     fig2=figure();
-    plot(handles.delays,Ratio,'-ok','LineWidth',2,'MarkerSize',4,'DisplayName','Ratio of Molec. signal to e- offset');
+    fig2.Position(3)  = 800;
+    fig2.Position(4)  = 420;
+    fig2.Color        = [1 1 1];
+    % Define the axes
+    newaxes2           = axes('Parent',fig2);
+    axes(newaxes2);
+    newaxes2.Units     = 'pixels';
+    newaxes2.Position  = [75 60 680 320];
+    box(newaxes2,'on');
+    % Plot
+    plot(newaxes2,handles.delays,Ratio,'-ok','LineWidth',2,'MarkerSize',4,'DisplayName','Ratio of Molec. signal to e- offset');
     % Prettify
-    set(gca,'FontSize',14)
-    title({handles.datafilename;[handles.rawcorr,' DATA - KINETICS';'']},'Interpreter','none','FontSize',10)
-    xlabel(['Delays',' (',handles.timescale,')'],'FontSize',14,'FontWeight','bold');
-    ylabel(label,'FontSize',14,'FontWeight','bold')
+    set(gca,'FontSize',12)
+    title({handles.datafilename;[handles.rawcorr,' DATA - KINETICS';'']},'Interpreter','none','FontSize',12)
+    xlabel(['Delays',' (',handles.timescale,')'],'FontSize',13,'FontWeight','bold');
+    ylabel(label,'FontSize',13,'FontWeight','bold')
     axis tight
     set(gca,'XScale','log');
     legend('show')
     legend('boxoff')
-    legend('Location','northeast')
-    set(handles.axes2,'xscale',handles.linlog)
+    legend('Location','best')
+    set(newaxes2,'xscale',handles.linlog)
     title({handles.datafilename;[handles.rawcorr,' DATA';'']},'Interpreter','none')
-    hline = refline(handles.axes2,[0 0]); hline.Color = [0.5 0.5 0.5];
+    hline = refline(newaxes2,[0 0]); hline.Color = [0.5 0.5 0.5];
     set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
     guidata(hObject,handles)
 else
@@ -2380,57 +2498,67 @@ ydata   = data_offset(:,k);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Plot the traces
 % Create a new figure with consistent format
-fh          = figure('Position', [100, 100, 800, 450]);
-fh.Color    = [1 1 1];
+% Create a new figure with consistent format
+fh = figure();
+fh.Position(3)  = 880;
+fh.Position(4)  = 420;
+fh.Color        = [1 1 1];
 
 % Define the axes
-axes2               = axes('Parent',fh);
+axes2 = axes('Parent',fh);
 axes(axes2);
+axes2.Units     = 'pixels';
+axes2.Position  = [75 60 800 320];
 
 cm=colormap(othercolor('Mrainbow',L));
 for n=1:L
    if handles.delays(k(n)) >= 1000
-       longdelays = handles.delays(k(n))/1000;
+       newdelays = handles.delays(k(n))/1000;
        switch handles.timescale
            case 'fs'
-               longtimescale = 'ps';
+               newtimescale = 'ps';
            case 'ps'
-               longtimescale = 'ns';
+               newtimescale = 'ns';
            case 'ns'
-               longtimescale = ['\mu' 's'];
+               newtimescale = [char(956) 's'];
+       end
+   elseif handles.delays(k(n)) < 1
+       newdelays = handles.delays(k(n))*1000;
+       switch handles.timescale
+           case 'ps'
+               newtimescale = 'fs';
+           case 'ns'
+               newtimescale = 'ps';
        end
    else
-       longdelays       = handles.delays(k(n));
-       longtimescale    = handles.timescale;
+       newdelays       = handles.delays(k(n));
+       newtimescale    = handles.timescale;
    end
-   plot(axes2,handles.cmprobe,ydata(:,n),'LineWidth',2,'Marker','none','color',cm(n,:),'DisplayName',[num2str(longdelays,'%.3g') ' ' longtimescale]);
+   plot(axes2,handles.cmprobe,ydata(:,n),'LineWidth',1.5,'Marker','none','color',cm(n,:),'DisplayName',[num2str(newdelays,'%.3g') ' ' newtimescale]);
    hold on
 end
 % Nice formatting
-xlabel('Wavenumbers (cm^{-1})','FontWeight','bold')
-ylabel('\DeltaAbs (mOD)','FontWeight','bold')
+set(axes2,'FontSize',12)
+xlabel('Wavenumbers (cm^{-1})','FontWeight','bold','FontSize',13)
+ylabel('\DeltaAbs (mOD)','FontWeight','bold','FontSize',13)
 axis tight
 % Make the legend and hide every second entry if the number of plots is >15
 legend('show');
 legend('boxoff');
-legend('Location','northeast');
+legend('Location','bestoutside');
 if L >= 15
-    for i=1:floor(L/3)
-        handles.axes2.Children(2*i).Annotation.LegendInformation.IconDisplayStyle = 'off';
+    for i=1:2:L
+        axes2.Children(i).Annotation.LegendInformation.IconDisplayStyle = 'off';
     end
 end
 
 % Title and refline
-title({handles.datafilename;[handles.rawcorr,' DATA';'']},'Interpreter','none','FontSize',10)
+title({handles.datafilename;'OFFSET-CORRECTED DATA'},'Interpreter','none','FontSize',12)
 hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
 set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
 guidata(hObject,handles)
 
-% Make uniform, consistent format for the axes
-axes2.Units         = 'pixels';
-axes2.Position      = [75 60 700 330];
-axes2.FontSize      = 12;
-axes2.LineWidth     = 1;
+% Tick length
 axes2.TickLength    = [0.015 0.035];
 % Make the axes resizable
 axes2.Units         = 'normalized';
@@ -2631,7 +2759,6 @@ handles.rootdir = handles.CurrDir.String;
 guidata(hObject,handles)
 
 
-
 function plot_skiplevels_Callback(hObject, eventdata, handles)
 switch handles.rawcorr
     case 'RAW'
@@ -2643,6 +2770,17 @@ guidata(hObject,handles)
 
 % --- Executes during object creation, after setting all properties.
 function plot_skiplevels_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function BinScans_Callback(hObject, eventdata, handles)
+% Do nothing
+
+% --- Executes during object creation, after setting all properties.
+function BinScans_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end

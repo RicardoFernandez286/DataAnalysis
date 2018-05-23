@@ -45,6 +45,7 @@ handles = EnableControls(handles,'IRLab2');
 % Set default values for certain controls
 set(handles.maxDeltaAbs_text,'String',zminmax);
 handles.AddReplace1Dplot.Value = 1;
+handles.linlogtick.Value = 0;
 handles.SVD = 0;
 percentwhites = 2;
 handles.percentwhites = percentwhites;

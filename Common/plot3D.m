@@ -55,10 +55,10 @@ caxis([minabs,maxabs])
 % Show the colorbar
 hcb=colorbar;
 title(hcb,{'\DeltaAbs';'(mOD)'});
-
-title({datafilename;[rawcorr,' DATA';'']},'Interpreter','none')
-xlabel(['Wavenumbers',' (cm^�^1)']);
-ylabel(['Delays',' (',timescale,')']);
+set(gca,'FontSize',12);
+title({datafilename;[rawcorr,' DATA';'']},'Interpreter','none','FontWeight','bold')
+xlabel(['Wavenumbers',' (cm^{-1})'],'FontSize',13,'FontWeight','bold');
+ylabel(['Delays',' (',timescale,')'],'FontSize',13,'FontWeight','bold');
 zlabel('\DeltaAbs (mOD)');
 view(-150,20)
 hline = refline(0,0); hline.Color = 'black';

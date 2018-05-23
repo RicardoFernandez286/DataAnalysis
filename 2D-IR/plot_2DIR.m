@@ -291,7 +291,7 @@ if plot_showcontours == 1
 
     LineColor       = 'k';
     hold on
-    contour(plotaxis,X,Y,Z{m,k},plot_contours,'LineColor',LineColor,'LineStyle',LineStyle,'LineWidth',0.1);
+    contour(plotaxis,X,Y,Z,plot_contours,'LineColor',LineColor,'LineStyle',LineStyle,'LineWidth',0.1);
     hold off
 end
 

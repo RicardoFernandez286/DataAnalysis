@@ -45,6 +45,9 @@ function FitWindow_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for FitWindow
 handles.output = hObject;
 
+% Disable warning of negative X limits
+warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
+
 % Initialise default values
 handles.exp=1;
 handles.FitDone=0;
@@ -87,35 +90,47 @@ switch handles.fittype
         handles.SelectTraces.String = zcm;
         handles.SelectTraces.Value = 1;
         % Plot the incoming data (XYY form assumed, first trace plotted)
-        plot(handles.dataAxes,handles.Data_x,handles.Data_y(:,1),'-or')
+        plot(handles.dataAxes,handles.Data_x,handles.Data_y(:,1),'or')
     case 2
         handles.SelectTraces.String = '(SVD global fit)';
         handles.SelectTraces.Value = 1;
         handles.SelectTraces.Enable = 'Off';
-        plot(handles.dataAxes,handles.Data_x,handles.Data_y,'-o','Linewidth',1.5)
+        plot(handles.dataAxes,handles.Data_x,handles.Data_y,'o','Linewidth',1.5)
 end
 
 % Add labels
-xlabel(handles.resAxes,handles.XLabel,'FontSize',14,'FontWeight','bold');
-ylabel(handles.dataAxes,handles.YLabel,'FontSize',14,'FontWeight','bold');
-ylabel(handles.resAxes,['Res. ' handles.YLabel],'FontSize',14,'FontWeight','bold');
+xlabel(handles.resAxes,handles.XLabel,'FontSize',13,'FontWeight','bold');
+ylabel(handles.dataAxes,handles.YLabel,'FontSize',13,'FontWeight','bold');
+ylabel(handles.resAxes,['Res. ' handles.YLabel],'FontSize',13,'FontWeight','bold');
+% Formatting
+box(handles.dataAxes,'on');
+box(handles.resAxes,'on');
+
 % Set limits (tight) and link axes
-axis(handles.dataAxes,'tight');
 linkaxes([handles.dataAxes,handles.resAxes],'x');
-limits=xlim(handles.dataAxes);
-% Add reference lines at zero
-syms p;
-zeroline = @(p) 0.0;
+axis(handles.dataAxes,'tight');
+handles.ZL_xlim = [min(handles.Data_x) max(handles.Data_x)];
+
+% Zero lines, new style -(Faster?)
 hold(handles.dataAxes,'on')
-zl_data = fplot(handles.dataAxes,zeroline,limits,'Color',[0.5 0.5 0.5],'MeshDensity',100);
-hold(handles.dataAxes,'off')
 hold(handles.resAxes,'on')
-zl_res = fplot(handles.resAxes,zeroline,limits,'Color',[0.5 0.5 0.5],'MeshDensity',100);
+
+xl = handles.ZL_xlim;
+plot(handles.dataAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
+plot(handles.resAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
+
+hold(handles.dataAxes,'off')
 hold(handles.resAxes,'off')
+
 % Make nice legend @ dataAxes, removing entry for last point (=zeroline)
 legend(handles.dataAxes,handles.TraceLabels);
 legend(handles.dataAxes,'boxoff'); legend(handles.dataAxes,'Location','northeast')
-handles.dataAxes.Legend.String(end)=[];
+
+% Hide legend entries of the reflines
+set_leg_off = findobj('DisplayName','NoLegend');
+for k = 1:numel(set_leg_off)
+    set_leg_off(k).Annotation.LegendInformation.IconDisplayStyle = 'off';
+end
 
 % Update handles structure
 guidata(hObject, handles);
@@ -628,11 +643,8 @@ uiresume
 
 % --- Executes on selection change in NumExp_menu.
 function NumExp_menu_Callback(hObject, eventdata, handles)
-% hObject    handle to NumExp_menu (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-contents = cellstr(get(hObject,'String'));
-exps = contents{get(hObject,'Value')};
+contents    = cellstr(get(hObject,'String'));
+exps        = contents{get(hObject,'Value')};
 switch exps
     case 'One exponential'
         handles.exp=1;
@@ -655,7 +667,7 @@ for i=1:4
         eval(['handles.Beta' num2str(i) '_value.Enable = ' off ';']);
         eval(['handles.Beta' num2str(i) '_hold.Enable = ' off ';']);
 end
-% Switch on the selected N� of exponentials
+% Switch on the selected Nº of exponentials
 if handles.exp ~= 0
     for i=1:handles.exp
         eval(['handles.Tau' num2str(i) '_value.Enable = ' on ';']);
@@ -671,12 +683,6 @@ guidata(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
 function NumExp_menu_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to NumExp_menu (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -694,11 +700,27 @@ guidata(hObject,handles);
 
 % --- Executes on button press in ResetZoom.
 function ResetZoom_Callback(hObject, eventdata, handles)
-xlim(handles.resAxes,[min(handles.Data_x) max(handles.Data_x)]);
-set(handles.resAxes,'XScale','lin');
+xlim(handles.dataAxes,[min(handles.Data_x) max(handles.Data_x)]);
 set(handles.dataAxes,'XScale','lin');
-hline = refline(handles.dataAxes,0,0);  hline.Color = [0.5 0.5 0.5];
-hline = refline(handles.resAxes,0,0);  hline.Color = [0.5 0.5 0.5];
+set(handles.resAxes,'XScale','lin');
+handles.ZL_xlim = [min(handles.Data_x) max(handles.Data_x)];
+
+% Zero lines, new style -(Faster?)
+hold(handles.dataAxes,'on')
+hold(handles.resAxes,'on')
+
+xl = handles.ZL_xlim;
+plot(handles.dataAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
+plot(handles.resAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
+
+hold(handles.dataAxes,'off')
+hold(handles.resAxes,'off')
+
+% Hide legend of the lines
+set_leg_off = findobj('DisplayName','NoLegend');
+for k = 1:numel(set_leg_off)
+    set_leg_off(k).Annotation.LegendInformation.IconDisplayStyle = 'off';
+end
 
 % Update handles
 guidata(hObject,handles);
@@ -707,15 +729,31 @@ guidata(hObject,handles);
 function LinLog_tick_Callback(hObject, eventdata, handles)
 handles.LinLog = get(hObject,'Value');
 switch handles.LinLog
-    case 1
+    case 1 % Log
         set(handles.resAxes,'XScale','log');
         set(handles.dataAxes,'XScale','log');
-        %hline pending
-    case 0
+        handles.ZL_xlim = [min(handles.Data_x(handles.Data_x>0)) max(handles.Data_x(handles.Data_x>0))];
+    case 0 % Lin
         set(handles.resAxes,'XScale','lin');
         set(handles.dataAxes,'XScale','lin');
-        hline = refline(handles.dataAxes,0,0);  hline.Color = [0.5 0.5 0.5];
-        hline = refline(handles.resAxes,0,0);  hline.Color = [0.5 0.5 0.5];
+        handles.ZL_xlim = [min(handles.Data_x) max(handles.Data_x)];
+end
+
+% Zero lines, new style -(Faster?)
+hold(handles.dataAxes,'on')
+hold(handles.resAxes,'on')
+
+xl = handles.ZL_xlim;
+plot(handles.dataAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
+plot(handles.resAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
+
+hold(handles.dataAxes,'off')
+hold(handles.resAxes,'off')
+
+% Hide legend of the lines
+set_leg_off = findobj('DisplayName','NoLegend');
+for k = 1:numel(set_leg_off)
+    set_leg_off(k).Annotation.LegendInformation.IconDisplayStyle = 'off';
 end
 
 % Update handles
@@ -737,14 +775,14 @@ switch handles.FitDone
         syms t;
         previewplot = handles.fitfunc(p_values,t);
         axes(dataAxes2);
-        limits = xlim; % keep the current limits
+        limits = handles.ZL_xlim;
         % Redo the plots
-        plot(handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value),'-or')
+        plot(handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value),'or')
         hold on;
         fplot(dataAxes2,previewplot,limits,'b','LineWidth',2);
         hold off;
         % Plot the residuals from the fit
-        plot(resAxes,handles.Data_x,handles.residuals,'-or');
+        plot(resAxes,handles.Data_x,handles.residuals,'or');
         xlim(dataAxes2,limits);
     case 2 % Preview
         % Read the inputs
@@ -756,15 +794,15 @@ switch handles.FitDone
         p_values = p_start;
         previewplot = fitfunc(p_values,t);
         axes(dataAxes2);
-        limits = xlim; % keep the current limits
+        limits = handles.ZL_xlim;
         % Redo the plots
-        plot(handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value),'-or')
+        plot(handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value),'or')
         hold on;
         fplot(dataAxes2,previewplot,limits,'b','LineWidth',2);
         hold off;
         xlim(dataAxes2,limits);
         % Plot the residuals from the initial guess
-        plot(resAxes2,handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value) - fitfunc(p_start,handles.Data_x),'-or');
+        plot(resAxes2,handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value) - fitfunc(p_start,handles.Data_x),'or');
         xlim(resAxes2,limits);
 end
 
@@ -778,13 +816,21 @@ switch handles.LinLog
     case 1
         set(resAxes2,'XScale','log');
         set(dataAxes2,'XScale','log');
-        %hline pending- MAYBE USING FIRST ELEMENT AFTER ZERO AS A START POINT FOR THE PLOT?
     case 0
         set(resAxes2,'XScale','lin');
         set(dataAxes2,'XScale','lin');
-        hline = refline(dataAxes2,0,0);  hline.Color = [0.5 0.5 0.5];
-        hline = refline(resAxes2,0,0);  hline.Color = [0.5 0.5 0.5];
 end
+
+% Zero lines, new style -(Faster?)
+hold(handles.dataAxes,'on')
+hold(handles.resAxes,'on')
+
+xl = handles.ZL_xlim;
+plot(handles.dataAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
+plot(handles.resAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
+
+hold(handles.dataAxes,'off')
+hold(handles.resAxes,'off')
 
 %%% INTERNAL FUNCTIONS
 function Output = ReadInput(handles)
@@ -882,21 +928,6 @@ end
     
 function handles = UpdatePlot(handles)
 switch handles.FitDone
-%     case 1 % Real fit done
-%         p_values = handles.fitP;
-%         % Get the values of the function and plot it
-%         syms t;
-%         previewplot = handles.fitfunc(p_values,t);
-%         axes(handles.dataAxes);
-%         limits = xlim; % keep the current limits
-%         % Redo the plots
-%         plot(handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value),'o','color',[1 0.2 0.2])
-%         hold on;
-%         fplot(handles.dataAxes,previewplot,limits,'r','LineWidth',2,'MeshDensity',10000);
-%         hold off;
-%         % Plot the residuals from the fit
-%         plot(handles.resAxes,handles.Data_x,handles.residuals,'-o','color',[1 0.2 0.2]);
-%         xlim(handles.dataAxes,limits);
     case 1 % REAL FIT DONE
         % Read the inputs
         Parameters = ReadInput(handles);
@@ -920,7 +951,7 @@ switch handles.FitDone
                 plotfunc = fitfunc;
             end
             previewplot = plotfunc(p_values,t);
-            limits = xlim(handles.dataAxes); % keep the current limits
+            limits = handles.ZL_xlim;
             % Redo the plots
             hold(handles.dataAxes,'on');
             hold(handles.resAxes,'on')
@@ -929,7 +960,7 @@ switch handles.FitDone
                 fp(FitNo) = fplot(handles.dataAxes,previewplot,limits,'-','LineWidth',2,'MeshDensity',5000,'color',cmap(FitNo,:),'DisplayName',['SVD Component ' num2str(FitNo)]);
                 rp(FitNo) = plot(handles.resAxes,handles.Data_x,(handles.Data_y(:,FitNo) - plotfunc(p_values,handles.Data_x)),'-o','color',cmap(FitNo,:));
             else
-                plot(handles.dataAxes,handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value),'-o','color',[0.2 0.2 1])
+                plot(handles.dataAxes,handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value),'o','color',[0.2 0.2 1])
                 fplot(handles.dataAxes,previewplot,limits,'-','LineWidth',2,'MeshDensity',5000,'color','b')
                 plot(handles.resAxes,handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value) - plotfunc(p_values,handles.Data_x),'-o','color',[0.2 0.2 1]);
             end
@@ -959,16 +990,16 @@ switch handles.FitDone
                 plotfunc = fitfunc;
             end
             previewplot = plotfunc(p_values,t);
-            limits = xlim(handles.dataAxes); % keep the current limits
+            limits = handles.ZL_xlim;
             % Redo the plots
             hold(handles.dataAxes,'on');
             hold(handles.resAxes,'on')
             if handles.fittype==2
-                dp(FitNo) = plot(handles.dataAxes,handles.Data_x,handles.Data_y(:,FitNo),'-o','color',cmap(FitNo,:),'LineWidth',0.025);
+                dp(FitNo) = plot(handles.dataAxes,handles.Data_x,handles.Data_y(:,FitNo),'o','color',cmap(FitNo,:),'LineWidth',0.025);
                 fp(FitNo) = fplot(handles.dataAxes,previewplot,limits,'-','LineWidth',2,'MeshDensity',5000,'color',cmap(FitNo,:),'DisplayName',['SVD Component ' num2str(FitNo)]);
                 rp(FitNo) = plot(handles.resAxes,handles.Data_x,(handles.Data_y(:,FitNo) - plotfunc(p_values,handles.Data_x)),'-o','color',cmap(FitNo,:));
             else
-                plot(handles.dataAxes,handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value),'-o','color',[0.2 0.2 1])
+                plot(handles.dataAxes,handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value),'o','color',[0.2 0.2 1])
                 fplot(handles.dataAxes,previewplot,limits,'-','LineWidth',2,'MeshDensity',5000,'color','b')
                 plot(handles.resAxes,handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value) - plotfunc(p_values,handles.Data_x),'-o','color',[0.2 0.2 1]);
             end
@@ -978,7 +1009,7 @@ switch handles.FitDone
     case 3
         % REDO THE PLOT WHEN THE WAVELENGTH IS CHANGED
         axes(handles.dataAxes);
-        limits = xlim; % keep the current limits
+        limits = handles.ZL_xlim;
         plot(handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value),'-o','color',[1 0.2 0.2])
         xlim(handles.dataAxes,limits);
         cla(handles.resAxes);
@@ -989,16 +1020,27 @@ xlabel(handles.resAxes,handles.XLabel,'FontSize',14,'FontWeight','bold');
 ylabel(handles.dataAxes,handles.YLabel,'FontSize',14,'FontWeight','bold');
 ylabel(handles.resAxes,['Res. ' handles.YLabel],'FontSize',14,'FontWeight','bold');
 
-% Zero lines
-syms p;
-zeroline = @(p) 0.0;
-limits = xlim(handles.dataAxes);
+% Lin/Log
+switch handles.LinLog
+    case 1
+        set(handles.resAxes,'XScale','log');
+        set(handles.dataAxes,'XScale','log');
+    case 0
+        set(handles.resAxes,'XScale','lin');
+        set(handles.dataAxes,'XScale','lin');
+end
+
+% Zero lines, new style -(Faster?)
 hold(handles.dataAxes,'on')
-fplot(handles.dataAxes,zeroline,limits,'Color',[0.5 0.5 0.5],'MeshDensity',100);
-hold(handles.dataAxes,'off')
 hold(handles.resAxes,'on')
-fplot(handles.resAxes,zeroline,limits,'Color',[0.5 0.5 0.5],'MeshDensity',100);
+
+xl = handles.ZL_xlim;
+plot(handles.dataAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
+plot(handles.resAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
+
+hold(handles.dataAxes,'off')
 hold(handles.resAxes,'off')
+
 
 if handles.fittype == 2
     % Make nice legend @ dataAxes, removing entry for last point (=zeroline)
@@ -1008,14 +1050,9 @@ else
     legend(handles.dataAxes,'off');
 end
 
-% Lin/Log
-switch handles.LinLog
-    case 1
-        set(handles.resAxes,'XScale','log');
-        set(handles.dataAxes,'XScale','log');
-    case 0
-        set(handles.resAxes,'XScale','lin');
-        set(handles.dataAxes,'XScale','lin');
+set_leg_off = findobj('DisplayName','NoLegend');
+for k = 1:numel(set_leg_off)
+    set_leg_off(k).Annotation.LegendInformation.IconDisplayStyle = 'off';
 end
 
 % --- Executes on selection change in SelectTraces.
