@@ -67,7 +67,8 @@ handles.BkgSubTick.Value = 1;
     % from the first data point till just before time zero
     k = 1;
     t = handles.delays(k);
-    while t < 0
+    bkg_time = -1;
+    while t < bkg_time
         k = k+1;
         t = handles.delays(k+1);
     end

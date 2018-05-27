@@ -150,19 +150,34 @@ maxwl = max(cmprobe);
 Ncontours = 50; % 10 contours by default is OK; need 50 contours to plot nicely with pFID
 plotranges = [mintime maxtime minwl maxwl zminmax Ncontours minabs maxabs];
 
-     % Average rows 1:n and subtract them (n=5)
-    n=3; 
-    delays(1:n-1)=[];
-    rawsignal =  rawsignal(n:end,:) - mean(rawsignal(1:n-1,:),1);
-    noise =  noise(n:end,:) - mean(noise(1:n-1,:),1);
-if handles.removeduplicates == 0
-    % Average last 3 rows and collapse into a single row
-    delays(end-1:end)=[];
-    rawsignal(end-2,:) = mean(rawsignal(end-2:end,:),1);
-    rawsignal(end-1:end,:)=[];
-    noise(end-3,:) =  mean(noise(end-2:end,:),1);
-    noise(end-1:end,:)=[];
+% % Average rows 1:n and subtract them (n=5)
+%     n=3; 
+%     delays(1:n-1)=[];
+%     rawsignal =  rawsignal(n:end,:) - mean(rawsignal(1:n-1,:),1);
+%     noise =  noise(n:end,:) - mean(noise(1:n-1,:),1);
+% if handles.removeduplicates == 0
+%     % Average last 3 rows and collapse into a single row
+%     delays(end-1:end)=[];
+%     rawsignal(end-2,:) = mean(rawsignal(end-2:end,:),1);
+%     rawsignal(end-1:end,:)=[];
+%     noise(end-3,:) =  mean(noise(end-2:end,:),1);
+%     noise(end-1:end,:)=[];
+% end
+
+% Remove duplicate delays and average the data for repeated delays (new universal method)
+[delays,~,idx]  = unique(delays,'stable');
+new_rawsignal   = zeros(length(delays),size(rawsignal,2));
+new_noise       = zeros(length(delays),size(rawsignal,2));
+
+for i=1:size(rawsignal,2)
+    new_rawsignal(:,i)       = accumarray(idx,rawsignal(:,i),[],@mean); 
+    new_noise(:,i)           = accumarray(idx,noise(:,i),[],@mean); 
 end
+
+% Sort the delays from negative to positive
+[delays,sortID] = sort(delays);
+rawsignal       = new_rawsignal(sortID,:);
+noise           = new_noise(sortID,:);
 
 % Write to handles
 handles.delays      = delays;

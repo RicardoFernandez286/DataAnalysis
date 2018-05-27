@@ -101,11 +101,12 @@ handles.IRloaded = 0;
 % By default, do not save kinetic traces
 handles.DoSaveTraces = 0;
 
+% UIWAIT makes DataAnalysis_GUI wait for user response (see UIRESUME)
+% uiwait(handles.MainGUI); DO NOT USE!
+
 % Update handles structure
 guidata(hObject, handles);
 
-% UIWAIT makes DataAnalysis_GUI wait for user response (see UIRESUME)
-% uiwait(handles.MainGUI); DO NOT USE!
 
 
 % --- Outputs from this function are returned to the command line.
@@ -378,7 +379,7 @@ function PlotBkg_Callback(hObject, eventdata, handles)
 % Create a new figure with consistent format
 fh = figure();
 fh.Position(3)  = 800;
-fh.Position(4)  = 420;
+fh.Position(4)  = 425;
 fh.Color        = [1 1 1];
 % Define the axes
 handles.axes2 = axes('Parent',fh);
@@ -558,7 +559,7 @@ FitType=2; % i.e. 1= LOCAL, 2 = GLOBAL SVD fit
     % Create a new figure with consistent format
     fh = figure();
     fh.Position(3)  = 800;
-    fh.Position(4)  = 420;
+    fh.Position(4)  = 425;
     fh.Color        = [1 1 1];
 
     % Define the axes
@@ -574,7 +575,7 @@ FitType=2; % i.e. 1= LOCAL, 2 = GLOBAL SVD fit
        if Taus(n) > 1000
            switch handles.timescale
                 case 'ns'
-                    newtimescale = [char(956) 's'];
+                    newtimescale = ['\mu' 's'];
                 case 'ps'
                     newtimescale = 'ns';
                 case 'fs'
@@ -1120,15 +1121,13 @@ while i < L
 end
 % Create a new figure with consistent format
 fh = figure();
-fh.Position(3)  = 880;
-fh.Position(4)  = 420;
+fh.Position(3)  = 920;
+fh.Position(4)  = 425;
 fh.Color        = [1 1 1];
 
 % Define the axes
 handles.axes2 = axes('Parent',fh);
 axes(handles.axes2);
-handles.axes2.Units     = 'pixels';
-handles.axes2.Position  = [75 60 800 320];
 
 % % Plot in two axes 
 % figure;
@@ -1158,6 +1157,9 @@ set(handles.axes2,'xscale',handles.linlog)
 hline = refline(handles.axes2,[0 0]); hline.Color = [0.5 0.5 0.5];
 set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
 guidata(hObject,handles)
+handles.axes2.Units     = 'pixels';
+handles.axes2.Position  = [75 60 675 320];
+
 % Decide whether to save the plotted traces or not
 if handles.DoSaveTraces==1
     wavenumbers=transpose(handles.cmprobe(k));
@@ -1231,29 +1233,43 @@ while i < L
     end
     i=i+1;
 end
-% Create a new figure with consistent format
-fh = figure();
-fh.Position(3)  = 880;
-fh.Position(4)  = 420;
-fh.Color        = [1 1 1];
+
 
 switch handles.IncludeSteadyState.Value
     case 1
-        ax1 = subplot(3,1,1);
-        plot(handles.IRx,handles.IRy,'LineWidth',1.5,'Marker','none','color','black');
-        set(gca,'FontSize',12)
-        title({handles.datafilename;[handles.rawcorr,' DATA - TRANSIENT SPECTRA';'']},'Interpreter','none')
-        ylabel('Abs (mOD)','FontWeight','bold','FontSize',13)
-        ax2 = subplot(3,1,[2 3]);
-        p = get(ax2,'pos'); p(2) = p(2)+0.05; set(ax2,'pos',p); linkaxes([ax1,ax2],'x');
+        % Create a new figure with consistent format
+        fh = figure();
+        fh.Units        = 'pixels';
+        fh.Position(2)  = fh.Position(3)-50;
+        fh.Position(3)  = 880;
+        fh.Position(4)  = 575;
+        fh.Color        = [1 1 1];
+        % Create the FTIR axis
+        ax1             = axes('Parent',fh);
+        ax1.Units       = 'pixels';
+        ax1.Position    = [75 400 675 125];
+        plot(ax1,handles.IRx,handles.IRy,'LineWidth',1.5,'Marker','none','color','black');
+        title(ax1,{handles.datafilename;[handles.rawcorr,' DATA - TRANSIENT SPECTRA';'']},'Interpreter','none')
+        ylabel(ax1,'Abs (mOD)','FontWeight','bold','FontSize',13)
+        ax1.Units       = 'normalized';
+        ax1.FontSize    = 12;
+        % Create the transient spectra axis
+        ax2             = axes('Parent',fh);
+        ax2.FontSize    = 12;
+        linkaxes([ax1,ax2],'x');
+        where = ax2;
     case 0
+        % Create a new figure with consistent format
+        fh = figure();
+        fh.Position(3)  = 880;
+        fh.Position(4)  = 425;
+        fh.Color        = [1 1 1];
         % Define the axes
-        handles.axes2 = axes('Parent',fh);
-        axes(handles.axes2);
-        handles.axes2.Units     = 'pixels';
-        handles.axes2.Position  = [75 75 800 320];
-        axes(handles.axes2);
-        title({handles.datafilename;[handles.rawcorr,' DATA - TRANSIENT SPECTRA';'']},'Interpreter','none')
+        ax2 = axes('Parent',fh);
+        axes(ax2);
+        ax2.Units     = 'pixels';
+        title(ax2,{handles.datafilename;[handles.rawcorr,' DATA - TRANSIENT SPECTRA';'']},'Interpreter','none')
+        where = ax2;
 end
 % Plot the data
 cm=colormap(othercolor('Mrainbow',L));
@@ -1266,7 +1282,7 @@ for n=1:L
            case 'ps'
                newtimescale = 'ns';
            case 'ns'
-               newtimescale = [char(956) 's'];
+               newtimescale = ['\mu' 's'];
        end
    elseif handles.delays(k(n)) < 1
        newdelays = handles.delays(k(n)).*1000;
@@ -1280,7 +1296,7 @@ for n=1:L
        newdelays    = handles.delays(k(n));
        newtimescale = handles.timescale;
    end
-   plot(handles.cmprobe,ydata(:,n),'LineWidth',1.5,'Marker','none','color',cm(n,:),'DisplayName',[num2str(newdelays,'%.3g') ' ' newtimescale]);
+   plot(where,handles.cmprobe,ydata(:,n),'LineWidth',1.5,'Marker','none','color',cm(n,:),'DisplayName',[num2str(newdelays,'%.3g') ' ' newtimescale]);
    hold on
 end
 % Nice formatting
@@ -1293,17 +1309,25 @@ if handles.IncludeSteadyState.Value == 1
     xlim(ax1,xl);
     set(ax1, 'XTick', []);
 end
-legend('show')
+legend('show');
 legend('boxoff')
 legend('Location','bestoutside')
+
+where.Units       = 'pixels';
+where.Position    = [75 75 675 320];
+where.Units       = 'normalized';
+
 if L >= 15
     for i=1:floor(L/3)
-        handles.axes2.Children(2*i).Annotation.LegendInformation.IconDisplayStyle = 'off';
+        where.Children(2*i).Annotation.LegendInformation.IconDisplayStyle = 'off';
     end
 end
-legend(gca,{},'FontSize',12)
+
+legend(ax2,{},'FontSize',12)
+
 % Disable warning of negative X limits
 warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
+
 % Refline
 hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
 set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
@@ -1536,10 +1560,10 @@ if BinScans > 1
         snew = s+BinScans;
         if snew > Nscans 
             m=[s:Nscans];
-            BinCaption(i)=string(['Scans ' num2str(s) ' to ' num2str(Nscans)]);
+            BinCaption(i)=string([num2str(s) ' to ' num2str(Nscans)]);
         else
             m=[s:snew-1];
-            BinCaption(i)=string(['Scans ' num2str(s) ' to ' num2str(snew-1)]);
+            BinCaption(i)=string([num2str(s) ' to ' num2str(snew-1)]);
         end
         BinScanData(:,i)=mean(ScanData(:,m),2);
         s=snew; i=i+1;
@@ -1565,15 +1589,13 @@ end
 
 % Create a new figure
 fh = figure();
-fh.Position(3)  = 940;
-fh.Position(4)  = 420;
+fh.Position(3)  = 920;
+fh.Position(4)  = 425;
 fh.Color        = [1 1 1];
 
 % Define the axes
 handles.axes2 = axes('Parent',fh);
 axes(handles.axes2);
-handles.axes2.Units     = 'pixels';
-handles.axes2.Position  = [75 55 800 320];
 
 % Plot the data
 cm=colormap(othercolor('Mrainbow',Nplots));
@@ -1591,12 +1613,15 @@ xlabel(['Delays',' (',handles.timescale,')'],'FontSize',13,'FontWeight','bold')
 ylabel(label,'FontSize',13,'FontWeight','bold')
 axis tight
 legend(gca,caption);
-legend(gca,'Location','best');
+legend(gca,'Location','bestoutside');
 legend(gca,'boxoff');
 set(handles.axes2,'xscale',handles.linlog)
 hline = refline(handles.axes2,[0 0]);
 hline.Color = [0.5 0.5 0.5];
 set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
+handles.axes2.FontSize  = 12;
+handles.axes2.Units     = 'pixels';
+handles.axes2.Position  = [75 60 675 320];
 guidata(hObject,handles)
 
 
@@ -1689,14 +1714,14 @@ BinScans = str2double(handles.BinScans.String);
 if BinScans > 1
     s=1; i=1;
     BinScanData=zeros(ceil(Nscans/BinScans),length(handles.cmprobe));
-    while s < Nscans
+    while s <= Nscans
         snew = s+BinScans;
         if snew > Nscans 
-            m=[s:Nscans];
-            BinCaption(i)=string(['Scans ' num2str(s) ' to ' num2str(Nscans)]);
+            m=s:Nscans;
+            BinCaption(i)=string([num2str(s) ' to ' num2str(Nscans)]);
         else
-            m=[s:snew-1];
-            BinCaption(i)=string(['Scans ' num2str(s) ' to ' num2str(snew-1)]);
+            m=s:snew-1;
+            BinCaption(i)=string([num2str(s) ' to ' num2str(snew-1)]);
         end
         BinScanData(i,:)=mean(ScanData(m,:),1);
         s=snew; i=i+1;
@@ -1717,26 +1742,26 @@ switch handles.NormKin.Value
             ScanData(j,:) = ScanData(j,:)./max(max(abs(ScanData(j,:))));
         end
 end
+
 % Create a new figure with consistent format
 fh = figure();
 fh.Position(3)  = 880;
-fh.Position(4)  = 420;
+fh.Position(4)  = 425;
 fh.Color        = [1 1 1];
 
 % Define the axes
 handles.axes2 = axes('Parent',fh);
 axes(handles.axes2);
-handles.axes2.Units     = 'pixels';
-handles.axes2.Position  = [75 55 800 320];
+
 % Plot the data
 cm=colormap(othercolor('Mrainbow',Nplots));
 for n=1:Nplots
-   plot(handles.cmprobe,ScanData(n,:),'color',cm(n,:));
+   pl(n) = plot(handles.cmprobe,ScanData(n,:),'color',cm(n,:));
    hold on
 end
 % Make the lines of the first and last scans thicker
-handles.axes2.Children(end).LineWidth = 1.5;
-handles.axes2.Children(1).LineWidth = 1.5;
+pl(end).LineWidth   = 1.5;
+pl(1).LineWidth     = 1.5;
 
 % Nice formatting
 set(handles.axes2,'FontSize',12)
@@ -1744,11 +1769,13 @@ title({handles.datafilename;['TR. SPECTRA PER SCAN AT ',num2str(handles.delays(k
 xlabel('Wavenumbers (cm^{-1})','FontSize',13,'FontWeight','bold')
 ylabel(label,'FontSize',13,'FontWeight','bold')
 axis tight
-hline = refline(0,0); 
+hline       = refline(0,0); 
 hline.Color = [0.5 0.5 0.5];
 legend(gca,caption);
 legend(gca,'boxoff');
 legend(gca,'Location','bestoutside');
+handles.axes2.Units     = 'pixels';
+handles.axes2.Position  = [75 60 675 320];
 guidata(hObject,handles)
 
 
@@ -1886,7 +1913,7 @@ plot(SelPowers,Avg,'Marker','o')
 nicetitle = {['POWER DEPENDENCE PLOT - SIGNAL AT ',num2str(handles.cmprobe(WLindex)),' cm^-^1'];['from ',num2str(tmin),' to ',num2str(tmax),' ',handles.timescale]}; 
 title(nicetitle,'FontSize',10)
 set(gca,'fontsize',12);
-xlabel(['Energy (' char(956) 'J)'],'FontSize',13)
+xlabel(['Energy (' '\mu' 'J)'],'FontSize',13)
 ylabel('\DeltaAbs (mOD)','FontSize',13)
 axis tight
 
@@ -1998,7 +2025,7 @@ for WLn=1:length(WL)
     % Create a new figure with consistent format
     fh.Units        = 'pixels';
     fh.Position(3)  = 800;
-    fh.Position(4)  = 420;
+    fh.Position(4)  = 425;
     fh.Color        = [1 1 1];
 
     % Make uniform, consistent format
@@ -2488,14 +2515,12 @@ ydata   = data_offset(:,k);
 % Create a new figure with consistent format
 fh = figure();
 fh.Position(3)  = 880;
-fh.Position(4)  = 420;
+fh.Position(4)  = 425;
 fh.Color        = [1 1 1];
 
 % Define the axes
 axes2 = axes('Parent',fh);
 axes(axes2);
-axes2.Units     = 'pixels';
-axes2.Position  = [75 60 800 320];
 
 cm=colormap(othercolor('Mrainbow',L));
 for n=1:L
@@ -2507,7 +2532,7 @@ for n=1:L
            case 'ps'
                newtimescale = 'ns';
            case 'ns'
-               newtimescale = [char(956) 's'];
+               newtimescale = ['\mu' 's'];
        end
    elseif handles.delays(k(n)) < 1
        newdelays = handles.delays(k(n))*1000;
@@ -2545,6 +2570,8 @@ hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
 set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
 guidata(hObject,handles)
 
+axes2.Units     = 'pixels';
+axes2.Position  = [75 60 680 320];
 % Tick length
 axes2.TickLength    = [0.015 0.035];
 % Make the axes resizable
