@@ -22,9 +22,9 @@ function varargout = InterfDataAnalysis_GUI(varargin)
 
 % Edit the above text to modify the response to help InterfDataAnalysis_GUI
 
-% Last Modified by GUIDE v2.5 26-Apr-2018 15:30:48
+% Last Modified by GUIDE v2.5 29-May-2018 18:25:23
 
-% Ricardo Fernández-Terán, v2.5c - 10.05.2018
+% Ricardo Fernández-Terán, v2.9a - 29.05.2018
 
 % ----CHANGELOG:
 % * Updated plotting routine: now the contour levels are defined based on min/max/# levels
@@ -77,7 +77,8 @@ else
     handles.defaultdir = [];
 end
 
-handles.VersionText.String = "v2.5c - 10.05.2018";
+% Update version text string
+handles.VersionText.String = "v2.9a - 29.05.2018";
 
 % Disable annoying warnings
 warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
@@ -1094,13 +1095,13 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-function plot_percentwhites_Callback(hObject, eventdata, handles)
+function plot_Nwhites_Callback(hObject, eventdata, handles)
 handles = UpdateEdits_2DIR(handles,0);
 plot_2DIR(handles,handles.MainAxes);
 
 
 % --- Executes during object creation, after setting all properties.
-function plot_percentwhites_CreateFcn(hObject, eventdata, handles)
+function plot_Nwhites_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end

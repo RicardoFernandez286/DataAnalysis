@@ -31,6 +31,7 @@ function handles = process2DIR(handles,ReProcess)
 %% Choose between debug/manual mode and normal mode
 debug=0;
 autoplot=0*debug; show_int=1*debug;
+
 %% DEBUG/MANUAL: THIS IS IMPLEMENTED IN ORDER TO TEST THE SCRIPT OR TO MANUALLY LOAD THE DATA
 if debug==1
     %%% FOR MANUAL LOADING OF OLD LAB 4 2D DATA
@@ -100,7 +101,7 @@ end
 
 %% READ from handles
 if debug==0 % Only during normal operation
-
+    
 % Read data
     cmprobe         = handles.cmprobe;
     t1delays        = handles.t1delays;
@@ -143,8 +144,8 @@ end
     filter_type     = 'Median';
     filter_points   = 10;
     zeropad_npoints = 10;
-    apodize_gaussian= 0;
-    apodize_Gcoeff  = 1000;
+    apodize_gaussian= 1;
+    apodize_Gcoeff  = 2/3; % Percentage of the Nbins for the decay of the Gaussian
     probe_fitorder  = 2;
     phase_fitmethod = 'Shift bins'; % 'Shift wavenumbers' or 'Shift bins'
     phase_wavenum   = 100;
@@ -171,7 +172,7 @@ for m=1:Ndelays
     progress = progress + 1;
     waitbar((progress/(Ndatastates*Ndelays*2)+0.5),handles.WaitBar,['Processing data... (' num2str(progress) ' of ' num2str(Ndatastates*Ndelays) ')']);
     
-    % Remove slow fluctuations in the data
+    % Remove background (and slow fluctuations in the data, if selected)
     if ReProcess == 0
         switch filter_type
             case 'Median'
@@ -233,11 +234,10 @@ for m=1:Ndelays
     cosine{m,k}             = (cos(pi*(q-binzero{m,k})/(2*(Nbins-binzero{m,k}))).^cos_exp)';
     box{m,k}                = (heaviside(q-binzero{m,k}))';
 
-
     % Gaussian
     if apodize_gaussian==1
         q=1:Nbins;
-        gaussian{m,k}(q)        = (exp(-((q-binzero{m,k}))^2/(apodize_Gcoeff*Nbins)))';
+        gaussian{m,k}           = (exp(-((q-binzero{m,k})./(apodize_Gcoeff.*Nbins)).^2))';
         apodize_function{m,k}   = cosine{m,k}.*gaussian{m,k};
     else
         apodize_function{m,k}   = cosine{m,k};

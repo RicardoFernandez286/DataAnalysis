@@ -56,7 +56,8 @@ Nspectra        = csvread([filename '_NSpectra.csv']);
 Ndatastates     = csvread([filename '_Ndatastates.csv']);
 Nbins           = length(bins);
 % Ninterleave     = length(csvread([filename '_interleaves.csv']));
-Ninterleave = 1;
+Ninterleave     = 1;
+
 Ndelays     = length(t2delays);
 
 % Read all the lines of the SlowModulation file
@@ -143,6 +144,7 @@ if exist(tempdir,'dir') ~= 0
 else % Can't determine whether it's a preview or not - TEMP folder absent
     Ndelays         = length(t2delays);
     Nscans          = 1; % Set it to 1 so it's a valid number.
+    preview_mode    = 0;
 end
 
 % Total number of states
@@ -163,7 +165,7 @@ if preview_mode == 0 % IF AT LEAST ONE SCAN HAS FINISHED
                         n=n+1;
                         for m=0:Ndelays-1
                             endings{m+1,n} = ['_ds' num2str(k) '_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '.csv'];
-                            ShortEndings{m+1,round(n/Ndatastates)} = ['_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '.csv'];
+                            ShortEndings{m+1,ceil(n/Ndatastates)} = ['_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '.csv'];
                         end
                     end
             end

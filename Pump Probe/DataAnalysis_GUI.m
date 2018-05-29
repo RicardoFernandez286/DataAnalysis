@@ -22,7 +22,7 @@ function varargout = DataAnalysis_GUI(varargin)
 
 % Edit the above text to modify the response to help DataAnalysis_GUI
 
-% Last Modified by GUIDE v2.5 23-May-2018 15:03:46
+% Last Modified by GUIDE v2.5 29-May-2018 17:54:04
 
 % Ricardo Fernández-Terán - v3.8b - 23.05.2018
 % ----CHANGELOG:
@@ -2795,6 +2795,23 @@ function BinScans_Callback(hObject, eventdata, handles)
 
 % --- Executes during object creation, after setting all properties.
 function BinScans_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function plot_colourscheme_Callback(hObject, eventdata, handles)
+switch handles.rawcorr
+    case 'RAW'
+        plot2D(handles,handles.rawsignal,handles.axes1,'On')
+    case 'CORRECTED'
+        plot2D(handles,handles.corrdata,handles.axes1,'On')
+end
+
+function plot_colourscheme_CreateFcn(hObject, eventdata, handles)
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end

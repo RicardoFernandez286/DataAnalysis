@@ -37,6 +37,7 @@ binzero             = handles.binzero{m,k};
 %% Plot the selected data type
 switch what
     case 'td' % Plot time-domain data for the given pixel
+        % Plot the time-domain data
         pixel               = str2double(handles.PixelNumber.String);
         switch plotmode
             case 'Time'
@@ -54,16 +55,20 @@ switch what
         yyaxis(where,'left')
         plot(where,time,y_data,'-ob','LineWidth',0.5,'MarkerSize',0.5);
         ylabel(where,'Signal (V / mOD)')
+        axis(where,'tight')
         hold(where,'on');
+        % Plot the apodization function and bin zero
         yyaxis(where,'right')
         plot(where,time,apodize_function,'-r','LineWidth',2);
         plot(where,time(binzero),apodize_function(binzero),'or','LineWidth',2);
         ylabel(where,'Apo. Func.');
-        ylim(where,[0,1]);
+        ylim(where,[-1,1]);
         hold off
         xlim(where,[min(time) max(time)]);
+        zl = refline(where,0,0);
+        zl.Color = [0.5 0.5 0.5];
     case 'ph' % Plot phasing data
-        % Plot the pump spectrum (real part of FFT[pyro])
+        %%% Plot the pump spectrum (real part of FFT[pyro])
         yyaxis(where,'left')
         p1 = plot(where,PumpAxis,abs(phased_FFTZPint),'-b','LineWidth',2,'DisplayName','|\mathcal{F}(Int)|');
         hold(where,'on')
@@ -73,12 +78,15 @@ switch what
             p3 = plot(where,PumpAxis,imag(phased_FFTZPint),'-','Color',[0.9290, 0.6940, 0.1250],'DisplayName','Im[\mathcal{F}(Int)]');
         end
         ylabel(where,'Intensity (a.u.)');
-        % Plot the phase and the fit
+        hline = refline(where,0,0);
+        hline.Color = [0.5 0.5 0.5];
+        hline.LineWidth = 0.1;
+        %%% Plot the phase and the fit
         yyaxis(where,'right')
         hold(where,'on')
         % Fitted points
-        p4 = plot(where,PumpAxis(phasepoints),fittedPhase(phasepoints),'dg','LineWidth',0.1,'MarkerSize',5,'DisplayName','Fitted phase');
-        p5 = plot(where,PumpAxis,fittedPhase,'g','LineWidth',0.1,'DisplayName','Fitted phase');
+        p4 = plot(where,PumpAxis(phasepoints),fittedPhase(phasepoints),'dg','LineWidth',0.1,'MarkerSize',6,'DisplayName','Fitted phase');
+        p5 = plot(where,PumpAxis,fittedPhase,'g','LineWidth',3,'DisplayName','Fitted phase');
         % Original phase
         p6 = plot(where,PumpAxis,ZP_phase,'-r','LineWidth',1,'DisplayName','Calculated phase');
         ylabel(where,'Phase (rad)')
@@ -105,7 +113,7 @@ switch what
         xlim(where,[1,length(ProbeAxis)]);
         ylim(where,[min(freq_fit),max(freq_fit)]);
         % Show legend
-        legend(where,{"Scattering maxima" "Fit"})
+        legend(where,{'Scattering maxima' 'Fit'})
         legend(where,'Boxoff')
         legend(where,'Location','northwest')
 end

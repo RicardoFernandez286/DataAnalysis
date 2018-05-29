@@ -47,7 +47,7 @@ if debug==0
     maxWL               = str2double(handles.editWLmax.String);
     plot_pumpdirection  = char(handles.plot_pumpdirection.String{handles.plot_pumpdirection.Value});
     plot_contourfill    = handles.plot_contourfill.Value;
-    plot_percentwhites  = str2double(handles.plot_percentwhites.String);
+    plot_Nwhites        = str2double(handles.plot_Nwhites.String);
     Ncontours           = str2double(handles.plot_Ncontours.String);
     LineStyle           = char(handles.plot_contourLineStyle.String); 
     plot_axislegend     = handles.plot_axislegend.Value; % "Omega", "Pump-probe" or "w pump-probe"
@@ -157,54 +157,61 @@ end
 
 %% Make the plot format nice
 
-% Define how many colours
-n_tot = Ncontours;
+% Define the total number of colours and the total number of red/white/blue levels
+n_tot       = Ncontours;
+
+% Check whether the colour range is symmetric
+if symcolrange == 1
+    percent_red     = 0.5-plot_Nwhites/(2*Ncontours);
+    percent_blue    = 0.5-plot_Nwhites/(2*Ncontours);
+else
+    percent_red     = abs(maxabs/(abs(maxabs-minabs)))-plot_Nwhites/(2*Ncontours);
+    percent_blue    = 1 - percent_red - plot_Nwhites/(2*Ncontours);
+end
+n_reds      = round(n_tot*percent_red)+1;
+n_blues     = round(n_tot*percent_blue)+1;
+n_whites    = plot_Nwhites;
 
 % Decide which colour scheme to use
 switch plot_colourscheme
-    case 'Red/blue'
-        n_whites = round(plot_percentwhites*n_tot/100);
-        if n_whites == 0
-            n_whites = 1;
-        end
-        % If the colour range is symmetric
-        if symcolrange == 1
-            percent_red = 0.5-plot_percentwhites/200;
-            percent_blue = 0.5-plot_percentwhites/200;
-        else
-            percent_red = abs(maxabs/(abs(maxabs-minabs)))-plot_percentwhites/200;
-            percent_blue = 1 - percent_red - plot_percentwhites/200;
-        end
-        n_blues     = round(n_tot*percent_blue);
-        n_reds      = round(n_tot*percent_red);
-        % Load the colormaps
+    case 'RdOr/Wh/Bl'
+        % Generate the RED part of the map
         map_red     = othercolor('YlOrRd9',n_reds);
-        %map_blue = flipud(othercolor('PuBu9',n_blues));
-        ylord       = othercolor('YlOrRd9',n_blues);
-        map_blue    = flipud([ylord(:,3) ylord(:,2) ylord(:,1)]);
+        
+        % Generate the BLUE part of the map
+        % This will use the same gradient as the red map, but conjugated (RGB -> BGR)
+        tmp_blue    = othercolor('YlOrRd9',n_blues);
+        map_blue    = flipud([tmp_blue(:,3) tmp_blue(:,2) tmp_blue(:,1)]);
+%         % An alternative blue (looks like "smoked" blue)        
+%         map_blue = flipud(othercolor('PuBu9',n_blues));
+
+        % Generate WHITE part of the colormap
         map_white   = ones(n_whites,3);
+        
         % Renormalize the colour scale to make the white more striking
         for j=1:3
             map_blue(:,j) = map_blue(:,j)/(max(map_blue(:,j)));
             map_red(:,j) = map_red(:,j)/(max(map_red(:,j)));
         end
         % Join the colormap "parts"
-        map = [map_blue(1:end-1,:);map_white;map_red(2:end,:)];
-        colormap(map);
-        % Set shading and color axis limits
-        shading flat;
+        % The first/last element of the red/blue maps is white, so it is discarded
+        cmap    = [map_blue(1:end-1,:);map_white;map_red(2:end,:)];
+    case 'DRd/Ylw/Bl'
+        cmap    = othercolor('BuDRd_12',n_tot);
+    case 'Rd/Wh/Bl'
+        cmap    = b2r(min_cut,max_cut,n_tot,n_whites);
+    case 'DkRd/Wh/DkBl'
+        cmap    = darkb2r(min_cut,max_cut,n_tot,n_whites);
     case 'Jet'
-        colormap(jet(n_tot));
-    case 'Blue/DRed'
-        colormap(othercolor('BuDRd_12',n_tot));
+        cmap    = jet(n_tot);
 end
 
-% Set the colour range
-if symcolrange == 1
-    caxis([-maxDabs*plot_colorrange/100,maxDabs*plot_colorrange/100]);
-else
-    caxis([minabs*plot_colorrange/100,maxabs*plot_colorrange/100]);
-end
+% Set the colormap
+colormap(cmap);
+
+%% Set the colour range
+% Set shading and color axis limits
+shading flat;
 
 % Show the colorbar
 hcb=colorbar;
@@ -249,8 +256,8 @@ text(0.05,0.90,['t_{2} = ' t2_delay_ps ' ps'],'Units','normalized','FontSize',12
 if plot_showcontours == 1
     % Define the contours to plot
     step = ((max_cut - min_cut)./Ncontours).*plot_skiplevels;
-	neg_zero = plot_percentwhites*min_cut/100;
-    pos_zero = plot_percentwhites*max_cut/100;
+	neg_zero = plot_Nwhites*min_cut/100;
+    pos_zero = plot_Nwhites*max_cut/100;
     
     plot_contours = [min_cut:step:neg_zero pos_zero:step:max_cut];
 
