@@ -26,6 +26,7 @@ function varargout = DataAnalysis_GUI(varargin)
 
 % Ricardo Fernández-Terán - v3.8b - 23.05.2018
 % ----CHANGELOG:
+% * Fixed a bug when plotting normalised kinetics per scan (wasn't dividing by the abs value)
 % * Updated all plotting routines to make plot format consistent. Font sizes and styles should now be the same in all plots.
 % * Included loading routine for TRES data files (*.dat)
 % * Updated tWLshift so it doesn't overwrite the .bak file, only _wavenumbers.csv is overwritten!
@@ -1159,6 +1160,7 @@ set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
 guidata(hObject,handles)
 handles.axes2.Units     = 'pixels';
 handles.axes2.Position  = [75 60 675 320];
+handles.axes2.Units     = 'normalized';
 
 % Decide whether to save the plotted traces or not
 if handles.DoSaveTraces==1
@@ -1209,32 +1211,45 @@ end
 k = findClosestId2Val(handles.delays,transpose(value));
 k = unique(k,'stable');
 L = length(k);
-i = 0;
-while i < L
+% ydata   = zeros(size
+for n=1:L
+    % Check the delays and convert the labels and numbers to appropriate units
+    if handles.delays(k(n)) >= 1000
+       newdelays = handles.delays(k(n))/1000;
+       switch handles.timescale
+           case 'fs'
+               newtimescale = 'ps';
+           case 'ps'
+               newtimescale = 'ns';
+           case 'ns'
+               newtimescale = ['\mu' 's'];
+       end
+    elseif handles.delays(k(n)) < 1
+       newdelays = handles.delays(k(n)).*1000;
+       switch handles.timescale
+           case 'ps'
+               newtimescale = 'fs';
+           case 'ns'
+               newtimescale = 'ps';
+       end
+    else
+       newdelays    = handles.delays(k(n));
+       newtimescale = handles.timescale;
+    end
+    
     % Get the actual vectors from the Z matrix (one by one)
     % together with their legend captions and corresponding ylabel
-    index = k(1,i+1);
     switch handles.NormKin.Value
         case 0
-            ydata(:,i+1) = data(:,index);
+            ydata(:,n) = data(:,k(n));
             label = '\DeltaAbs (mOD)';
-            caption(i+1,1) = string(strcat(num2str(round(handles.delays(index),2,'significant')),[' ', timescale]));
         case 1
-            maxval = max(data(:,index));
-            minval = min(data(:,index));
-            if abs(maxval) >= abs(minval)
-                ydata(:,i+1) = data(:,index)./maxval;
-                caption(i+1,1) = string(strcat(num2str(round(handles.delays(index),2,'significant')),[' ', timescale]));
-            else
-                ydata(:,i+1) = data(:,index)./minval;
-                caption(i+1,1) = string(strcat(num2str(round(handles.delays(index),2,'significant')),[' ', timescale, '\times -1']));
-            end
+            ydata(:,n) = data(:,k(n))./max(max(abs(data(:,k(n)))));
             label = 'Normalised \DeltaAbs';
     end
-    i=i+1;
+    caption(n,1) = string([num2str(round(newdelays,2,'significant')) ' ' newtimescale]);
 end
-
-
+   
 switch handles.IncludeSteadyState.Value
     case 1
         % Create a new figure with consistent format
@@ -1274,29 +1289,7 @@ end
 % Plot the data
 cm=colormap(othercolor('Mrainbow',L));
 for n=1:L
-   if handles.delays(k(n)) >= 1000
-       newdelays = handles.delays(k(n))/1000;
-       switch handles.timescale
-           case 'fs'
-               newtimescale = 'ps';
-           case 'ps'
-               newtimescale = 'ns';
-           case 'ns'
-               newtimescale = ['\mu' 's'];
-       end
-   elseif handles.delays(k(n)) < 1
-       newdelays = handles.delays(k(n)).*1000;
-       switch handles.timescale
-           case 'ps'
-               newtimescale = 'fs';
-           case 'ns'
-               newtimescale = 'ps';
-       end
-   else
-       newdelays    = handles.delays(k(n));
-       newtimescale = handles.timescale;
-   end
-   plot(where,handles.cmprobe,ydata(:,n),'LineWidth',1.5,'Marker','none','color',cm(n,:),'DisplayName',[num2str(newdelays,'%.3g') ' ' newtimescale]);
+   plot(where,handles.cmprobe,ydata(:,n),'LineWidth',1.5,'Marker','none','color',cm(n,:),'DisplayName',caption(n));
    hold on
 end
 % Nice formatting
@@ -1583,7 +1576,7 @@ switch handles.NormKin.Value
         j=0;
         while j < Nplots
             j=j+1;
-            ScanData(:,j) = ScanData(:,j)./max(max(ScanData(:,j)));
+            ScanData(:,j) = ScanData(:,j)./max(max(abs(ScanData(:,j))));
         end
 end
 
@@ -1622,6 +1615,7 @@ set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
 handles.axes2.FontSize  = 12;
 handles.axes2.Units     = 'pixels';
 handles.axes2.Position  = [75 60 675 320];
+handles.axes2.Units     = 'normalized';
 guidata(hObject,handles)
 
 
@@ -1776,6 +1770,7 @@ legend(gca,'boxoff');
 legend(gca,'Location','bestoutside');
 handles.axes2.Units     = 'pixels';
 handles.axes2.Position  = [75 60 675 320];
+handles.axes2.Units     = 'normalized';
 guidata(hObject,handles)
 
 
