@@ -22,7 +22,7 @@ function varargout = InterfDataAnalysis_GUI(varargin)
 
 % Edit the above text to modify the response to help InterfDataAnalysis_GUI
 
-% Last Modified by GUIDE v2.5 29-May-2018 18:25:23
+% Last Modified by GUIDE v2.5 08-Jun-2018 14:18:51
 
 % Ricardo Fernández-Terán, v2.9a - 29.05.2018
 
@@ -571,8 +571,8 @@ fh = figure();
 fh.Color = [1 1 1];
 
 % Define the axes
-handles.axes2 = axes('Parent',fh);
-axes(handles.axes2);
+axes2 = axes('Parent',fh);
+axes(axes2);
 
 % Plot the data
 cmap=colormap(othercolor('Mrainbow',L));
@@ -597,10 +597,10 @@ legend('boxoff')
 legend('Location','northeast')
 
 % Set linear or log X scale
-set(handles.axes2,'xscale','lin');
+set(axes2,'xscale','lin');
 
 % Add zero line
-hline = refline(handles.axes2,[0 0]); hline.Color = [0.5 0.5 0.5];
+hline = refline(axes2,[0 0]); hline.Color = [0.5 0.5 0.5];
 set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
 
 % % Decide whether to save the plotted traces or not
@@ -616,7 +616,7 @@ guidata(hObject,handles)
 function plot_Slices_Callback(hObject, eventdata, handles)
 % Ask the user what to plot
 slice_options = {'Diagonal','Along fixed pump WL','Along fixed probe WL','Integrate along pump axis','Integrate along probe axis'};
-[sice_typeindx,doplot] = listdlg('ListString',slice_options,'OKstring','Plot','SelectionMode','single','ListSize',[150,80],'PromptString','Select slice type to plot:');
+[slice_typeindx,doplot] = listdlg('ListString',slice_options,'OKstring','Plot','SelectionMode','single','ListSize',[150,80],'PromptString','Select slice type to plot:');
 
 if doplot == 0
     return
@@ -630,7 +630,7 @@ Ndelays             = handles.Ndelays;
 t2delays            = handles.t2delays;
 PROC_2D_DATA        = handles.PROC_2D_DATA;
 
-switch slice_options{sice_typeindx}
+switch slice_options{slice_typeindx}
     case 'Diagonal'
         % Initialise variables
         pump_indexes    = cell(Ndelays,1);
@@ -1020,6 +1020,124 @@ function SpectralDiffusion_Callback(hObject, eventdata, handles)
 
 % --- Executes on button press in IntegralDynamics.
 function IntegralDynamics_Callback(hObject, eventdata, handles)
+% Ask the user what to plot
+integral_options    = {'Peak volume kinetics','Peak max-min kinetics','Peak volume difference kinetics'};
+[integral_typeindx,doplot] = listdlg('ListString',integral_options,'OKstring','Plot','SelectionMode','single','ListSize',[200,100],'PromptString','Select kinetic analysis type:');
+
+if doplot == 0
+    return
+end
+
+% Get some information from the GUI
+plot_pumpdirection  = char(handles.plot_pumpdirection.String{handles.plot_pumpdirection.Value});
+ProbeAxis           = handles.ProbeAxis;
+PumpAxis            = handles.PumpAxis;
+Ndelays             = handles.Ndelays;
+t2delays            = handles.t2delays;
+PROC_2D_DATA        = handles.PROC_2D_DATA;
+Axes                = handles.MainAxes;
+
+switch integral_options{integral_typeindx}
+    case 'Peak volume kinetics'
+        % Get the desired values to plot from user
+        handles.SelTraces = [];
+        
+        switch handles.InteractiveModeTick.Value
+            case 1
+                % Select points interactively, to finish hit RETURN
+                [RegionPositions,L] = SelectRegions(Axes);
+                % Separate the values into pump and probe, according to how the data is plotted
+                % i.e. convert from [x_min x_max y_min y_max] to [pump_min pump_max probe_min probe_max]
+                switch plot_pumpdirection
+                    case 'Horizontal'
+                        pump_ranges     = RegionPositions(:,1:2); 
+                        probe_ranges    = RegionPositions(:,3:4);
+                    case 'Vertical'
+                        pump_ranges     = RegionPositions(:,3:4); 
+                        probe_ranges    = RegionPositions(:,1:2);
+                end
+            case 0
+                RegionPositions_cell    = inputdlg({'Enter the pump regions (Format: min1 max1; min2 max2; ...): ','Enter the probe regions (Format: min1 max1; min2 max2; ...):'},'Define regions to integrate', [1 80]);
+                pump_ranges              = str2num(RegionPositions_cell{1});
+                probe_ranges             = str2num(RegionPositions_cell{2});
+                L = size(pump_ranges,1);
+                M = size(probe_ranges,1);
+                if L ~= M
+                    warndlg('Number of pump and probe ranges is different!')
+                    return
+                end
+        end
+
+        % Initialise variables
+        pump_idx    = zeros(L,2);
+        probe_idx   = zeros(L,2);
+        kindata     = zeros(Ndelays,L);
+        
+        % Get the data to be plotted
+        for m=1:Ndelays
+            % Get the values from the 2D arrays for each population delay on the selected regions
+            % The data is by default in the format (w1,w3) (according to process2DIR.m)
+            for p=1:L
+                % Get the indices of the probe wavelengths
+                pump_idx(p,:)   = findClosestId2Val(PumpAxis{m,1},pump_ranges(p,:));
+                probe_idx(p,:)  = findClosestId2Val(ProbeAxis,probe_ranges(p,:));
+                tempdata        = PROC_2D_DATA{m,1}(pump_idx(p,1):pump_idx(p,2),probe_idx(p,1):probe_idx(p,2));
+                kindata(m,p)    = sum(tempdata(:));
+            end
+        end
+        % Normalise the data
+        if handles.Normalise.Value == 1
+            kindata    = kindata./max(abs(kindata),[],1);
+            label      = 'Normalised Peak volume (a.u.)';
+        else
+            label      = 'Peak volume (a.u.)';
+        end
+        
+        % Create a new figure
+        fh          = figure();
+        fh.Color    = [1 1 1];
+
+        % Define the axes
+        axes2       = axes('Parent',fh);
+
+        % Plot the data
+        cmap=colormap(othercolor('Mrainbow',L));
+        for n=1:L
+           plotname = ['(' num2str(PumpAxis{m,1}(pump_idx(n,1)),'%.4g') '-' num2str(PumpAxis{m,1}(pump_idx(n,2)),'%.4g') '; ' num2str(ProbeAxis(probe_idx(n,1)),'%.4g') '-' num2str(ProbeAxis(probe_idx(n,2)),'%.4g') ') cm^{-1}'];
+           plot(axes2,t2delays,kindata(:,n),'LineWidth',2,'Marker','o','MarkerSize',2,'color',cmap(n,:),'DisplayName',plotname);
+           hold on
+        end
+
+        %%% Nice formatting
+        set(gca,'FontSize',14)
+        xlabel('t_{2} delay (ps)','FontSize',14,'FontWeight','bold');
+        ylabel(label,'FontSize',14,'FontWeight','bold')
+        title([handles.datafilename;'WAITING TIME KINETICS';''],'Interpreter','none','FontSize',10)
+        axis tight
+
+        % Show only positive t2 times
+        xlim([0.25 max(t2delays)]);
+
+        % Create legend
+        legend(gca,{},'FontSize',12)
+        legend('boxoff')
+        legend('Location','northeast')
+
+        % Set linear or log X scale
+        set(axes2,'xscale','lin');
+
+        % Add zero line
+        hline = refline(axes2,[0 0]); hline.Color = [0.5 0.5 0.5];
+        set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
+
+        % % Decide whether to save the plotted traces or not
+        % if handles.DoSaveTraces==1
+        %     wavenumbers=transpose(handles.cmprobe(k));
+        %     filename=char(strcat(handles.CurrDir.String,filesep,handles.datafilename,'_traces.dat'));
+        %     dlmwrite(filename,[[0;handles.delays] [wavenumbers;kindata]])
+        % end
+        guidata(hObject,handles)
+end
 
 
 % --- Executes on button press in InteractiveModeTick.
@@ -1039,9 +1157,25 @@ function PumpCorrection_tick_Callback(hObject, eventdata, handles)
 
 
 function editWLmin_Callback(hObject, eventdata, handles)
-maxWL = str2double(handles.editWLmax.String);
-minWL = str2double(handles.editWLmin.String);
-xlim(handles.MainAxes,[minWL maxWL]);
+maxWL       = str2double(handles.editWLmax.String);
+minWL       = str2double(handles.editWLmin.String);
+plotaxis    = handles.MainAxes;
+plot_pumpdirection  = char(handles.plot_pumpdirection.String{handles.plot_pumpdirection.Value});
+if handles.EditProbeAxis_tick.Value == 1
+    switch plot_pumpdirection
+    case 'Vertical' 
+        xlim(plotaxis,[minWL,maxWL]);
+    case 'Horizontal'
+        ylim(plotaxis,[minWL,maxWL]);
+    end
+else
+    switch plot_pumpdirection
+    case 'Vertical' 
+        ylim(plotaxis,[minWL,maxWL]);
+    case 'Horizontal'
+        xlim(plotaxis,[minWL,maxWL]);
+    end
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -1052,9 +1186,25 @@ end
 
 
 function editWLmax_Callback(hObject, eventdata, handles)
-maxWL = str2double(handles.editWLmax.String);
-minWL = str2double(handles.editWLmin.String);
-xlim(handles.MainAxes,[minWL maxWL]);
+maxWL       = str2double(handles.editWLmax.String);
+minWL       = str2double(handles.editWLmin.String);
+plotaxis    = handles.MainAxes;
+plot_pumpdirection  = char(handles.plot_pumpdirection.String{handles.plot_pumpdirection.Value});
+if handles.EditProbeAxis_tick.Value == 1
+    switch plot_pumpdirection
+    case 'Vertical' 
+        xlim(plotaxis,[minWL,maxWL]);
+    case 'Horizontal'
+        ylim(plotaxis,[minWL,maxWL]);
+    end
+else
+    switch plot_pumpdirection
+    case 'Vertical' 
+        ylim(plotaxis,[minWL,maxWL]);
+    case 'Horizontal'
+        xlim(plotaxis,[minWL,maxWL]);
+    end
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -1291,3 +1441,6 @@ if exist(todaydir,'dir') ~= 0
         set(handles.DatafoldersList,'String',handles.file_names,'Value',1)
     guidata(hObject,handles)
 end
+
+function EditProbeAxis_tick_Callback(hObject, eventdata, handles)
+% This shouldn't do anything

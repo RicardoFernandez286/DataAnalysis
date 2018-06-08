@@ -58,6 +58,7 @@ if debug==0
     plot_skiplevels     = str2double(handles.plot_skiplevels.String);
     popdelay            = handles.Population_delay.Value;
     symcolrange         = handles.SymColRange_tick.Value;
+    EditProbeAxis       = handles.EditProbeAxis_tick.Value;
     
     t2_delay_ps         = str2double(char(handles.Population_delay.String(popdelay)));
     
@@ -92,8 +93,8 @@ switch cut_method
         minindex        = find(accepted_pts,1,'first');
         maxindex        = find(accepted_pts,1,'last');
     case 'Axis'
-        minindex    = findClosestId2Val(PumpAxis{m,k},min(ProbeAxis))-1;
-        maxindex    = findClosestId2Val(PumpAxis{m,k},max(ProbeAxis))+1;
+        minindex        = findClosestId2Val(PumpAxis{m,k},min(ProbeAxis))-1;
+        maxindex        = findClosestId2Val(PumpAxis{m,k},max(ProbeAxis))+1;
 end
 
 switch plot_limittype
@@ -204,7 +205,7 @@ switch plot_colourscheme
         tmp_blue    = othercolor('YlOrRd9',n_blues);
         map_blue    = flipud([tmp_blue(:,3) tmp_blue(:,2) tmp_blue(:,1)]);
 %         % An alternative blue (looks like "smoked" blue)        
-%         map_blue = flipud(othercolor('PuBu9',n_blues));
+%         map_blue = flipud(othercolor('Blues1',n_blues));
 
         % Generate WHITE part of the colormap
         map_white   = ones(n_whites,3);
@@ -250,13 +251,14 @@ ylabel(hcb,'2D signal (a.u.)','FontWeight','bold')
 
 % Set appropriate limits
 switch plot_pumpdirection
-    case 'Vertical' 
-        xlim(plotaxis,[min(ProbeAxis),max(ProbeAxis)]);
-        ylim(plotaxis,[minWL,maxWL]);
-    case 'Horizontal'
-        ylim(plotaxis,[min(ProbeAxis),max(ProbeAxis)]);
-        xlim(plotaxis,[minWL,maxWL]);
+case 'Vertical' 
+    xlim(plotaxis,[min(ProbeAxis),max(ProbeAxis)]);
+    ylim(plotaxis,[minWL,maxWL]);
+case 'Horizontal'
+    ylim(plotaxis,[min(ProbeAxis),max(ProbeAxis)]);
+    xlim(plotaxis,[minWL,maxWL]);
 end
+
 
 % Show the axis legends
 switch plot_axislegend

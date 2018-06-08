@@ -1,4 +1,4 @@
-function newmap = b2r(cmin_input,cmax_input,color_num,n_whites)
+function newmap = b2r(cmin_input,cmax_input,n_total,n_whites)
 %BLUEWHITERED   Blue, white, and red color map.
 %   this matlab file is designed to draw anomaly figures. the color of
 %   the colorbar is from blue to white and then to red, corresponding to 
@@ -35,7 +35,7 @@ function newmap = b2r(cmin_input,cmax_input,color_num,n_whites)
 if nargin > 4
    warning('input two variables, the range of caxis , for example : colormap(b2r(-3,3)) or three, b2r(-3,3,ncolors)');
 elseif nargin > 2 && nargin < 4
-   color_num = 251;
+   n_total = 251;
    n_whites = 1;
 end
 
@@ -53,10 +53,32 @@ red_top     = [1 0 0];
 white_middle= [1 1 1];
 blue_bottom = [0 0 1];
 
+n_reds      = round((n_total - n_whites/2)/2);
+n_blues     = round((n_total - n_whites/2)/2);
+
 %% Color interpolation 
-color_input = [blue_bottom;  white_middle;  red_top];
-oldsteps = linspace(-1, 1, size(color_input,1));
-newsteps = linspace(-1, 1, color_num);  
+color_input     = [blue_bottom; white_middle];
+oldsteps        = [0 1];
+newsteps        = linspace(0, 1, n_blues);  
+
+bluemap         = zeros(n_blues,3);
+for j=1:3
+   bluemap(:,j) = min(max(transpose(interp1(oldsteps, color_input(:,j), newsteps)), 0), 1);
+end
+bluemap(end,:)  = [];
+
+color_input     = [white_middle; red_top];
+oldsteps        = [0 1];
+newsteps        = linspace(0, 1, n_reds);  
+
+redmap          = zeros(n_reds,3);
+for j=1:3
+   redmap(:,j)  = min(max(transpose(interp1(oldsteps, color_input(:,j), newsteps)), 0), 1);
+end
+redmap(1,:)     = [];
+
+whitemap        = ones(n_whites,3);
+newmap_all      = [bluemap;whitemap;redmap];
 
 %% Category Discussion according to the cmin and cmax input
 
@@ -74,21 +96,17 @@ newsteps = linspace(-1, 1, color_num);
 % first : from negative to positive
 % then  : from positive to positive
 % last  : from negative to negative
-newmap_all  = zeros(color_num,3);
-for j=1:3
-   newmap_all(:,j) = min(max(transpose(interp1(oldsteps, color_input(:,j), newsteps)), 0), 1);
-end
 
 if (cmin_input < 0)  &&  (cmax_input > 0) 
     if abs(cmin_input) < cmax_input     
         % |--------|---------|--------------------|    
       % -cmax      cmin       0                  cmax         [cmin,cmax]
-       start_point = max(round((cmin_input+cmax_input)/2/cmax_input*color_num),1);
-       newmap = squeeze(newmap_all(start_point:color_num,:));       
+       start_point = max(round((cmin_input+cmax_input)/2/cmax_input*n_total),1);
+       newmap = squeeze(newmap_all(start_point:n_total,:));       
     elseif abs(cmin_input) >= cmax_input        
          % |------------------|------|--------------|    
        %  cmin                0     cmax          -cmin         [cmin,cmax]          
-       end_point = max(round((cmax_input-cmin_input)/2/abs(cmin_input)*color_num),1);
+       end_point = max(round((cmax_input-cmin_input)/2/abs(cmin_input)*n_total),1);
        newmap = squeeze(newmap_all(1:end_point,:));
     end
     
@@ -102,8 +120,8 @@ elseif cmin_input >= 0
         % |-----------------|-------|-------------|    
       % -cmax               0      cmin          cmax         [cmin,cmax]
  
-       start_point = max(round((cmin_input+cmax_input)/2/cmax_input*color_num),1);
-       newmap = squeeze(newmap_all(start_point:color_num,:));
+       start_point = max(round((cmin_input+cmax_input)/2/cmax_input*n_total),1);
+       newmap = squeeze(newmap_all(start_point:n_total,:));
 
 elseif cmax_input <= 0
 
@@ -116,7 +134,7 @@ elseif cmax_input <= 0
          % |------------|------|--------------------|    
        %  cmin         cmax    0                  -cmin         [cmin,cmax]      
 
-       end_point = max(round((cmax_input-cmin_input)/2/abs(cmin_input)*color_num),1);
+       end_point = max(round((cmax_input-cmin_input)/2/abs(cmin_input)*n_total),1);
        newmap = squeeze(newmap_all(1:end_point,:));
 end
 
