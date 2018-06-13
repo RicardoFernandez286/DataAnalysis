@@ -63,25 +63,27 @@ m=2/3; % Position of the set colors
 color_input     = [blue_bottom; blue_middle; white_middle];
 oldsteps        = [-1 -m 0];
 newsteps        = linspace(-1, 0, n_blues);  
-
 bluemap         = zeros(n_blues,3);
 for j=1:3
    bluemap(:,j) = min(max(transpose(interp1(oldsteps, color_input(:,j), newsteps)), 0), 1);
 end
-bluemap(end,:)  = [];
 
 color_input     = [white_middle; red_middle; red_top];
 oldsteps        = [0 m 1];
 newsteps        = linspace(0, 1, n_reds);  
-
 redmap          = zeros(n_reds,3);
 for j=1:3
    redmap(:,j)  = min(max(transpose(interp1(oldsteps, color_input(:,j), newsteps)), 0), 1);
 end
-redmap(1,:)     = [];
 
-whitemap        = ones(n_whites,3);
-newmap_all      = [bluemap;whitemap;redmap];
+if n_whites ~= 0
+    bluemap(end,:)  = [];
+    redmap(1,:)     = [];
+    whitemap        = ones(n_whites,3);
+    newmap_all      = [bluemap;whitemap;redmap];
+else
+    newmap_all      = [bluemap;redmap];
+end
 
 %% Category Discussion according to the cmin and cmax input
 

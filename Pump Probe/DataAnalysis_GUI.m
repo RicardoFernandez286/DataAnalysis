@@ -24,7 +24,7 @@ function varargout = DataAnalysis_GUI(varargin)
 
 % Last Modified by GUIDE v2.5 29-May-2018 17:54:04
 
-% Ricardo Fernández-Terán - v3.8b - 23.05.2018
+% Ricardo Fernández-Terán - v3.9a - 11.06.2018
 % ----CHANGELOG:
 % * Fixed a bug when plotting normalised kinetics per scan (wasn't dividing by the abs value)
 % * Updated all plotting routines to make plot format consistent. Font sizes and styles should now be the same in all plots.
@@ -1007,8 +1007,8 @@ function maxtimeBkg_Callback(hObject, eventdata, handles)
 % TO FIX =  CHECK THAT THE TIME LIMITS ARE READ AND EXECUTED CORRECTLY
 maxtimeBkg = str2double(get(hObject,'String'));
 if maxtimeBkg <= max(handles.delays)
-    k = 1;
-    t = handles.delays(k);
+    k = 0;
+    t = handles.delays(k+1);
     while t <= maxtimeBkg && k < (length(handles.delays)-1)
         k = k+1;
         t = handles.delays(k+1);

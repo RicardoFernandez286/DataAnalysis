@@ -60,25 +60,28 @@ n_blues     = round((n_total - n_whites/2)/2);
 color_input     = [blue_bottom; white_middle];
 oldsteps        = [0 1];
 newsteps        = linspace(0, 1, n_blues);  
-
 bluemap         = zeros(n_blues,3);
 for j=1:3
    bluemap(:,j) = min(max(transpose(interp1(oldsteps, color_input(:,j), newsteps)), 0), 1);
 end
-bluemap(end,:)  = [];
+
 
 color_input     = [white_middle; red_top];
 oldsteps        = [0 1];
 newsteps        = linspace(0, 1, n_reds);  
-
 redmap          = zeros(n_reds,3);
 for j=1:3
    redmap(:,j)  = min(max(transpose(interp1(oldsteps, color_input(:,j), newsteps)), 0), 1);
 end
-redmap(1,:)     = [];
 
-whitemap        = ones(n_whites,3);
-newmap_all      = [bluemap;whitemap;redmap];
+if n_whites ~= 0
+    bluemap(end,:)  = [];
+    redmap(1,:)     = [];
+    whitemap        = ones(n_whites,3);
+    newmap_all      = [bluemap;whitemap;redmap];
+else
+    newmap_all      = [bluemap;redmap];
+end
 
 %% Category Discussion according to the cmin and cmax input
 
