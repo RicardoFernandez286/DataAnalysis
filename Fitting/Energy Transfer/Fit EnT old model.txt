@@ -1,0 +1,35 @@
+% Define the fit functions (OLD)       
+% f_diagFW    = @(p,t)  p(5)*exp(-t/p(1))  + p(6)*exp(-t/p(2));
+% f_diagBW    = @(p,t)  p(7)*exp(-t/p(1))  + p(8)*exp(-t/p(2));
+% 
+% f_xpeakFW   = @(p,t) (p(9)*exp(-t/p(1))  + p(10)*exp(-t/p(2))).*p(11).*(1-exp(-t/p(3)));
+% f_xpeakBW   = @(p,t) (p(12)*exp(-t/p(1)) + p(13)*exp(-t/p(2))).*p(14).*(1-exp(-t/p(4)));
+
+%% Generate the fit functions using the differential equations for the system
+% Define the variables
+syms dpeak(t) xpeak(t) tau1 tau2 tau3 tau4 a0;
+k1 = 1/tau1;
+k2 = 1/tau2;
+k3 = 1/tau3;
+k4 = 1/tau4;
+
+% Define the model differential equations
+ode_diag    = diff(dpeak) == -k1.*dpeak - k3.*dpeak + k4.*xpeak;
+ode_xpeak   = diff(xpeak) == -k2.*xpeak - k4.*xpeak + k3.*dpeak;
+
+% Define the ODE system and initial conditions
+ODEs        = [ode_diag; ode_xpeak];
+cond        = [dpeak(0)==a0; xpeak(0)==0];
+
+%% Analytically solve the system
+[dpeak_Sol(t,tau1,tau2,tau3,tau4,a0),xpeak_Sol(t,tau1,tau2,tau3,tau4,a0)] = dsolve(ODEs,cond);
+
+% Convert the functions to character vectors and replace "t" for "t.*"
+dpeak_Sol_Char  = strrep(char(dpeak_Sol),'*','.*');
+xpeak_Sol_Char  = strrep(char(xpeak_Sol),'*','.*');
+dpeak_Func(t,tau1,tau2,tau3,tau4,a0) = str2sym(dpeak_Sol_Char);
+xpeak_Func(t,tau1,tau2,tau3,tau4,a0) = str2sym(xpeak_Sol_Char);
+
+dpeak_FitFunc   = @(p,t) dpeak_Func(t,p(1),p(2),p(3),p(4),p(5));
+xpeak_FitFunc   = @(p,t) xpeak_Func(t,p(1),p(2),p(3),p(4),p(5));
+

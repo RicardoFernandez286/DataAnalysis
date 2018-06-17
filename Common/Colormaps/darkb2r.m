@@ -55,8 +55,12 @@ white_middle= [1 1 1];
 blue_middle = [0 0 1];
 blue_bottom = [0 0 0.5];
 
-n_reds      = round((n_total - n_whites/2)/2);
-n_blues     = round((n_total - n_whites/2)/2);
+if mod(n_whites,2) ~= 0
+    n_whites    = n_whites - 1;
+end
+
+n_reds      = round((n_total - n_whites)/2)+1;
+n_blues     = round((n_total - n_whites)/2)+1;
 
 %% Color interpolation 
 m=2/3; % Position of the set colors
@@ -76,9 +80,10 @@ for j=1:3
    redmap(:,j)  = min(max(transpose(interp1(oldsteps, color_input(:,j), newsteps)), 0), 1);
 end
 
+bluemap(end,:)  = [];
+redmap(1,:)     = [];
+
 if n_whites ~= 0
-    bluemap(end,:)  = [];
-    redmap(1,:)     = [];
     whitemap        = ones(n_whites,3);
     newmap_all      = [bluemap;whitemap;redmap];
 else
@@ -147,4 +152,3 @@ elseif cmax_input <= 0
        end_point = max(round((cmax_input-cmin_input)/2/abs(cmin_input)*n_total),1);
        newmap = squeeze(newmap_all(1:end_point,:));
 end
-

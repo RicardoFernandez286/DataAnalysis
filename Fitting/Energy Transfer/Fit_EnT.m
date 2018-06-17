@@ -1,4 +1,4 @@
-function [Taus,Amps,Tau_err,Amp_err,SSR] = Fit_EnT(time,FW_data,BW_data,start_taus,start_amps,ShowOutput,DoFit,varargin)
+function [Taus,Amps,Tau_err,Amp_err,SSR] = Fit_EnT(time,FW_data,BW_data,start_params,LB,UB,ShowOutput,DoFit,varargin)
 % Fitting function used to fit forward<->backward energy transfer problems
 % Input:
 %    time = vector with the time steps in ps
@@ -13,24 +13,21 @@ function [Taus,Amps,Tau_err,Amp_err,SSR] = Fit_EnT(time,FW_data,BW_data,start_ta
 
 %% Build the fit model
 % Set the options for fitting
-options = statset('MaxIter',5000,...
-            'TolFun',1e-10,...
-            'TolX',1e-10);
+options = optimoptions('lsqcurvefit',...
+            'MaxFunctionEvaluations',10000,...
+            'MaxIterations',10000,...
+            'Algorithm','trust-region-reflective',...  %'levenberg-marquardt' 'trust-region-reflective'
+            'OptimalityTolerance',1e-5,...
+            'FunctionTolerance',1e-5,...
+            'StepTolerance',1e-5);
 
 % Define the parameter locations
 Tau_index   = [1 2 3 4];
-Amp_index   = [5 6 7 8 9 10 11 12 13 14];
+Amp_index   = [5 6 7 8]; 
 
 % Get the input parameters
-start_param(Tau_index) = start_taus;
-start_param(Amp_index) = start_amps;
-
-% Define the fit functions       
-f_diagFW    = @(p,t)  p(5)*exp(-t/p(1))  + p(6)*exp(-t/p(2));
-f_diagBW    = @(p,t)  p(7)*exp(-t/p(1))  + p(8)*exp(-t/p(2));
-
-f_xpeakFW   = @(p,t) (p(9)*exp(-t/p(1))  + p(10)*exp(-t/p(2))).*p(11).*(1-exp(-t/p(3)));
-f_xpeakBW   = @(p,t) (p(12)*exp(-t/p(1)) + p(13)*exp(-t/p(2))).*p(14).*(1-exp(-t/p(4)));
+% start_params(Tau_index) = start_params(Tau_index);
+% start_params(Amp_index) = start_amps;
 
 %% Parse the input data
 % Split the arrays
@@ -39,26 +36,14 @@ diagBW      = BW_data(:,1);
 xpeakFW     = FW_data(:,2);
 xpeakBW     = BW_data(:,2);
 
-% Build input cells for NLINMULTIFIT
-x_cell          = {time,time,time,time};
-y_cell          = {diagFW,diagBW,xpeakFW,xpeakBW};
-fitfunc_cell    = {f_diagFW,f_diagBW,f_xpeakFW,f_xpeakBW};
-
 if DoFit==1
 %% Fit the data
-    [fitted_param,RAWresiduals,jacobian_fit,~,SSR] = nlinmultifit(x_cell, y_cell, fitfunc_cell,start_param,options);
+    [fitted_param,resnorm,residuals,exitflag,output,lambda,jacobian_fit] = lsqcurvefit(@EnT_kinetics,start_params,time,[diagFW,xpeakFW,diagBW,xpeakBW],LB,UB,options);
     plot_param      = fitted_param;
     fitted_param    = fitted_param';
-    n_points        = length(time);
-    n_datasets      = length(RAWresiduals)/n_points;
-
-    residuals       = zeros(n_points,n_datasets);
-    for i=1:n_datasets
-        residuals(:,i)=RAWresiduals((n_points*(i-1)+1):n_points*(i));
-    end
 
 %% Calculate parameters and parameter errors
-    fitted_CI   = nlparci(fitted_param,RAWresiduals,'jacobian',jacobian_fit);
+    fitted_CI   = nlparci(fitted_param,residuals,'jacobian',jacobian_fit);
     fitted_CI   = (fitted_CI(:,2) - fitted_CI(:,1))/2;
 
     Taus        = fitted_param(Tau_index);
@@ -74,31 +59,23 @@ if DoFit==1
             '=============== \n' ...
             '\n' ...
             'LIFETIMES: \n' ...
-            '   Tau_fast   = %.4g ' char(177) ' %.4g ps \n' ...
-            '   Tau_slow   = %.4g ' char(177) ' %.4g ps \n' ...
-            '   Tau_FW     = %.4g ' char(177) ' %.4g ps \n' ...
-            '   Tau_BW     = %.4g ' char(177) ' %.4g ps \n' ...
+            '       Tau_fast   = %.4g ' char(177) ' %.4g ps \n' ...
+            '       Tau_slow   = %.4g ' char(177) ' %.4g ps \n' ...
+            '       Tau_FW     = %.4g ' char(177) ' %.4g ps \n' ...
+            '       Tau_BW     = %.4g ' char(177) ' %.4g ps \n' ...
             '\n' ...
             'AMPLITUDES: \n' ...
-            '   Diagonal peaks: \n' ...
-            '       A1_fw      = %.4g ' char(177) ' %.4g \n' ...
-            '       A2_fw      = %.4g ' char(177) ' %.4g \n' ...
-            '       A1_bw      = %.4g ' char(177) ' %.4g \n' ...
-            '       A2_bw      = %.4g ' char(177) ' %.4g \n' ...
-            '   Cross peaks: \n' ...
-            '       A1_fw      = %.4g ' char(177) ' %.4g \n' ...
-            '       A2_fw      = %.4g ' char(177) ' %.4g \n' ...
-            '       B_fw       = %.4g ' char(177) ' %.4g \n' ...
-            '       A1_bw      = %.4g ' char(177) ' %.4g \n' ...
-            '       A2_bw      = %.4g ' char(177) ' %.4g \n' ...
-            '       B_bw       = %.4g ' char(177) ' %.4g \n' ...
-            '\n'];
-        Output = [[Taus Tau_err];[Amps Amp_err]]';
-        Output = Output(:);
-        fprintf(formatspec,Output);
+            '       A_0        = %.4g ' char(177) ' %.4g \n' ...
+            '       AB_0       = %.4g ' char(177) ' %.4g \n' ...
+            '       B_0        = %.4g ' char(177) ' %.4g \n' ...
+            '       BA_0       = %.4g ' char(177) ' %.4g \n' ...
+            '\n'];             
+%         Output = [Taus Tau_err]';
+        Output = [[Taus Tau_err];[Amps Amp_err]]';   
+        fprintf(formatspec,Output(:));
     end
 else
-    plot_param = start_param;
+    plot_param = start_params;
 end
 %% Plot the data
 % Create figure
@@ -126,12 +103,12 @@ hold(ax_FW,'on');
 hold(ax_BW,'on');
 
 % Plot the diagonal peaks
-plot(ax_FW,time,diagFW,'or','LineWidth',1,'DisplayName','Diagonal - FW');
-plot(ax_BW,time,diagBW,'ob','LineWidth',1,'DisplayName','Diagonal - BW');
+plot(ax_FW,time,diagFW,'or','LineWidth',1,'DisplayName','Diagonal Re(^{13}CO)');
+plot(ax_BW,time,diagBW,'ob','LineWidth',1,'DisplayName','Diagonal Re(^{12}CO)');
 
 % Plot the cross peaks
-plot(ax_FW,time,xpeakFW,'^r','LineWidth',1,'DisplayName','Re(^{13}CO) \rightarrow Re(^{12}CO)');
-plot(ax_BW,time,xpeakBW,'vb','LineWidth',1,'DisplayName','Re(^{13}CO) \leftarrow Re(^{12}CO)');
+plot(ax_FW,time,10.*xpeakFW,'^r','LineWidth',1,'DisplayName','Re(^{13}CO) \rightarrow Re(^{12}CO) \rm{\times10}');
+plot(ax_BW,time,10.*xpeakBW,'vb','LineWidth',1,'DisplayName','Re(^{13}CO) \leftarrow Re(^{12}CO) \rm{\times10}');
 
 % Set axes limits
 axis(ax_FW,'tight');
@@ -140,14 +117,16 @@ axis(ax_BW,'tight');
 %% Plot the fit results
 % Plot the fit/initial guess kinetics (evaluating the function)
 t_values    = linspace(time(1),time(end),500);
-fit_diagFW  = fitfunc_cell{1}(plot_param,t_values);
-fit_diagBW  = fitfunc_cell{2}(plot_param,t_values);
-fit_xpeakFW = fitfunc_cell{3}(plot_param,t_values);
-fit_xpeakBW = fitfunc_cell{4}(plot_param,t_values);
+fitted_data = EnT_kinetics(plot_param,t_values);
+
+fit_diagFW  = fitted_data(:,1);
+fit_xpeakFW = 10.*fitted_data(:,2);
+fit_diagBW  = fitted_data(:,3);
+fit_xpeakBW = 10.*fitted_data(:,4);
 
 plot(ax_FW,t_values,fit_diagFW,'-','LineWidth',1.5,'color','r','DisplayName','Diagonal - FW (Fit)');
-plot(ax_BW,t_values,fit_diagBW,'-','LineWidth',1.5,'color','b','DisplayName','Diagonal - BW (Fit)');
 plot(ax_FW,t_values,fit_xpeakFW,'-','LineWidth',1.5,'color','r','DisplayName','Re(^{13}CO) \rightarrow Re(^{12}CO) (fit)');
+plot(ax_BW,t_values,fit_diagBW,'-','LineWidth',1.5,'color','b','DisplayName','Diagonal - BW (Fit)');
 plot(ax_BW,t_values,fit_xpeakBW,'-','LineWidth',1.5,'color','b','DisplayName','Re(^{13}CO) \leftarrow Re(^{12}CO) (fit)');
 
 hold(ax_FW,'off');
