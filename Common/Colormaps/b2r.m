@@ -53,6 +53,10 @@ red_top     = [1 0 0];
 white_middle= [1 1 1];
 blue_bottom = [0 0 1];
 
+if mod(n_whites,2) ~= 0
+    n_whites    = n_whites - 1;
+end
+
 n_reds      = round((n_total - n_whites/2)/2);
 n_blues     = round((n_total - n_whites/2)/2);
 
