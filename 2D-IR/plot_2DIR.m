@@ -31,7 +31,7 @@ end
 
 %% READ from handles
 % Hardcoded values
-    cut_threshold       = 5; % Percentage of max intensity to cut for plotting
+    cut_threshold       = 20; % Percentage of max intensity to cut for plotting
     LineWidth           = 0.5;
     plot_limittype      = 'Local'; % 'Global' will take min/max of the whole 2D set, while 'Local' will take only the selected region
     interpolate         = 0;

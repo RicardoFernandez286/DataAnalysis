@@ -1255,16 +1255,16 @@ switch handles.IncludeSteadyState.Value
         % Create a new figure with consistent format
         fh = figure();
         fh.Units        = 'pixels';
-        fh.Position(2)  = fh.Position(3)-50;
+        fh.Position(2)  = fh.Position(2)-150;
         fh.Position(3)  = 880;
-        fh.Position(4)  = 575;
+        fh.Position(4)  = 550;
         fh.Color        = [1 1 1];
         % Create the FTIR axis
         ax1             = axes('Parent',fh);
         ax1.Units       = 'pixels';
         ax1.Position    = [75 400 675 125];
         plot(ax1,handles.IRx,handles.IRy,'LineWidth',1.5,'Marker','none','color','black');
-        title(ax1,{handles.datafilename;[handles.rawcorr,' DATA - TRANSIENT SPECTRA';'']},'Interpreter','none')
+%         title(ax1,{handles.datafilename;[handles.rawcorr,' DATA - TRANSIENT SPECTRA';'']},'Interpreter','none')
         ylabel(ax1,'Abs (mOD)','FontWeight','bold','FontSize',13)
         ax1.Units       = 'normalized';
         ax1.FontSize    = 12;

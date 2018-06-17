@@ -283,7 +283,7 @@ case 'Raw'
             reference{m,k}      = reference{m,k}./mean(reference{m,k},1);
           % Now we can calculate the signal (in mOD)
             signal{m,k}         = -1000*log10(probe{m,k}./reference{m,k});
-%             signal{m,k}         = -(probe{m,k}./reference{m,k});
+%             signal{m,k}         = -1000*(probe{m,k}./reference{m,k});
           % Store the size of the interferogram
             size(m,k)           = length(interferogram{m,k});
         end
