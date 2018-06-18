@@ -5,16 +5,16 @@ if fileexist == 2
     try 
         defaultIRdir = readParam('defaultIRdir','C:\GUIoptions.txt');
     catch
-        warning('Detault IR directory not defined in GUIoptions.txt');
+        warning('Default IR directory not defined in GUIoptions.txt');
         defaultIRdir = pwd;
     end
     cd(defaultIRdir);
     [FileName,PathName,FilterIndex] = uigetfile(...
-    {'*.dat;*.csv;*.dpt','ASCII spectra (*.dat,*.csv,*.dpt)';'*.??','Bruker OPUS files (*.??)'}, ...
+    {'*.dat;*.csv;*.dpt','ASCII spectra (*.dat,*.csv,*.dpt)';'*.??','Bruker OPUS files (*.#)'}, ...
     'Select the FTIR spectrum to load...');
 else
     [FileName,PathName,FilterIndex] = uigetfile(...
-    {'*.dat;*.csv;*.dpt','ASCII spectra (*.dat,*.csv,*.dpt)';'*.??','Bruker OPUS files (*.??)'}, ...
+    {'*.dat;*.csv;*.dpt','ASCII spectra (*.dat,*.csv,*.dpt)';'*.??','Bruker OPUS files (*.#)'}, ...
     'Select the FTIR spectrum to load...');
 end
 if FileName ~= 0
@@ -25,11 +25,11 @@ if FileName ~= 0
         case 2
             [y,x,~] = ImportOpus(SteadyIRfile,'RatioAbsorption');
         case 1
-            IRdata =  csvread(SteadyIRfile);
-            x = IRdata(:,1);
-            y = IRdata(:,2);
+            IRdata  =  csvread(SteadyIRfile);
+            x       = IRdata(:,1);
+            y       = IRdata(:,2);
     end
-    % Y data in mODS
+    % Convert Y data to mOD
     y = 1000.*y;
     % Store data in Handles
     handles.IRx = x;

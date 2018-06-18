@@ -145,7 +145,7 @@ case 'normal' % Single click
     if  handles.is_dir(handles.sorted_index(index_selected))
         % Load the data (replace handles) and update the main handles
         error=0;
-        try
+%         try
            % Check the number of t2 delays
            OldNt2delays = length(handles.Population_delay.String);
            %%% Load the data
@@ -168,10 +168,10 @@ case 'normal' % Single click
            guidata(hObject,handles)
            % Delete progress bar
            delete(handles.WaitBar);
-        catch err
-           set(handles.ErrorText,'String', string(err.message));
-           error=1;
-        end
+%         catch err
+%            set(handles.ErrorText,'String', string(err.message));
+%            error=1;
+%         end
         if error == 0
             % Update the edit controls
             handles = UpdateEdits_2DIR(handles,1);
@@ -566,9 +566,11 @@ for i=1:L
     end
 end
 
-% Create a new figure
+% Create a new figure with consistent format
 fh = figure();
-fh.Color = [1 1 1];
+fh.Position(3)  = 800;
+fh.Position(4)  = 425;
+fh.Color        = [1 1 1];
 
 % Define the axes
 axes2 = axes('Parent',fh);
@@ -576,6 +578,12 @@ axes(axes2);
 
 % Plot the data
 cmap=colormap(othercolor('Mrainbow',L));
+
+kindata = kindata./max(abs(kindata(:)));
+kindata(:,2) = 10*kindata(:,2);
+label = 'Normalised 2D signal (a.u.)';
+caption{2} = ['(' num2str(round(PumpAxis{1,1}(pump_index(1,2)))) ', ' num2str(ProbeAxis(probe_index(2))) ') cm^{-1} \times10'];
+
 for n=1:L
    plot(handles.t2delays,kindata(:,n),'LineWidth',2,'Marker','o','MarkerSize',2,'color',cmap(n,:));
    hold on
@@ -585,7 +593,7 @@ end
 set(gca,'FontSize',14)
 xlabel('t_{2} delay (ps)','FontSize',14,'FontWeight','bold');
 ylabel(label,'FontSize',14,'FontWeight','bold')
-title([handles.datafilename;'WAITING TIME KINETICS';''],'Interpreter','none','FontSize',10)
+% title([handles.datafilename;'WAITING TIME KINETICS';''],'Interpreter','none','FontSize',10)
 axis tight
 
 % Show only positive t2 times
@@ -602,6 +610,10 @@ set(axes2,'xscale','lin');
 % Add zero line
 hline = refline(axes2,[0 0]); hline.Color = [0.5 0.5 0.5];
 set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
+
+axes2.Units     = 'pixels';
+axes2.Position  = [75 75 675 320];
+axes2.Units     = 'normalized';
 
 % % Decide whether to save the plotted traces or not
 % if handles.DoSaveTraces==1
@@ -779,11 +791,18 @@ switch slice_options{slice_typeindx}
         switch handles.InteractiveModeTick.Value
             case 1
                 % Select points interactively, to finish hit RETURN
-                handles = SelectTraces(handles,0);     
+                handles = SelectTraces(handles,0); 
+                % Separate the values into pump and probe, according to how the data is plotted    
+                switch plot_pumpdirection
+                    case 'Horizontal'
+                        probe_search    = handles.SelTraces(:,2); 
+                    case 'Vertical'
+                        probe_search    = handles.SelTraces(:,1); 
+                end
             case 0
                 handles.SelTraces = inputdlg('Enter the probe wavenumbers to plot:',...
                      'Input probe wavenumbers to plot:', [1 60]);
-                handles.SelTraces = str2num(handles.SelTraces{:});
+                probe_search = str2num(handles.SelTraces{:});
         end
         L = size(handles.SelTraces,1);
         
@@ -800,15 +819,7 @@ switch slice_options{slice_typeindx}
         
         % Initialise variables
         data                = zeros(length(PumpAxis{1,1}(pump_indexes{m})),Ndelays,L);
-        
-        % Separate the values into pump and probe, according to how the data is plotted    
-        switch plot_pumpdirection
-            case 'Horizontal'
-                probe_search    = handles.SelTraces(:,2); 
-            case 'Vertical'
-                probe_search    = handles.SelTraces(:,1); 
-        end
-        
+              
         % Get the probe indexes
         probe_indexes           = findClosestId2Val(ProbeAxis,probe_search);
         
