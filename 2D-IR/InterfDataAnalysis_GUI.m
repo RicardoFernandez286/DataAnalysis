@@ -145,7 +145,7 @@ case 'normal' % Single click
     if  handles.is_dir(handles.sorted_index(index_selected))
         % Load the data (replace handles) and update the main handles
         error=0;
-%         try
+        try
            % Check the number of t2 delays
            OldNt2delays = length(handles.Population_delay.String);
            %%% Load the data
@@ -168,10 +168,10 @@ case 'normal' % Single click
            guidata(hObject,handles)
            % Delete progress bar
            delete(handles.WaitBar);
-%         catch err
-%            set(handles.ErrorText,'String', string(err.message));
-%            error=1;
-%         end
+        catch err
+           set(handles.ErrorText,'String', string(err.message));
+           error=1;
+        end
         if error == 0
             % Update the edit controls
             handles = UpdateEdits_2DIR(handles,1);
@@ -580,7 +580,9 @@ axes(axes2);
 cmap=colormap(othercolor('Mrainbow',L));
 
 kindata = kindata./max(abs(kindata(:)));
-kindata(:,2) = 10*kindata(:,2);
+% kindata(:,2) = 10.*kindata(:,2);
+% kindata(:,3:4) = kindata(:,3:4)./max(max(abs(kindata(:,3:4))));
+% kindata(:,4) = 10.*kindata(:,4);
 label = 'Normalised 2D signal (a.u.)';
 caption{2} = ['(' num2str(round(PumpAxis{1,1}(pump_index(1,2)))) ', ' num2str(ProbeAxis(probe_index(2))) ') cm^{-1} \times10'];
 
@@ -615,11 +617,11 @@ axes2.Units     = 'pixels';
 axes2.Position  = [75 75 675 320];
 axes2.Units     = 'normalized';
 
-% % Decide whether to save the plotted traces or not
+% Decide whether to save the plotted traces or not
 % if handles.DoSaveTraces==1
 %     wavenumbers=transpose(handles.cmprobe(k));
 %     filename=char(strcat(handles.CurrDir.String,filesep,handles.datafilename,'_traces.dat'));
-%     dlmwrite(filename,[[0;handles.delays] [wavenumbers;kindata]])
+    dlmwrite('Kinetic traces.dat',[[[0;PumpAxis{1,1}(pump_index(1,:))],[0,ProbeAxis(probe_index)]']';[handles.t2delays(2:end),kindata(2:end,:)]]);
 % end
 guidata(hObject,handles)
 
@@ -702,30 +704,27 @@ switch slice_options{slice_typeindx}
         set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
         
     case 'Along fixed pump WL'
-        % Get the desired values to plot from user
-        handles.SelTraces = [];
         switch handles.InteractiveModeTick.Value
             case 1
                 % Select points interactively, to finish hit RETURN
-                handles = SelectTraces(handles,0);     
+                handles = SelectTraces(handles,0); 
+                % Separate the values into pump and probe, according to how the data is plotted    
+                switch plot_pumpdirection
+                    case 'Horizontal'
+                        pump_search    = handles.SelTraces(:,2); 
+                    case 'Vertical'
+                        pump_search    = handles.SelTraces(:,1); 
+                end
             case 0
                 handles.SelTraces = inputdlg('Enter the pump wavenumbers to plot:',...
                      'Input pump wavenumbers to plot:', [1 60]);
-                handles.SelTraces = str2num(handles.SelTraces{:});
+                pump_search = str2num(handles.SelTraces{:})';
         end
-        L = size(handles.SelTraces,1);
+        L = length(pump_search);
 
         % Initialise variables
         pump_indexes    = cell(Ndelays,1);
         data            = zeros(length(ProbeAxis),Ndelays,L);
-        
-        % Separate the values into pump and probe, according to how the data is plotted    
-        switch plot_pumpdirection
-            case 'Horizontal'
-                pump_search     = handles.SelTraces(:,1); 
-            case 'Vertical'
-                pump_search     = handles.SelTraces(:,2); 
-        end
         
         % Get the data to be plotted
         for m=1:Ndelays
@@ -804,7 +803,7 @@ switch slice_options{slice_typeindx}
                      'Input probe wavenumbers to plot:', [1 60]);
                 probe_search = str2num(handles.SelTraces{:});
         end
-        L = size(handles.SelTraces,1);
+        L = size(probe_search);
         
         % Get the segment of the pump axis
         for m=1:Ndelays

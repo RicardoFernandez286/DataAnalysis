@@ -338,10 +338,19 @@ if m==1 && k==1
         [~,maxindex]            = max(magnitude_FFTsig{m,k}(fitrange,:));
         Npixels                 = size(magnitude_FFTsig{m,k},2);
         pixels                  = transpose(1:1:Npixels);
-      % Do the fit
+      % Do the fit [OLD WAY]
         scattering_maxima       = PumpAxis{m,k}(fitrange(maxindex));
-        freq_coeff              = polyfit(pixels,scattering_maxima,probe_fitorder);
-        freq_fit                = transpose(polyval(freq_coeff,pixels));
+%         freq_coeff              = polyfit(pixels,scattering_maxima,probe_fitorder);
+%         freq_fit                = transpose(polyval(freq_coeff,pixels));
+        switch probe_fitorder
+            case 1
+                model       = 'poly1';
+            case 2
+                model       = 'poly2';
+        end
+        warning('off','curvefit:fit:iterationLimitReached');
+        mdl                     = fit(pixels,scattering_maxima,model,'Robust','Bisquare');
+        freq_fit                = mdl(pixels);
       % Decide which kind of probe axis to use. It will anyway store all of them
         switch probe_calib
             case 1

@@ -259,7 +259,6 @@ case 'Horizontal'
     xlim(plotaxis,[minWL,maxWL]);
 end
 
-
 % Show the axis legends
 switch plot_axislegend
     case 1
@@ -286,7 +285,7 @@ end
 t2_delay_ps = num2str(t2_delay_ps,'%.3g');
 
 text(0.05,0.925,['t_{2} = ' t2_delay_ps ' ' timescale],...
-    'Units','normalized','FontSize',12,'FontWeight','bold');
+    'Units','normalized','FontSize',12,'FontWeight','bold','BackgroundColor',[1 1 1]);
 
 % % Make the figure square
 % pbaspect([1 1 1])
