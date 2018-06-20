@@ -58,7 +58,7 @@ The program has the following features:
 - [x] Secondary graph showing time-domain data for interferometer ("pixel 0", in V) and for any pixel in the MCT detector (in mOD).
 - [x] Plotting of waiting time dependence (kinetics) of any signal in the 2D-IR spectrum.
 - [x] Plotting of slices from the 2D-IR data (diagonal, fixed pump or probe WL, integrated pump or probe).
-- [ ] Plotting and fitting of "integral dynamics" - a unified module to calculate the sum, difference and so on of different peaks.
+- [x] Plotting and fitting of "integral dynamics" - a unified module to calculate the volume, sum, difference and so on of different peaks. [In progress!]
 - [ ] Spectral diffusion module, which allows analysis of lineshape parameters (CLS, NLS, etc.) and fitting of their evolution.
 
 The unchecked features are still work in progress, incomplete or missing.
@@ -81,4 +81,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 # Acknowledgments
 * Prof. Dr. Peter Hamm (for being my Ph.D. advisor and helpful discussions).
 * Dr. Jan Helbing (for helpful discussions).
-* Dr. Kerstin Oppelt (for using this software, helpful discussions and debugging).
+* Dr. Kerstin Oppelt (for using this software, helpful discussions and for finding bugs).
