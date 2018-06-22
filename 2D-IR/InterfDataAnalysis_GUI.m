@@ -712,9 +712,9 @@ switch slice_options{slice_typeindx}
                 % Separate the values into pump and probe, according to how the data is plotted    
                 switch plot_pumpdirection
                     case 'Horizontal'
-                        pump_search    = handles.SelTraces(:,2); 
-                    case 'Vertical'
                         pump_search    = handles.SelTraces(:,1); 
+                    case 'Vertical'
+                        pump_search    = handles.SelTraces(:,2); 
                 end
             case 0
                 handles.SelTraces = inputdlg('Enter the pump wavenumbers to plot:',...
@@ -804,7 +804,7 @@ switch slice_options{slice_typeindx}
                      'Input probe wavenumbers to plot:', [1 60]);
                 probe_search = str2num(handles.SelTraces{:});
         end
-        L = size(probe_search);
+        L = size(probe_search,1);
         
         % Get the segment of the pump axis
         for m=1:Ndelays
@@ -818,7 +818,7 @@ switch slice_options{slice_typeindx}
         end
         
         % Initialise variables
-        data                = zeros(length(PumpAxis{1,1}(pump_indexes{m})),Ndelays,L);
+        data                    = zeros(length(PumpAxis{1,1}(pump_indexes{m})),Ndelays,L);
               
         % Get the probe indexes
         probe_indexes           = findClosestId2Val(ProbeAxis,probe_search);
