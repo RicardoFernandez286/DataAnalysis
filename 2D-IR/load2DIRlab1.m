@@ -30,7 +30,7 @@ function  handles = load2DIRlab1(handles)
 % handles.rootdir=rootdir;
 
 %% HARDCODED Settings
-autodetect_datatype = 1;
+autodetect_datatype = 0;
 datatype = 'Raw'; % 'Raw' or 'Signal'
 
 %% READ from handles
@@ -49,8 +49,14 @@ handles.ErrorText.String    = "";
     cmprobe         = csvread([filename '_wavenumbers.csv']);
     bins            = csvread([filename '_bins.csv']);
     t2delays        = csvread([filename '_delays.csv']);
+    % TEMP dir story
     tempdir         = [rootdir filesep datafilename filesep 'temp'];
-
+    tempdirOUT      = [rootdir filesep datafilename 'temp'];
+    % Check if the temp dir is outside (Lab 1) or inside the data folder (Lab 4)
+    if exist(tempdir,'dir') == 0 && exist(tempdirOUT,'dir') ~= 0
+        tempdir     = tempdirOUT;
+    end
+    
 % Continue loading other stuff
 Nspectra        = csvread([filename '_NSpectra.csv']);
 Ndatastates     = csvread([filename '_Ndatastates.csv']);
@@ -180,7 +186,7 @@ elseif preview_mode == 1 % IF THE MEASUREMENT IS STILL ONGOING AND THE FIRST SCA
                         n=n+1;
                         for m=0:Ndelays-1
                             endings{m+1,n} = ['_ds' num2str(k) '_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '_0.csv'];
-                            ShortEndings{m+1,round(n/Ndatastates)} = ['_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '_0.csv'];
+%                             ShortEndings{m+1,round(n/Ndatastates)} = ['_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '_0.csv'];
                         end
                     end
             end
