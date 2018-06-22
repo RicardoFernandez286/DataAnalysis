@@ -576,16 +576,17 @@ fh.Color        = [1 1 1];
 axes2 = axes('Parent',fh);
 axes(axes2);
 
-% Plot the data
-cmap=colormap(othercolor('Mrainbow',L));
-
-kindata = kindata./max(abs(kindata(:)));
+% % Prepare plot for EnT
+% kindata = -kindata;
+% kindata(:,1:2) = kindata(:,1:2)./max(max(abs(kindata(:,1:2))));
 % kindata(:,2) = 10.*kindata(:,2);
 % kindata(:,3:4) = kindata(:,3:4)./max(max(abs(kindata(:,3:4))));
 % kindata(:,4) = 10.*kindata(:,4);
-label = 'Normalised 2D signal (a.u.)';
-caption{2} = ['(' num2str(round(PumpAxis{1,1}(pump_index(1,2)))) ', ' num2str(ProbeAxis(probe_index(2))) ') cm^{-1} \times10'];
+% label = 'Normalised 2D signal (a.u.)';
+% caption{2} = ['(' num2str(round(PumpAxis{1,1}(pump_index(1,2)))) ', ' num2str(ProbeAxis(probe_index(2))) ') cm^{-1} \times10'];
 
+% Plot the data
+cmap=colormap(othercolor('Mrainbow',L));
 for n=1:L
    plot(handles.t2delays,kindata(:,n),'LineWidth',2,'Marker','o','MarkerSize',2,'color',cmap(n,:));
    hold on
@@ -621,7 +622,7 @@ axes2.Units     = 'normalized';
 % if handles.DoSaveTraces==1
 %     wavenumbers=transpose(handles.cmprobe(k));
 %     filename=char(strcat(handles.CurrDir.String,filesep,handles.datafilename,'_traces.dat'));
-    dlmwrite('Kinetic traces.dat',[[[0;PumpAxis{1,1}(pump_index(1,:))],[0,ProbeAxis(probe_index)]']';[handles.t2delays(2:end),kindata(2:end,:)]]);
+%     dlmwrite('Kinetic traces.dat',[[[0;PumpAxis{1,1}(pump_index(1,:))],[0,ProbeAxis(probe_index)]']';[handles.t2delays(2:end),kindata(2:end,:)]]);
 % end
 guidata(hObject,handles)
 

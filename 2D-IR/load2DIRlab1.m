@@ -30,7 +30,7 @@ function  handles = load2DIRlab1(handles)
 % handles.rootdir=rootdir;
 
 %% HARDCODED Settings
-autodetect_datatype = 1;
+autodetect_datatype = 0;
 datatype = 'Raw'; % 'Raw' or 'Signal'
 
 %% READ from handles
