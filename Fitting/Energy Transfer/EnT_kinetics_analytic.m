@@ -20,10 +20,10 @@ kBWf = kFW./factor;
 kFWb = kBW.*factor;
 
 % FIRST DECAY
-eqns_fw(1)     = diff(A,t)     == -k1*A  - kFWb*A  + kBW*aB;
-eqns_fw(2)     = diff(aB,t)    == -k1*aB - kBW*aB + kFWb*A;
-eqns_bw(1)     = diff(bA,t)    == -k1*bA - kFW*bA + kBWf*B;
-eqns_bw(2)     = diff(B,t)     == -k1*B  - kBWf*B  + kFW*bA;
+eqns_fw(1)     = diff(A,t)     == -k1*A  - kFW*A  + kBWf*aB;
+eqns_fw(2)     = diff(aB,t)    == -k1*aB - kBWf*aB + kFW*A;
+eqns_bw(1)     = diff(bA,t)    == -k1*bA - kFWb*bA + kBW*B;
+eqns_bw(2)     = diff(B,t)     == -k1*B  - kBW*B  + kFWb*bA;
 
 cond_fw(1)     = A(time(1))  == fw(1,1);
 cond_fw(2)     = aB(time(1)) == 0;
@@ -38,10 +38,10 @@ solBW = dsolve(eqns_bw,cond_bw);
 % eqns_fw2(2)     = diff(aB,t)    == -k2*aB - kBW*aB + kFW*A;
 % eqns_bw2(1)     = diff(bA,t)    == -k2*bA - kFW*bA + kBW*B;
 % eqns_bw2(2)     = diff(B,t)     == -k2*B  - kBW*B  + kFW*bA;
-eqns_fw2(1)     = diff(A,t)     == -k2*A  - kFWb*A  + kBW*aB;
-eqns_fw2(2)     = diff(aB,t)    == -k2*aB - kBW*aB + kFWb*A;
-eqns_bw2(1)     = diff(bA,t)    == -k2*bA - kFW*bA + kBWf*B;
-eqns_bw2(2)     = diff(B,t)     == -k2*B  - kBWf*B  + kFW*bA;
+eqns_fw2(1)     = diff(A,t)     == -k2*A  - kFW*A  + kBWf*aB;
+eqns_fw2(2)     = diff(aB,t)    == -k2*aB - kBWf*aB + kFW*A;
+eqns_bw2(1)     = diff(bA,t)    == -k2*bA - kFWb*bA + kBW*B;
+eqns_bw2(2)     = diff(B,t)     == -k2*B  - kBW*B  + kFWb*bA;
 
 cond_fw2(1)     = A(time(1))  == fw(1,1);
 cond_fw2(2)     = aB(time(1)) == 0;
