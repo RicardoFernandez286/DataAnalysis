@@ -8,7 +8,7 @@ function plot_2DIR(handles,plotaxis)
 % Outputs:
 %     plot
 % 
-% Ricardo Fernández-Terán / 24.03.2018 / v2.1c
+% Ricardo Fernández-Terán / 05.07.2018 / v2.5a
 
 debug=0;
 %% DEBUG/MANUAL:
@@ -59,8 +59,16 @@ if debug==0
     popdelay            = handles.Population_delay.Value;
     symcolrange         = handles.SymColRange_tick.Value;
     EditProbeAxis       = handles.EditProbeAxis_tick.Value;
-    
-    t2_delay_ps         = str2double(char(handles.Population_delay.String(popdelay)));
+    % Determine whether the data is transient 2D or not, then read the delays
+    if handles.DataTypeMenu.Value == 3
+        Transient2D         = 1;
+        delays              = str2num(char(handles.Population_delay.String(popdelay,:)));
+        t2_delay_ps         = delays(1);
+        UV_delay_ps         = delays(2);
+    else
+        Transient2D         = 0;
+        t2_delay_ps         = str2double(char(handles.Population_delay.String(popdelay)));
+    end
     
     LineColor           = [1 1 1]*0;
     axes(plotaxis);
@@ -284,8 +292,26 @@ else
 end
 t2_delay_ps = num2str(t2_delay_ps,'%.3g');
 
-text(0.05,0.925,['t_{2} = ' t2_delay_ps ' ' timescale],...
-    'Units','normalized','FontSize',12,'FontWeight','bold','BackgroundColor',[1 1 1]);
+if Transient2D
+    if abs(UV_delay_ps) < 1
+    UVtimescale   = 'fs';
+    UV_delay_ps = UV_delay_ps*1000;
+    elseif abs(UV_delay_ps) > 1000
+        UVtimescale   = 'ns';
+        UV_delay_ps = UV_delay_ps/1000;
+    else
+        UVtimescale   = 'ps';
+    end
+    UV_delay_ps = num2str(UV_delay_ps,'%.3g');
+    
+    text(0.05,0.925,['t_{2} = ' t2_delay_ps ' ' timescale '; t_{UV} = ' UV_delay_ps ' ' UVtimescale],...
+        'Units','normalized','FontSize',12,'FontWeight','bold','BackgroundColor',[1 1 1]);
+
+% If NOT transient 2D
+else
+    text(0.05,0.925,['t_{2} = ' t2_delay_ps ' ' timescale],...
+        'Units','normalized','FontSize',12,'FontWeight','bold','BackgroundColor',[1 1 1]);
+end
 
 % % Make the figure square
 % pbaspect([1 1 1])

@@ -26,7 +26,7 @@ function handles = process2DIR(handles,ReProcess)
 %     The calculation routines were updated accordingly in MESS and now the chopper signal and all
 %     datastates should be calculated properly.
 %
-% Ricardo Fernández-Terán / 25.04.2018 / v2.1b
+% Ricardo Fernández-Terán / 05.07.2018 / v3.0a
 
 %% Choose between debug/manual mode and normal mode
 debug=0;
@@ -71,6 +71,7 @@ if debug==1
     else
         Ndatastates = 1;
     end
+    Nspectra        = handles.Nspectra;
     Nbins           = handles.Nbins;
     interferogram	= handles.interferogram;
     signal		    = handles.signal;
@@ -112,6 +113,7 @@ if debug==0 % Only during normal operation
     else
         Ndatastates = 1;
     end
+    Nspectra        = handles.Nspectra;
     Nbins           = handles.Nbins;
     interferogram	= handles.interferogram;
     signal		    = handles.signal;
@@ -125,12 +127,21 @@ if debug==0 % Only during normal operation
     else
         zeropad_factor  = 0;
     end
+    % Determine whether the data is transient 2D or not, then read the mode
+    if handles.DataTypeMenu.Value == 3
+        Transient2D         = 1;
+        Transient2D_mode    = handles.Transient2D_mode.Value;
+    else
+        Transient2D         = 0;
+        Transient2D_mode    = 0;
+    end
+    
     zeropad_next2k  = handles.zeropad_next2k.Value;
     apodise_method  = char(handles.apodise_method.String{handles.apodise_method.Value});
     phase_method    = char(handles.phase_method.String{handles.phase_method.Value});
     phase_points    = str2double(handles.phase_Npoints.String);
     probe_calib     = handles.Probe_Calibration.Value;
-    binzero         = num2cell(-1*ones(Ndelays,Ndatastates));
+    binzero         = num2cell(-1*ones(Ndelays,Ndatastates*Nspectra));
     pumpcorrection  = handles.PumpCorrection_tick.Value;
     % If there is a calibrated WL file in the current ROOTDIR, use it
     if probe_calib == 0 && exist([rootdir filesep 'CalibratedProbe.csv'],'file') == 2
@@ -166,11 +177,11 @@ end
     end
     
 %% Process the data
-for k=1:Ndatastates
+for k=1:Ndatastates*Nspectra
 for m=1:Ndelays
     % Update the Wait Bar
     progress = progress + 1;
-    waitbar((progress/(Ndatastates*Ndelays*2)+0.5),handles.WaitBar,['Processing data... (' num2str(progress) ' of ' num2str(Ndatastates*Ndelays) ')']);
+    waitbar((progress/(Ndatastates*Ndelays*Nspectra*2)+0.5),handles.WaitBar,['Processing data... (' num2str(progress) ' of ' num2str(Ndatastates*Ndelays*Nspectra) ')']);
     
     % Remove background (and slow fluctuations in the data, if selected)
     if ReProcess == 0
@@ -378,6 +389,29 @@ end
 
 end % Ndelays
 end % Ndatastates
+
+%% Transient 2D IR processing
+% % Determine whether it is a transient 2D dataset or not, then do the stuff
+if Transient2D
+    switch Transient2D_mode
+        case 1 % Show spectrum 1
+            PROC_2D_DATA = PROC_2D_DATA(:,1);
+        case 2 % Show spectrum 2
+            PROC_2D_DATA = PROC_2D_DATA(:,2);
+        case 3 % Show difference 1-2
+            for m=1:Ndelays
+                PROC_2D_DATA{m,1} = PROC_2D_DATA{m,1} - PROC_2D_DATA{m,2};
+            end
+        case 4 % Show difference 2-1
+            for m=1:Ndelays
+                PROC_2D_DATA{m,1} = PROC_2D_DATA{m,2} - PROC_2D_DATA{m,1};
+            end
+        case 5 % Show sum
+            for m=1:Ndelays
+                PROC_2D_DATA{m,1} = PROC_2D_DATA{m,1} + PROC_2D_DATA{m,2};
+            end
+    end
+end
 
 %% WRITE to handles
     handles.ProbeAxis           = ProbeAxis;

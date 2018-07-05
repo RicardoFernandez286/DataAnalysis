@@ -44,7 +44,7 @@ The program has the following features:
 The unchecked features are still work in progress, incomplete or missing.
 
 # 4. 2D-IR data analysis routine
-The pump-probe data analysis routine can be called by running the `InterfDataAnalysis_GUI` command from the MATLAB command line.
+The 2D-IR data analysis routine can be called by running the `InterfDataAnalysis_GUI` command from the MATLAB command line.
 The initial screen contains all the features available so far.
 
 The program has the following features:
@@ -59,6 +59,8 @@ The program has the following features:
 - [x] Plotting of waiting time dependence (kinetics) of any signal in the 2D-IR spectrum.
 - [x] Plotting of slices from the 2D-IR data (diagonal, fixed pump or probe WL, integrated pump or probe).
 - [x] Plotting and fitting of "integral dynamics" - a unified module to calculate the volume, sum, difference and so on of different peaks. [In progress!]
+- [x] Processing and plotting of transient 2D-IR data.
+- [ ] Processing, plotting and calculation of 2D-IR anisotropy data.
 - [ ] Spectral diffusion module, which allows analysis of lineshape parameters (CLS, NLS, etc.) and fitting of their evolution.
 
 The unchecked features are still work in progress, incomplete or missing.

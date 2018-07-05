@@ -22,7 +22,7 @@ function  handles = load2DIRlab1(handles)
 %     interferogram     (Cell array)
 %     signal			(Cell array)
 %
-% Ricardo Fernández-Terán / 23.03.2018 / v1.8c
+% Ricardo Fernández-Terán / 05.07.2018 / v2.0a
 
 %% DEBUG
 % datafilename = 'R3_mTiO2_Re1213_MeOH_4PM_2D_154022';
@@ -30,7 +30,7 @@ function  handles = load2DIRlab1(handles)
 % handles.rootdir=rootdir;
 
 %% HARDCODED Settings
-autodetect_datatype = 0;
+autodetect_datatype = 1;
 datatype = 'Raw'; % 'Raw' or 'Signal'
 
 %% READ from handles
@@ -49,6 +49,13 @@ handles.ErrorText.String    = "";
     cmprobe         = csvread([filename '_wavenumbers.csv']);
     bins            = csvread([filename '_bins.csv']);
     t2delays        = csvread([filename '_delays.csv']);
+    
+    % Determine whether the data is transient 2D or not, then read the transient delays
+    if handles.DataTypeMenu.Value == 3
+        transient_delays    = csvread([filename '_transientDelays.csv']);
+        t2delays            = [t2delays, transient_delays];
+    end
+        
     % TEMP dir story
     tempdir         = [rootdir filesep datafilename filesep 'temp'];
     tempdirOUT      = [rootdir filesep datafilename 'temp'];
@@ -291,7 +298,7 @@ case 'Raw'
             signal{m,k}         = -1000*log10(probe{m,k}./reference{m,k});
 %             signal{m,k}         = -1000*(probe{m,k}./reference{m,k});
           % Store the size of the interferogram
-            size(m,k)           = length(interferogram{m,k});
+            Int_size(m,k)           = length(interferogram{m,k});
         end
     end
     
@@ -300,7 +307,7 @@ case 'Raw'
     % All data should have the same size
     for k=1:Ndatastates*Nslowmod*Ninterleave
         for m=1:Ndelays
-            startcut            = size(m,k)-min(size);
+            startcut            = Int_size(m,k)-min(Int_size);
             count{m,k}          = count{m,k}(startcut+1:end);
             probe{m,k}          = probe{m,k}(startcut+1:end,:);
             reference{m,k}      = reference{m,k}(startcut+1:end,:);
@@ -390,12 +397,12 @@ case 'Raw'
     end
     
 case 'Signal'
-    for k=1:Nslowmod*Ninterleave
+    for k=1:Nslowmod*Ninterleave*Nspectra
     for m=1:Ndelays
         Ndatastates = 1;
         % Update the Wait Bar
         progress = progress+1;
-        waitbar(progress/(Nslowmod*Ndelays*Ninterleave*2),handles.WaitBar,['Loading data (signal) - Reading file ' num2str(progress) ' of ' num2str(Nslowmod*Ndelays*Ninterleave)]);
+        waitbar(progress/(Nslowmod*Ndelays*Ninterleave*Nspectra*2),handles.WaitBar,['Loading data (signal) - Reading file ' num2str(progress) ' of ' num2str(Nslowmod*Ndelays*Ninterleave*Nspectra)]);
       % Counts here are all 1's. Load them to ensure consistency...
         count{m,k}          = csvread([filename '_count' ShortEndings{m,k}]);
       % Load the interferogram and signal
@@ -411,12 +418,12 @@ case 'Signal'
         interferogram{m,k}  = interferogram{m,k}(start_nNaN(m,k):end_nNaN(m,k));
         t1delays{m,k}       = bins(start_nNaN(m,k):end_nNaN(m,k),:);
       % Store the size of the interferogram
-        size(m,k)           = length(interferogram{m,k});
+        Int_size(m,k)           = length(interferogram{m,k});
     end
     end
     for m=1:Ndelays
     % Cut the data to equal length
-        startcut            = size(m,k)-min(size);
+        startcut            = Int_size(m,k)-min(Int_size);
         count{m,k}          = count{m,k}(startcut+1:end);
         interferogram{m,k}  = interferogram{m,k}(startcut+1:end);
         signal{m,k}         = signal{m,k}(startcut+1:end,:);
@@ -444,9 +451,14 @@ end
 
 %% Sort the data in increasing t2 delays
 % These are needed
-[t2delays,delay_index] = sort(t2delays,1);
-signal                 = signal(delay_index);
-interferogram          = interferogram(delay_index);
+if size(t2delays,2) == 2
+    [~,delay_index] = sort(t2delays(:,2),1);
+else
+    [~,delay_index] = sort(t2delays(:,1),1);
+end
+t2delays               = t2delays(delay_index,:);
+signal                 = signal(delay_index,:);
+interferogram          = interferogram(delay_index,:);
 
 % These are also sorted for consistency
 if strcmp(datatype,'Raw')
@@ -459,7 +471,7 @@ end
 %% WRITE to handles
 handles.cmprobe       =	cmprobe;
 handles.bins          =	bins;
-handles.t2delays      =	t2delays/1000; % in ps!
+handles.t2delays      =	t2delays./1000; % in ps!
 handles.Ndelays       =	Ndelays;
 handles.Nspectra      =	Nspectra;
 handles.Ndatastates   =	Ndatastates;

@@ -22,11 +22,12 @@ function varargout = InterfDataAnalysis_GUI(varargin)
 
 % Edit the above text to modify the response to help InterfDataAnalysis_GUI
 
-% Last Modified by GUIDE v2.5 08-Jun-2018 14:18:51
+% Last Modified by GUIDE v2.5 05-Jul-2018 10:30:43
 
-% Ricardo Fernández-Terán, v2.9a - 29.05.2018
+% Ricardo Fernández-Terán, v3.0b - 05.07.2018
 
 % ----CHANGELOG:
+% * Added compatibility with transient 2D IR datasets
 % * Updated plotting routine: now the contour levels are defined based on min/max/# levels
 % * Updated GUI features, including progress bar.
 % * Implemented plotting of t2 kinetics and spectral slices (integrated still pending).
@@ -37,6 +38,7 @@ function varargout = InterfDataAnalysis_GUI(varargin)
 % ----PENDING:
 % * Movie, actions of most of the buttons :)
 % * Plot Z range control in main screen (!!)
+% * Anisotropy calculations from two datasets
 
 
 % Begin initialization code - DO NOT EDIT
@@ -153,12 +155,15 @@ case 'normal' % Single click
                case 1 % 2D-IR Lab 1 & Lab 4 (new)
                    handles = load2DIRlab1(handles);
                case 2 % 2D-IR Lab 4 (old)
+                   % Not implemented
+               case 3 % Transient 2D-IR
+                   handles = load2DIRlab1(handles);
            end
            guidata(hObject,handles)
            %%% Process the data
            handles = process2DIR(handles,0);
            % Set t2 delay control values
-           handles.Population_delay.String = string(handles.t2delays);
+           handles.Population_delay.String = num2str(handles.t2delays);
            % Ensure that datasets with less t2 delays are loaded correctly
            NewNt2delays = length(handles.t2delays);
            if NewNt2delays < OldNt2delays
@@ -289,6 +294,13 @@ guidata(hObject,handles)
 
 % --- Executes on selection change in DataTypeMenu.
 function DataTypeMenu_Callback(hObject, eventdata, handles)
+if handles.DataTypeMenu.Value == 3
+    handles.Transient2D_text.Visible = 'On';
+    handles.Transient2D_mode.Visible = 'On';
+else
+    handles.Transient2D_text.Visible = 'Off';
+    handles.Transient2D_mode.Visible = 'Off';
+end
 
 % --- Executes during object creation, after setting all properties.
 function DataTypeMenu_CreateFcn(hObject, eventdata, handles)
@@ -1458,3 +1470,32 @@ end
 
 function EditProbeAxis_tick_Callback(hObject, eventdata, handles)
 % This shouldn't do anything
+
+
+% --- Executes on selection change in Transient2D_mode.
+function Transient2D_mode_Callback(hObject, eventdata, handles)
+% Reprocess the data without reloading
+handles = process2DIR(handles,1);
+guidata(hObject,handles);
+% Clear error string
+set(handles.ErrorText,'String', "");
+% Update the edit controls
+handles = UpdateEdits_2DIR(handles,1);
+% Plot the data in the main window (for preview)
+plot_2DIR(handles,handles.MainAxes);   
+set(handles.MainAxes,'Visible','On')
+% Generate the secondary plot (show phasing data by default)
+SecondaryPlot(handles,handles.SecondaryAxes,'ph');
+set(handles.SecondaryAxes,'Visible','On')
+    handles.ShowTimeDomain.Value = 0;
+    handles.ShowProbeCalibration.Value = 0;
+    handles.ShowPhasing.Value = 1;
+% Delete progress bar
+delete(handles.WaitBar);
+
+
+% --- Executes during object creation, after setting all properties.
+function Transient2D_mode_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
