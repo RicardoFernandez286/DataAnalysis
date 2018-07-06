@@ -24,7 +24,7 @@ function varargout = InterfDataAnalysis_GUI(varargin)
 
 % Last Modified by GUIDE v2.5 05-Jul-2018 10:30:43
 
-% Ricardo Fernández-Terán, v3.0b - 05.07.2018
+% Ricardo Fernández-Terán, v3.0c - 06.07.2018
 
 % ----CHANGELOG:
 % * Added compatibility with transient 2D IR datasets
@@ -80,7 +80,7 @@ else
 end
 
 % Update version text string
-handles.VersionText.String = "v2.9a - 29.05.2018";
+handles.VersionText.String = "v3.0c - 06.07.2018";
 
 % Disable annoying warnings
 warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
@@ -150,6 +150,7 @@ case 'normal' % Single click
         try
            % Check the number of t2 delays
            OldNt2delays = length(handles.Population_delay.String);
+           Transient2D  = 0;
            %%% Load the data
            switch handles.DataTypeMenu.Value
                case 1 % 2D-IR Lab 1 & Lab 4 (new)
@@ -157,7 +158,8 @@ case 'normal' % Single click
                case 2 % 2D-IR Lab 4 (old)
                    % Not implemented
                case 3 % Transient 2D-IR
-                   handles = load2DIRlab1(handles);
+                   handles      = load2DIRlab1(handles);
+                   Transient2D  = 1;
            end
            guidata(hObject,handles)
            %%% Process the data
@@ -165,10 +167,11 @@ case 'normal' % Single click
            % Set t2 delay control values
            handles.Population_delay.String = num2str(handles.t2delays);
            % Ensure that datasets with less t2 delays are loaded correctly
-           NewNt2delays = length(handles.t2delays);
+           NewNt2delays = size(handles.t2delays,1);
            if NewNt2delays < OldNt2delays
                handles.Population_delay.Value = 1;
            end
+           handles.t2delays = handles.t2delays(:,1);
            % Update handles
            guidata(hObject,handles)
            % Delete progress bar

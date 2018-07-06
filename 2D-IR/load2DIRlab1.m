@@ -449,7 +449,7 @@ case 'Signal'
         end
 end
 
-%% Sort the data in increasing t2 delays
+%% Sort the data in increasing t2 (IR) delays
 % These are needed
 if size(t2delays,2) == 2
     [~,delay_index] = sort(t2delays(:,2),1);

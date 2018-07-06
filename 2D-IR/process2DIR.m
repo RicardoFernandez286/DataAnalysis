@@ -330,14 +330,15 @@ end
 % Phase the data (MCT data + interferogram)
     phasingterm{m,k}            = exp(-1i*fittedPhase{m,k});
     phased_FFTZPint{m,k}        = FFT_ZPint{m,k}.*phasingterm{m,k};
-    
+
 % Do pump correction
 if pumpcorrection == 1
     phased_FFTZPsig{m,k}        = real(FFT_ZPsig{m,k}.*phasingterm{m,k})./(abs(phased_FFTZPint{m,k}*ones(1,length(cmprobe))));
     magnitude_FFTsig{m,k}       = abs(FFT_ZPsig{m,k}-mean(FFT_ZPsig{m,k}))./(real(phased_FFTZPint{m,k}*ones(1,length(cmprobe))));
 else
     phased_FFTZPsig{m,k}        = real(FFT_ZPsig{m,k}.*phasingterm{m,k});
-    magnitude_FFTsig{m,k}       = abs(FFT_ZPsig{m,k}-mean(FFT_ZPsig{m,k}));
+%     magnitude_FFTsig{m,k}       = abs(FFT_ZPsig{m,k}-mean(FFT_ZPsig{m,k}));
+    magnitude_FFTsig{m,k}       = abs(FFT_ZPsig{m,k});
 end
     
 %% PROBE AXIS CALIBRATION USING SCATTERING - LINEAR FIT OF THE MAXIMA ALONG THE DIAGONAL
@@ -346,13 +347,17 @@ if m==1 && k==1
       %%%! TO DO: needs to be redefined in terms of cm-1
         P                       = floor(N_FTpoints{m,k}/50);
         fitrange                = (binspecmax(m,k)-P):(binspecmax(m,k)+P);
-        [~,maxindex]            = max(magnitude_FFTsig{m,k}(fitrange,:));
         Npixels                 = size(magnitude_FFTsig{m,k},2);
         pixels                  = transpose(1:1:Npixels);
-      % Do the fit [OLD WAY]
+        % Get the maxima for probe calibration    
+        magFFT                  = abs(FFT_ZPsig{m,k});
+        [~,maxindex]            = max(magFFT(fitrange,:));
         scattering_maxima       = PumpAxis{m,k}(fitrange(maxindex));
+%        % Do the fit [OLD WAY]
 %         freq_coeff              = polyfit(pixels,scattering_maxima,probe_fitorder);
 %         freq_fit                = transpose(polyval(freq_coeff,pixels));
+        
+        % Do the fit [NEW WAY - ROBUST]
         switch probe_fitorder
             case 1
                 model       = 'poly1';

@@ -67,7 +67,7 @@ if debug==0
         UV_delay_ps         = delays(2);
     else
         Transient2D         = 0;
-        t2_delay_ps         = str2double(char(handles.Population_delay.String(popdelay)));
+        t2_delay_ps         = str2double(handles.Population_delay.String(popdelay,:));
     end
     
     LineColor           = [1 1 1]*0;
@@ -137,8 +137,7 @@ else
 end
 
 % Define the contours to plot
-step = (max_cut - min_cut)./Ncontours;
-plot_contours = min_cut:step:max_cut;
+plot_contours = linspace(min_cut,max_cut,Ncontours);
 
 % Set pump and probe orientations (i.e. define X,Y and Z)
 switch plot_pumpdirection    
