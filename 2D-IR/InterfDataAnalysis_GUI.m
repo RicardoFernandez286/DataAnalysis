@@ -150,7 +150,6 @@ case 'normal' % Single click
         try
            % Check the number of t2 delays
            OldNt2delays = length(handles.Population_delay.String);
-           Transient2D  = 0;
            %%% Load the data
            switch handles.DataTypeMenu.Value
                case 1 % 2D-IR Lab 1 & Lab 4 (new)
@@ -159,7 +158,6 @@ case 'normal' % Single click
                    % Not implemented
                case 3 % Transient 2D-IR
                    handles      = load2DIRlab1(handles);
-                   Transient2D  = 1;
            end
            guidata(hObject,handles)
            %%% Process the data
