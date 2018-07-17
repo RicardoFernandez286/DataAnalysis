@@ -19,6 +19,8 @@ if nargin < 2
     doSort = 1;
 end
 
+
+
 i=0;
 hold on
 while 1 % Repeat the loop until Return is pressed

@@ -8,7 +8,7 @@ function plot_2DIR(handles,plotaxis)
 % Outputs:
 %     plot
 % 
-% Ricardo Fernández-Terán / 05.07.2018 / v2.5a
+% Ricardo Fernández-Terán / 17.07.2018 / v2.9a
 
 debug=0;
 %% DEBUG/MANUAL:
@@ -35,6 +35,7 @@ end
     LineWidth           = 0.5;
     plot_limittype      = 'Local'; % 'Global' will take min/max of the whole 2D set, while 'Local' will take only the selected region
     interpolate         = 0;
+    textcolor           = 'none';
 % Read data
     ProbeAxis           = handles.ProbeAxis;
     PumpAxis            = handles.PumpAxis;
@@ -59,6 +60,19 @@ if debug==0
     popdelay            = handles.Population_delay.Value;
     symcolrange         = handles.SymColRange_tick.Value;
     EditProbeAxis       = handles.EditProbeAxis_tick.Value;
+    % Determine if spectral diffusion analysis have been performed or not and whether to plot them
+    if handles.ShowSpecDiff.Value && handles.SpecDiff
+        Plot_SpecDiff   = 1;
+        % Get the spectral diffusion data
+        CLS_Xdata   = handles.CLS_Xdata;
+        CLS_Ydata   = handles.CLS_Ydata;
+        IvCLS_Xdata = handles.IvCLS_Xdata;
+        IvCLS_Ydata = handles.IvCLS_Ydata;
+        NLS_Xdata   = handles.NLS_Xdata;
+        NLS_Ydata   = handles.NLS_Ydata;
+    else
+        Plot_SpecDiff   = 0;
+    end
     % Determine whether the data is transient 2D or not, then read the delays
     if handles.DataTypeMenu.Value == 3
         Transient2D         = 1;
@@ -77,6 +91,7 @@ end
 %% Plot the data
 % Hide the axes for now, until everything is ready
 plotaxis.Visible='Off';
+hold(plotaxis,'off');
 
 % Read the selection
 m = popdelay;
@@ -304,12 +319,12 @@ if Transient2D
     UV_delay_ps = num2str(UV_delay_ps,'%.3g');
     
     text(0.05,0.925,['t_{2} = ' t2_delay_ps ' ' timescale '; t_{UV} = ' UV_delay_ps ' ' UVtimescale],...
-        'Units','normalized','FontSize',12,'FontWeight','bold','BackgroundColor',[1 1 1]);
+        'Units','normalized','FontSize',12,'FontWeight','bold','BackgroundColor',textcolor);
 
 % If NOT transient 2D
 else
     text(0.05,0.925,['t_{2} = ' t2_delay_ps ' ' timescale],...
-        'Units','normalized','FontSize',12,'FontWeight','bold','BackgroundColor',[1 1 1]);
+        'Units','normalized','FontSize',12,'FontWeight','bold','BackgroundColor',textcolor);
 end
 
 % % Make the figure square
@@ -365,6 +380,24 @@ end
 % drawnow
 % set(hContour.EdgePrims(1:end),'Visible','Off');
 % set(hContour.EdgePrims(1:end),'Visible','Off');
+
+%% Show the spectral diffusion lines
+if Plot_SpecDiff
+    hold(plotaxis,'on')
+    % CLS
+    if ~isnan(CLS_Xdata)
+        plot(plotaxis,CLS_Xdata,CLS_Ydata(:,popdelay),'LineWidth',2,'Color','w')
+    end
+    % IvCLS
+    if ~isnan(IvCLS_Xdata)
+        plot(plotaxis,IvCLS_Xdata(:,popdelay),IvCLS_Ydata,'LineWidth',2,'Color','y')
+    end
+    % NLS
+    if ~isnan(IvCLS_Xdata)
+        plot(plotaxis,NLS_Xdata,NLS_Ydata,'LineWidth',2,'Color','m')
+    end
+    hold(plotaxis,'off')
+end
 
 %% Show the plot
 plotaxis.Visible='On';

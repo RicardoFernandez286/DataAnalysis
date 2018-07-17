@@ -1,9 +1,9 @@
-function  handles = load2DIRlab1(handles)
+function  handles = load2DIRlab3(handles)
 
-% Description: This function loads all 2DIR data in the file format from the Lab 1 MESS program.
-% Usage: handles = load2DIRlab1(handles,datatype)
+% Description: This function loads all 2DIR data in the file format from the Lab 3 program
+% Usage: handles = load2DIRlab3(handles)
 % Inputs:
-%     datatype ('Raw' or 'Signal', as in the MESS program)
+%   Handles structure with fields:
 %     datafilename
 %     rootdir
 %     

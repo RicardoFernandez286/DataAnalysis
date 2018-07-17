@@ -20,7 +20,7 @@ function handles = process2DIR(handles,ReProcess)
 % Additional inputs from the handles structure (GUI options, etc.):
 %   ...To be listed
 % Outputs:
-%   ...To be listed
+%   ...To be listed.
 % Comments: 
 %     It is possible to read both RAW (intensity) and SIGNAL files from the MESS program.
 %     The calculation routines were updated accordingly in MESS and now the chopper signal and all
@@ -429,6 +429,7 @@ end
     handles.binzero             = binzero;
     handles.binspecmax          = binspecmax;
     handles.apodize_function    = apodize_function;
+    handles.FFT_ZPsig           = FFT_ZPsig;
     handles.phased_FFTZPsig     = phased_FFTZPsig;
 	handles.phased_FFTZPint		= phased_FFTZPint;
     handles.fittedPhase			= fittedPhase;
@@ -439,7 +440,7 @@ end
     handles.apo_signal          = apo_signal;
     handles.signal              = signal;
     handles.PROC_2D_DATA        = PROC_2D_DATA;
-    
+    handles.SpecDiff            = 0;
 %% Stuff to do only if DEBUG MODE is ON
 if debug==1
     % Export the data properly

@@ -22,11 +22,12 @@ function varargout = InterfDataAnalysis_GUI(varargin)
 
 % Edit the above text to modify the response to help InterfDataAnalysis_GUI
 
-% Last Modified by GUIDE v2.5 05-Jul-2018 10:30:43
+% Last Modified by GUIDE v2.5 17-Jul-2018 21:42:32
 
-% Ricardo Fernández-Terán, v3.0c - 06.07.2018
+% Ricardo Fernández-Terán, v3.5a - 17.07.2018
 
 % ----CHANGELOG:
+% * Implemented spectral diffusion module
 % * Added compatibility with transient 2D IR datasets
 % * Updated plotting routine: now the contour levels are defined based on min/max/# levels
 % * Updated GUI features, including progress bar.
@@ -80,7 +81,7 @@ else
 end
 
 % Update version text string
-handles.VersionText.String = "v3.0c - 06.07.2018";
+handles.VersionText.String = "v3.5a - 17.07.2018";
 
 % Disable annoying warnings
 warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
@@ -516,9 +517,15 @@ PROC_2D_DATA        = handles.PROC_2D_DATA;
         case 1
             % Select points interactively, to finish hit RETURN
             handles = SelectTraces(handles,0);
+            if isempty(handles.SelTraces)
+                return
+            end
         case 0
             handles.SelTraces = inputdlg('Enter the coordinates of the points to plot along t2:',...
                  'Input desired coordinates (format: x1,y1;x2,y2...)', [1 60]);
+            if isempty(handles.SelTraces)
+                return
+            end
             handles.SelTraces = str2num(handles.SelTraces{:});
     end
     L = size(handles.SelTraces,1);
@@ -646,8 +653,8 @@ guidata(hObject,handles)
 % --- Executes on button press in plot_Slices.
 function plot_Slices_Callback(hObject, eventdata, handles)
 % Ask the user what to plot
-slice_options = {'Diagonal','Along fixed pump WL','Along fixed probe WL','Integrate along pump axis','Integrate along probe axis'};
-[slice_typeindx,doplot] = listdlg('ListString',slice_options,'OKstring','Plot','SelectionMode','single','ListSize',[150,80],'PromptString','Select slice type to plot:');
+slice_options = {'Diagonal','Along fixed pump WL','Along fixed probe WL','Integrate along pump axis','Integrate along probe axis','Along several pump WL','Along several probe WL'};
+[slice_typeindx,doplot] = listdlg('ListString',slice_options,'OKstring','Plot','SelectionMode','single','ListSize',[150,120],'PromptString','Select slice type to plot:');
 
 if doplot == 0
     return
@@ -660,6 +667,8 @@ PumpAxis            = handles.PumpAxis;
 Ndelays             = handles.Ndelays;
 t2delays            = handles.t2delays;
 PROC_2D_DATA        = handles.PROC_2D_DATA;
+PopDelay            = handles.Population_delay.Value;
+Normalise           = handles.Normalise.Value;
 
 switch slice_options{slice_typeindx}
     case 'Diagonal'
@@ -1022,6 +1031,83 @@ switch slice_options{slice_typeindx}
         hline = refline(handles.axes2,[0 0]);
         hline.Color = [0.5 0.5 0.5];
         set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
+    case 'Along several pump WL'
+        switch handles.InteractiveModeTick.Value
+            case 1
+                % Select points interactively, to finish hit RETURN
+                handles = SelectTraces(handles,0); 
+                % Separate the values into pump and probe, according to how the data is plotted    
+                switch plot_pumpdirection
+                    case 'Horizontal'
+                        pump_search    = handles.SelTraces(:,1); 
+                    case 'Vertical'
+                        pump_search    = handles.SelTraces(:,2); 
+                end
+            case 0
+                handles.SelTraces = inputdlg('Enter the pump wavenumbers to plot:',...
+                     'Input pump wavenumbers to plot:', [1 60]);
+                pump_search = str2num(handles.SelTraces{:})';
+        end
+        
+        % Get the data to be plotted
+        % Get the indices of the probe wavelengths
+        pump_indexes        = unique(findClosestId2Val(PumpAxis{PopDelay,1},pump_search));
+        probe_indexes       = 1:length(ProbeAxis);
+        L                   = length(pump_indexes);
+        % Initialise variables
+        data            = zeros(length(ProbeAxis),L);
+        % Get the data
+        for p=1:L
+            data(:,p)       = transpose(PROC_2D_DATA{PopDelay,1}(pump_indexes(p),probe_indexes));
+        end
+        
+        if Normalise
+            data            = data./max(abs(data),[],1);
+        end
+        
+        % Create a new figure
+        fh = figure();
+
+        % Define the axes
+        handles.axes2 = axes(fh);
+
+        % Plot the data
+        cmap=colormap(othercolor('Mrainbow',L));
+        for p=1:L
+           plot(handles.axes2,ProbeAxis,data(:,p),'-','LineWidth',2,'MarkerSize',2,'color',cmap(p,:),'DisplayName',[num2str(PumpAxis{PopDelay,1}(pump_indexes(p)),'%.5g') ' cm^{-1}']);
+           hold on
+        end
+
+        % Save plot details
+        plot_title  = ['CUTS ACROSS PUMP WAVELENGTHS AT t_2 = ' num2str(t2delays(PopDelay),'%.3g') ' ps'];
+        x_axis      = 'Probe';
+
+        %%% Nice formatting
+        % Size and colour
+        fh.Color = [1 1 1];
+        currsize = fh.Position;
+        fh.Position = [currsize(1:2) 900 425];
+        handles.axes2.Units = 'Pixels';
+        currsize = handles.axes2.OuterPosition;
+        handles.axes2.OuterPosition = [currsize(1:2) 950 420];
+        handles.axes2.Units = 'Normalized';
+
+        % Title, axis labels and legend
+        handles.axes2.FontSize = 14;
+        xlabel(handles.axes2,[x_axis ' wavelength (cm^{-1})'],'FontSize',14,'FontWeight','bold');
+        ylabel(handles.axes2,'2D signal (a.u.)','FontSize',14,'FontWeight','bold')
+        title(handles.axes2,plot_title,'FontSize',10)
+        axis tight
+
+        % Create legend
+        legend(gca);
+        legend('boxoff')
+        legend('Location','eastoutside')
+
+        % Add zero line
+        hline = refline(handles.axes2,[0 0]);
+        hline.Color = [0.5 0.5 0.5];
+        set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
 end
 
 
@@ -1043,7 +1129,9 @@ function ShiftT2_Callback(hObject, eventdata, handles)
 
 % --- Executes on button press in SpectralDiffusion.
 function SpectralDiffusion_Callback(hObject, eventdata, handles)
-
+handles = SpectralDiffusion_analysis(handles);
+plot_2DIR(handles,handles.MainAxes);
+guidata(hObject, handles);
 
 % --- Executes on button press in IntegralDynamics.
 function IntegralDynamics_Callback(hObject, eventdata, handles)
@@ -1500,3 +1588,7 @@ function Transient2D_mode_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+function ShowSpecDiff_Callback(hObject, eventdata, handles)
+handles = UpdateEdits_2DIR(handles,0);
+plot_2DIR(handles,handles.MainAxes);
