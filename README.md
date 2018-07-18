@@ -11,7 +11,7 @@ The second one, **InterfDataAnalysis_GUI** is designed to process, phase, plot a
 
 
 # 2. Basic requirements
-The first implementation of the program was done in MATLAB R2016a, but current development will run in the latest release.
+The first implementation of the program was done in MATLAB R2016a, but current development will always run in the latest release.
 ### 2.1 Current MATLAB version: R2018a
 
 Both GUIs need a file, **"GUIoptions.txt"**, to be present in the root of the __C:__ drive.
@@ -36,10 +36,11 @@ The program has the following features:
 - [x] Plotting of the change in kinetic or spectral traces as a function of the concentration or pump energy.
 - [x] Singular value decomposition of the time-resolved data and global fitting of the SVD components.
 - [x] Compatibility with the Bruker OPUS files from FTIR spectrometers (to show steady-state data together with transient absorption).
-- [ ] Fitting of multi-exponential (up to 4) kinetics with (or without) a Gaussian IRF.
-- [ ] Fitting of up to 4 stretched exponential kinetics.
-- [x] Removal of time-dependent offset from the data, defined as a spectral average or by averaging a user-selected region.
-- [x] Plotting the kinetic trace of the difference in transient absorption/time-resolved emission from two wavelengths.
+- [x] Fitting of multi-exponential (up to 4) kinetics with (or without) a Gaussian IRF.
+- [x] Fitting of up to 4 stretched exponential kinetics.
+- [ ] Information about the fits, calculation of the relevant statistical parameters, GooF, etc.
+- [x] Removal of time-dependent offset from the data, defined as a spectral average or by averaging over a user-selected region.
+- [x] Plotting the kinetic trace of the difference in transient absorption/time-resolved emission between two wavelengths.
 
 The unchecked features are still work in progress, incomplete or missing.
 
@@ -60,8 +61,8 @@ The program has the following features:
 - [x] Plotting of slices from the 2D-IR data (diagonal, fixed pump or probe WL, integrated pump or probe).
 - [x] Plotting and fitting of "integral dynamics" - a unified module to calculate the volume, sum, difference and so on of different peaks. [In progress!]
 - [x] Processing and plotting of transient 2D-IR data.
+- [x] Spectral diffusion module, which allows analysis of lineshape parameters (CLS, IvCLS, NLS, etc.) and fitting of their evolution.
 - [ ] Processing, plotting and calculation of 2D-IR anisotropy data.
-- [ ] Spectral diffusion module, which allows analysis of lineshape parameters (CLS, NLS, etc.) and fitting of their evolution.
 
 The unchecked features are still work in progress, incomplete or missing.
 
@@ -81,6 +82,6 @@ LinLogScale	<lin or log>
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
 
 # Acknowledgments
-* Prof. Dr. Peter Hamm (for being my Ph.D. advisor and helpful discussions).
+* Prof. Dr. Peter Hamm (for mentoring and helpful discussions).
 * Dr. Jan Helbing (for helpful discussions).
 * Dr. Kerstin Oppelt (for using this software, helpful discussions and for finding bugs).
