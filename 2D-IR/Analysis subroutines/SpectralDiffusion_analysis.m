@@ -2,6 +2,7 @@ function  handles = SpectralDiffusion_analysis(handles)
 
 % Description: This function handles the spectral diffusion analysis of a
 % series of 2D-IR data as a function of the waiting time
+% 
 % Usage: handles = SpectralDiffusion_analysis(handles)
 % Inputs:
 %     datatype ('Raw' or 'Signal', as in the MESS program)
@@ -270,6 +271,7 @@ end
         end
     end
 
+%% Make the plots and fit the data
 switch specdif_options{specdif_typeindx}
     case 'CLS+IvCLS'
         % Fit a bixeponential function to the centerline slope decay, assuming a Kubo lineshape
@@ -302,27 +304,32 @@ switch specdif_options{specdif_typeindx}
         ax.FontSize = 14;
         % Plot the spectral diffusion kinetics
         plot(ax,t2delays(t2delays>=0),CLS_value(t2delays>=0),'ob') % 'MarkerFaceColor','b'
-        % Plot the fit
-        FittedSpecDiff   = FFCF_func(CLS_param,linspace(0,max(t2delays)*1.1,500));
-        hold on
-        plot(ax,linspace(0,max(t2delays),500),FittedSpecDiff,'-b','LineWidth',1)
-        hold off
-        % Show text with the fit results
-        if ~isnan(fittedCLS_err)
-            plot_text = {'Fit of C(t) = A_0 + A_1 exp(-t/\tau) \rm';...
-                    ['A_0   = ' num2str(CLS_param(1),'%.3g') ' \pm ' num2str(fittedCLS_err(1),'%.3g')];...
-                    ['A_1   = ' num2str(CLS_param(2),'%.3g') ' \pm ' num2str(fittedCLS_err(2),'%.3g')];...
-                ['\bf \tau  = ' num2str(CLS_param(3),'%.3g') ' \pm ' num2str(fittedCLS_err(3),'%.3g') ' ps \rm'];...
-                };
-        else
-            plot_text = {'Fit of C(t) = A_0 + A_1 exp(-t/\tau)';...
-                ['A_0 = ' num2str(CLS_param(1),'%.3g')];...
-                ['A_1 = ' num2str(CLS_param(2),'%.3g')];...
-                ['\bf \tau = ' num2str(CLS_param(3),'%.3g') ' ps \rm'];...
-                };
+        switch fit_method
+            case 'None'
+                % Do nothing
+            otherwise
+                % Plot the fit
+                FittedSpecDiff   = FFCF_func(CLS_param,linspace(0,max(t2delays)*1.1,500));
+                hold on
+                plot(ax,linspace(0,max(t2delays),500),FittedSpecDiff,'-b','LineWidth',1)
+                hold off
+                % Show text with the fit results
+                if ~isnan(fittedCLS_err)
+                    plot_text = {'Fit of C(t) = A_0 + A_1 exp(-t/\tau) \rm';...
+                            ['A_0   = ' num2str(CLS_param(1),'%.3g') ' \pm ' num2str(fittedCLS_err(1),'%.3g')];...
+                            ['A_1   = ' num2str(CLS_param(2),'%.3g') ' \pm ' num2str(fittedCLS_err(2),'%.3g')];...
+                        ['\bf \tau  = ' num2str(CLS_param(3),'%.3g') ' \pm ' num2str(fittedCLS_err(3),'%.3g') ' ps \rm'];...
+                        };
+                else
+                    plot_text = {'Fit of C(t) = A_0 + A_1 exp(-t/\tau)';...
+                        ['A_0 = ' num2str(CLS_param(1),'%.3g')];...
+                        ['A_1 = ' num2str(CLS_param(2),'%.3g')];...
+                        ['\bf \tau = ' num2str(CLS_param(3),'%.3g') ' ps \rm'];...
+                        };
+                end
+                text(ax,0.65,0.8,plot_text,...
+                        'Units','normalized','FontSize',12,'BackgroundColor',textcolor);
         end
-        text(ax,0.65,0.8,plot_text,...
-                'Units','normalized','FontSize',12,'BackgroundColor',textcolor);
         % Make the plot nice
         ylabel(ax,'CLS','FontWeight','bold','FontSize',12);
         xlabel(ax,'Waiting time, t_2 (ps)','FontWeight','bold','FontSize',12);
@@ -345,31 +352,38 @@ switch specdif_options{specdif_typeindx}
         ax.FontSize = 14;
         % Plot the spectral diffusion kinetics
         plot(ax,t2delays(t2delays>=0),IvCLS_value(t2delays>=0),'ob') % 'MarkerFaceColor','b'
-        % Plot the fit
-        FittedSpecDiff   = FFCF_func(IvCLS_param,linspace(0,max(t2delays)*1.1,500));
-        hold on
-        plot(ax,linspace(0,max(t2delays),500),FittedSpecDiff,'-b','LineWidth',1)
-        hold off
-        % Show text with the fit results
-        if ~isnan(fittedCLS_err)
-            plot_text = {'Fit of C(t) = A_0 + A_1 exp(-t/\tau) \rm';...
-                    ['A_0   = ' num2str(IvCLS_param(1),'%.3g') ' \pm ' num2str(fittedIvCLS_err(1),'%.3g')];...
-                    ['A_1   = ' num2str(IvCLS_param(2),'%.3g') ' \pm ' num2str(fittedIvCLS_err(2),'%.3g')];...
-                ['\bf \tau  = ' num2str(IvCLS_param(3),'%.3g') ' \pm ' num2str(fittedIvCLS_err(3),'%.3g') ' ps \rm'];...
-                };
-        else
-            plot_text = {'Fit of C(t) = A_0 + A_1 exp(-t/\tau)';...
-                ['A_0 = ' num2str(IvCLS_param(1),'%.3g')];...
-                ['A_1 = ' num2str(IvCLS_param(2),'%.3g')];...
-                ['\bf \tau = ' num2str(IvCLS_param(3),'%.3g') ' ps \rm'];...
-                };
+        switch fit_method
+            case 'None'
+                % Do nothing
+                maxvalue    = max(SpecDif_ind(t2delays>=0));
+            otherwise
+                % Plot the fit
+                FittedSpecDiff   = FFCF_func(IvCLS_param,linspace(0,max(t2delays)*1.1,500));
+                hold on
+                plot(ax,linspace(0,max(t2delays),500),FittedSpecDiff,'-b','LineWidth',1)
+                hold off
+                % Show text with the fit results
+                if ~isnan(fittedCLS_err)
+                    plot_text = {'Fit of C(t) = A_0 + A_1 exp(-t/\tau) \rm';...
+                            ['A_0   = ' num2str(IvCLS_param(1),'%.3g') ' \pm ' num2str(fittedIvCLS_err(1),'%.3g')];...
+                            ['A_1   = ' num2str(IvCLS_param(2),'%.3g') ' \pm ' num2str(fittedIvCLS_err(2),'%.3g')];...
+                        ['\bf \tau  = ' num2str(IvCLS_param(3),'%.3g') ' \pm ' num2str(fittedIvCLS_err(3),'%.3g') ' ps \rm'];...
+                        };
+                else
+                    plot_text = {'Fit of C(t) = A_0 + A_1 exp(-t/\tau)';...
+                        ['A_0 = ' num2str(IvCLS_param(1),'%.3g')];...
+                        ['A_1 = ' num2str(IvCLS_param(2),'%.3g')];...
+                        ['\bf \tau = ' num2str(IvCLS_param(3),'%.3g') ' ps \rm'];...
+                        };
+                end
+                text(ax,0.65,0.8,plot_text,...
+                        'Units','normalized','FontSize',12,'BackgroundColor',textcolor);
+                maxvalue    = max(FittedSpecDiff);
         end
-        text(ax,0.65,0.8,plot_text,...
-                'Units','normalized','FontSize',12,'BackgroundColor',textcolor);
         % Make the plot nice
         ylabel(ax,'IvCLS','FontWeight','bold','FontSize',12);
         xlabel(ax,'Waiting time, t_2 (ps)','FontWeight','bold','FontSize',12);
-        ylim(ax,[0,max(FittedSpecDiff)]);
+        ylim(ax,[0,maxvalue]);
         % curr_xlim = xlim(ax);
         xlim(ax,[0,max(t2delays)]);
         % Make the axis size consistent
@@ -410,34 +424,39 @@ switch specdif_options{specdif_typeindx}
 
         % Plot the spectral diffusion kinetics
         plot(ax,t2delays(t2delays>=0),SpecDif_ind(t2delays>=0),'ob') % 'MarkerFaceColor','b'
-
-        % Plot the fit
-        FittedSpecDiff   = FFCF_func(fitted_param,linspace(0,max(t2delays)*1.1,500));
-        hold on
-        plot(ax,linspace(0,max(t2delays),500),FittedSpecDiff,'-b','LineWidth',1)
-        hold off
-
-        % Show text with the fit results
-        if ~isnan(fitted_err)
-            plot_text = {'Fit of C(t) = A_0 + A_1 exp(-t/\tau) \rm';...
-                    ['A_0   = ' num2str(fitted_param(1),'%.3g') ' \pm ' num2str(fitted_err(1),'%.3g')];...
-                    ['A_1   = ' num2str(fitted_param(2),'%.3g') ' \pm ' num2str(fitted_err(2),'%.3g')];...
-                ['\bf \tau  = ' num2str(fitted_param(3),'%.3g') ' \pm ' num2str(fitted_err(3),'%.3g') ' ps \rm'];...
-                };
-        else
-            plot_text = {'Fit of C(t) = A_0 + A_1 exp(-t/\tau)';...
-                ['A_0 = ' num2str(fitted_param(1),'%.3g')];...
-                ['A_1 = ' num2str(fitted_param(2),'%.3g')];...
-                ['\bf \tau = ' num2str(fitted_param(3),'%.3g') ' ps \rm'];...
-                };
+        switch fit_method
+            case 'None'
+                % Do nothing
+                maxvalue    = max(SpecDif_ind(t2delays>=0));
+            otherwise
+                % Plot the fit
+                FittedSpecDiff   = FFCF_func(fitted_param,linspace(0,max(t2delays)*1.1,500));
+                hold on
+                plot(ax,linspace(0,max(t2delays),500),FittedSpecDiff,'-b','LineWidth',1)
+                hold off
+                % Show text with the fit results
+                if ~isnan(fitted_err)
+                    plot_text = {'Fit of C(t) = A_0 + A_1 exp(-t/\tau) \rm';...
+                            ['A_0   = ' num2str(fitted_param(1),'%.3g') ' \pm ' num2str(fitted_err(1),'%.3g')];...
+                            ['A_1   = ' num2str(fitted_param(2),'%.3g') ' \pm ' num2str(fitted_err(2),'%.3g')];...
+                        ['\bf \tau  = ' num2str(fitted_param(3),'%.3g') ' \pm ' num2str(fitted_err(3),'%.3g') ' ps \rm'];...
+                        };
+                else
+                    plot_text = {'Fit of C(t) = A_0 + A_1 exp(-t/\tau)';...
+                        ['A_0 = ' num2str(fitted_param(1),'%.3g')];...
+                        ['A_1 = ' num2str(fitted_param(2),'%.3g')];...
+                        ['\bf \tau = ' num2str(fitted_param(3),'%.3g') ' ps \rm'];...
+                        };
+                end
+                text(ax,0.65,0.8,plot_text,...
+                        'Units','normalized','FontSize',12,'BackgroundColor',textcolor);
+                maxvalue    = max(FittedSpecDiff);
         end
-        text(ax,0.65,0.8,plot_text,...
-                'Units','normalized','FontSize',12,'BackgroundColor',textcolor);
-
+        
         % Make the plot nice
         ylabel(ax,SpecDif_name,'FontWeight','bold','FontSize',12);
         xlabel(ax,'Waiting time, t_2 (ps)','FontWeight','bold','FontSize',12);
-        ylim(ax,[0,max(FittedSpecDiff)]);
+        ylim(ax,[0,maxvalue]);
         % curr_xlim = xlim(ax);
         xlim(ax,[0,max(t2delays)]);
 
@@ -446,6 +465,7 @@ switch specdif_options{specdif_typeindx}
         ax.Position     = [75 70 675 320];
         ax.Units        = 'normalized';
 end
+
 %% WRITE to handles
 % CLS
     handles.CLS_Xdata     = CLS_Xdata;
@@ -460,4 +480,5 @@ end
 % Show Spectral diffusion control
     handles.ShowSpecDiff.Visible = 'on';
     handles.SpecDiff      = 1;
+    
 end

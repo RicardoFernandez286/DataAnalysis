@@ -22,11 +22,13 @@ function varargout = InterfDataAnalysis_GUI(varargin)
 
 % Edit the above text to modify the response to help InterfDataAnalysis_GUI
 
-% Last Modified by GUIDE v2.5 17-Jul-2018 21:42:32
+% Last Modified by GUIDE v2.5 18-Jul-2018 19:45:33
 
-% Ricardo Fernández-Terán, v3.5a - 17.07.2018
+% Ricardo Fernández-Terán, v3.6b - 18.07.2018
 
 % ----CHANGELOG:
+% * Data list will now omit and not show the "temp" folders
+% * Implemented spectral subtraction module
 % * Implemented spectral diffusion module
 % * Added compatibility with transient 2D IR datasets
 % * Updated plotting routine: now the contour levels are defined based on min/max/# levels
@@ -81,7 +83,7 @@ else
 end
 
 % Update version text string
-handles.VersionText.String = "v3.5a - 17.07.2018";
+handles.VersionText.String = "v3.6b - 18.07.2018";
 
 % Disable annoying warnings
 warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
@@ -116,6 +118,8 @@ if rootdir ~= 0 % the user selected a directory
         files = dir(rootdir);
         % Extract only those that are directories.
         subFolders = files([files.isdir]);
+        % Don't show the temp folders in the list
+        subFolders = subFolders(~contains({subFolders.name},"temp",'IgnoreCase',1));
     % Go to the selected folder
         cd (rootdir);
     % Sort the names and create variables for the list
@@ -138,9 +142,9 @@ function DatafoldersList_Callback(hObject, eventdata, handles)
 % Determine whether the user double-clicked the folder or not
 switch get(gcf,'SelectionType')
 case 'normal' % Single click
-    index_selected = get(handles.DatafoldersList,'Value');
-    file_list = get(handles.DatafoldersList,'String');
-    datafilename = cellstr(file_list{index_selected}); % Item selected in list box
+    index_selected  = handles.DatafoldersList.Value;
+    file_list       = handles.DatafoldersList.String;
+    datafilename    = cellstr(file_list{index_selected}); % Item selected in list box
     % Write datafilename to handles(datafilename) and update
     handles.datafilename = string(datafilename);
     guidata(hObject,handles)
@@ -250,6 +254,8 @@ handles.rootdir = handles.CurrDir.String;
     files = dir(handles.rootdir);
     % Extract only those that are directories.
     subFolders = files([files.isdir]);
+    % Don't show the temp folders in the list
+    subFolders = subFolders(~contains({subFolders.name},"temp",'IgnoreCase',1));
 % Go to the folder
     cd (handles.rootdir);
 % Sort the names and create variables for the list
@@ -279,6 +285,8 @@ handles.rootdir = handles.CurrDir.String;
     files = dir(handles.rootdir);
     % Extract only those that are directories.
     subFolders = files([files.isdir]);
+    % Don't show the temp folders in the list
+    subFolders = subFolders(~contains({subFolders.name},"temp",'IgnoreCase',1));
 % Go to the selected folder
     cd (handles.rootdir);
 % Sort the names and create variables for the list
@@ -1114,18 +1122,11 @@ end
 % --- Executes on button press in PowerDependence.
 function PowerDependence_Callback(hObject, eventdata, handles)
 
-
-% --- Executes on button press in ConcentrationDep.
-function ConcentrationDep_Callback(hObject, eventdata, handles)
-
-
 % --- Executes on button press in Fit.
 function Fit_Callback(hObject, eventdata, handles)
 
-
 % --- Executes on button press in ShiftT2.
 function ShiftT2_Callback(hObject, eventdata, handles)
-
 
 % --- Executes on button press in SpectralDiffusion.
 function SpectralDiffusion_Callback(hObject, eventdata, handles)
@@ -1519,7 +1520,7 @@ plot_2DIR(handles,handles.MainAxes);
 
 
 function phase_coeffs_Callback(hObject, eventdata, handles)
-
+% This shouldn't do anything
 
 function phase_coeffs_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -1560,7 +1561,6 @@ end
 function EditProbeAxis_tick_Callback(hObject, eventdata, handles)
 % This shouldn't do anything
 
-
 % --- Executes on selection change in Transient2D_mode.
 function Transient2D_mode_Callback(hObject, eventdata, handles)
 % Reprocess the data without reloading
@@ -1592,3 +1592,90 @@ end
 function ShowSpecDiff_Callback(hObject, eventdata, handles)
 handles = UpdateEdits_2DIR(handles,0);
 plot_2DIR(handles,handles.MainAxes);
+
+% --- Executes on button press in SubtractSpectra.
+function SubtractSpectra_Callback(hObject, eventdata, handles)
+% Ask the user what to plot
+    sel_spectra     = inputdlg({'Enter the index of dataset A:','Enter the index of dataset B:'},'Subtract spectra (A-B)',[1 50],{'1','2'});
+    if isempty(sel_spectra)
+        return
+    end
+
+% Get the indices of the selected spectra
+    A_idx = str2double(sel_spectra{1});
+    B_idx = str2double(sel_spectra{2});
+
+% Process the spectra
+    % Create a copy of the current handles structure to load the second dataset
+    handles_B   = handles;
+    file_list   = handles.DatafoldersList.String;
+    
+    %%% Process A
+        % Define filename
+        handles.datafilename  = string(cellstr(file_list{A_idx})); 
+        % Load data
+        handles               = load2DIRlab1(handles);
+        % Phase spectra
+        handles               = process2DIR(handles,0);
+        % Delete progress bar
+        delete(handles.WaitBar);
+
+    %%% Process B
+        % Define filename
+        handles_B.datafilename  = string(cellstr(file_list{B_idx})); 
+        % Load data
+        handles_B               = load2DIRlab1(handles_B);
+        % Phase spectra
+        handles_B               = process2DIR(handles_B,0);
+        % Delete progress bar
+        delete(handles_B.WaitBar);
+        
+% Calculate the differential 2D-IR spectra
+    % Get the phased 2D data
+    A_data  = handles.PROC_2D_DATA;
+    B_data  = handles_B.PROC_2D_DATA;
+    
+    % Check if the datasets have the number of t2 delays
+    if length(A_data) ~= length(B_data)
+        opts.Interpreter    = 'tex';
+        opts.WindowStyle    = 'replace';
+        warndlg('Datasets do not have the same number of \itt_2\rm delays!','Warning',opts);
+        return
+    end
+  
+    % Check if the datasets have the same FT and pixel size
+    if length(A_data{1,1}) ~= length(B_data{1,1})
+        opts.Interpreter    = 'tex';
+        opts.WindowStyle    = 'replace';
+        warndlg('Datasets do not have the same \omega_1 size!','Warning',opts);
+        return
+    end
+    
+    % Preallocate variables
+    Ncols       = size(A_data,2);
+    diff_data   = cell(length(A_data),Ncols);
+    
+    % If everything is OK, do the subtraction
+    for i=1:length(A_data)
+        diff_data{i}    = A_data{i} - B_data{i};
+    end
+    
+% Write back to main handles structure
+    handles.PROC_2D_DATA = diff_data;
+
+% Update controls, plot the data and save to the main handles structure
+    % Update the edit controls
+    handles = UpdateEdits_2DIR(handles,1);
+    % Plot the data in the main window (for preview)
+    plot_2DIR(handles,handles.MainAxes);   
+    set(handles.MainAxes,'Visible','On')
+    % Generate the secondary plot (show phasing data by default)
+    SecondaryPlot(handles,handles.SecondaryAxes,'ph');
+    set(handles.SecondaryAxes,'Visible','On')
+        handles.ShowTimeDomain.Value = 0;
+        handles.ShowProbeCalibration.Value = 0;
+        handles.ShowPhasing.Value = 1;
+    % Enable disabled controls
+    EnableControls_2DIR(handles)
+    % Update handles
+    guidata(hObject,handles)

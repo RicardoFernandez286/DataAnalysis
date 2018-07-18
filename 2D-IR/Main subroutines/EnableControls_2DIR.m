@@ -35,7 +35,7 @@ handles.text43.Enable               = 'On';
 % Analysis controls
 handles.IntegralDynamics.Enable		= 'On';
 handles.ShiftT2.Enable              = 'On';
-handles.ConcentrationDep.Enable     = 'On';
+handles.SubtractSpectra.Enable     = 'On';
 handles.SpectralDiffusion.Enable    = 'On';
 handles.Fit.Enable                  = 'On';
 handles.PowerDependence.Enable      = 'On';
