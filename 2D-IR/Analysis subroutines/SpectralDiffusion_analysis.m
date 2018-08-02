@@ -45,7 +45,7 @@ Interp_method       = 'InterpFT'; % 2D FFT, InterpFT, Mesh
 Interp_order        = 4; % Multiplies Npixels by a factor to interpolate in the probe dimension
 % Fit_type            = 'Quadratic'; % 'Quadratic' 'None' - Sets the type of fit to calculate the minima along the slices
 N_pointsParabola    = 10; % No. of X points to fit a parabola on each side of the peak: [-x (peak) +x]
-intensity_threshold = 80/100; % Intensity threshold for the linear fit to get the CLS or IvCLS
+intensity_threshold = 60/100; % Intensity threshold for the linear fit to get the CLS or IvCLS
 textcolor           = 'none'; % 'none' or RGB color
 fit_method          = 'LSQ'; % 'GA' or 'LSQ' for Genetic algorithm or Least-squares
 

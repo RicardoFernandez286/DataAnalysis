@@ -26,7 +26,7 @@ function handles = process2DIR(handles,ReProcess)
 %     The calculation routines were updated accordingly in MESS and now the chopper signal and all
 %     datastates should be calculated properly.
 %
-% Ricardo Fernández-Terán / 05.07.2018 / v3.0a
+% Ricardo Fernández-Terán / 02.08.2018 / v3.2b
 
 %% Choose between debug/manual mode and normal mode
 debug=0;
@@ -177,11 +177,11 @@ end
     end
     
 %% Process the data
-for k=1:Ndatastates*Nspectra
+for k=1:Nspectra
 for m=1:Ndelays
     % Update the Wait Bar
     progress = progress + 1;
-    waitbar((progress/(Ndatastates*Ndelays*Nspectra*2)+0.5),handles.WaitBar,['Processing data... (' num2str(progress) ' of ' num2str(Ndatastates*Ndelays*Nspectra) ')']);
+    waitbar((progress/(Ndelays*Nspectra*2)+0.5),handles.WaitBar,['Processing data... (' num2str(progress) ' of ' num2str(Ndelays*Nspectra) ')']);
     
     % Remove background (and slow fluctuations in the data, if selected)
     if ReProcess == 0

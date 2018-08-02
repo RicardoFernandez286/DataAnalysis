@@ -22,7 +22,7 @@ function  handles = load2DIRlab1(handles)
 %     interferogram     (Cell array)
 %     signal			(Cell array)
 %
-% Ricardo Fernández-Terán / 05.07.2018 / v2.0a
+% Ricardo Fernández-Terán / 02.08.2018 / v2.5b
 
 %% DEBUG
 % datafilename = 'R3_mTiO2_Re1213_MeOH_4PM_2D_154022';
@@ -208,7 +208,7 @@ exist_probe             = zeros(Ndelays,Ndatastates*Nslowmod*Ninterleave);
 exist_reference         = zeros(Ndelays,Ndatastates*Nslowmod*Ninterleave);
 exist_interf            = zeros(Ndelays,Ndatastates*Nslowmod*Ninterleave);
 
-for k=1:Ndatastates*Nslowmod*Ninterleave
+for k=1:Ndatastates*Nslowmod*Ninterleave*Nspectra
     for m=1:Ndelays
       % For each dataset we need COUNTS, PROBE, REFERENCE & INTERFEROGRAM
         exist_count(m,k)            = exist([filename '_count' endings{m,k}],'file');
@@ -261,11 +261,11 @@ progress=0;
 switch datatype
 case 'Raw'
     probe={}; reference={}; interferogram={}; count={};
-    for k=1:Ndatastates*Nslowmod*Ninterleave
+    for k=1:Ndatastates*Nslowmod*Ninterleave*Nspectra
         for m=1:Ndelays
           % Update the Wait Bar
             progress = progress+1;
-            waitbar(progress/(Ndatastates*Nslowmod*Ndelays*Ninterleave*2),handles.WaitBar,['Loading data (raw) - Reading file ' num2str(progress) ' of ' num2str(Ndatastates*Nslowmod*Ndelays*Ninterleave)]);
+            waitbar(progress/(Ndatastates*Nspectra*Nslowmod*Ndelays*Ninterleave*2),handles.WaitBar,['Loading data (raw) - Reading file ' num2str(progress) ' of ' num2str(Ndatastates*Nslowmod*Ndelays*Ninterleave*Nspectra)]);
           % First load the counts
             count{m,k}          = csvread([filename '_count' endings{m,k}]);
             if cumsum(count{m,k}) == 0
@@ -298,14 +298,14 @@ case 'Raw'
             signal{m,k}         = -1000*log10(probe{m,k}./reference{m,k});
 %             signal{m,k}         = -1000*(probe{m,k}./reference{m,k});
           % Store the size of the interferogram
-            Int_size(m,k)           = length(interferogram{m,k});
+            Int_size(m,k)       = length(interferogram{m,k});
         end
     end
     
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Finished loading everything
 
     % All data should have the same size
-    for k=1:Ndatastates*Nslowmod*Ninterleave
+    for k=1:Ndatastates*Nslowmod*Ninterleave*Nspectra
         for m=1:Ndelays
             startcut            = Int_size(m,k)-min(Int_size);
             count{m,k}          = count{m,k}(startcut+1:end);
@@ -320,11 +320,11 @@ case 'Raw'
 %% Calculate the signal
     % Start with the interleaves - sum all interleaves
     if Ninterleave > 1
-        for k=1:Ndatastates*Nslowmod
+        for k=1:Ndatastates*Nslowmod*Nspectra
             for m=1:Ndelays
                 for p=1:Ninterleave-1 
-                    signal{m,k}         = signal{m,k}+signal{m,(k+p*Nslowmod*Ndatastates)};
-                    interferogram{m,k}  = interferogram{m,k}+interferogram{m,(k+p*Nslowmod*Ndatastates)};
+                    signal{m,k}         = signal{m,k}+signal{m,(k+p*Nslowmod*Ndatastates*Nspectra)};
+                    interferogram{m,k}  = interferogram{m,k}+interferogram{m,(k+p*Nslowmod*Ndatastates*Nspectra)};
                 end
                 signal{m,k}             = signal{m,k}./Ninterleave;
                 interferogram{m,k}      = interferogram{m,k}./Ninterleave;
@@ -347,52 +347,52 @@ case 'Raw'
             % Reduce signal and interferogram to a single datastate (the calculated signal)
             signal=signal(:,1);
             interferogram=interferogram(:,1);
-            Ndatastates=1; % Once we have the signal, set only one datastate
         case 'Chopper OFF'
             % If piezo is random/off and the chopper is off,
             % the signal is already there. Nothing to calculate
         case 'Wobbler'
+            temp_sig=cell(Ndelays,Nslowmod*Nspectra); temp_int=cell(Ndelays,Nslowmod*Nspectra);
             % Calculate the signal by taking the sum of all 4 states
-            for m=1:Ndelays
-                signal{m,1}=signal{m,1}+signal{m,2}+signal{m,3}+signal{m,4};
-                interferogram{m,1}=interferogram{m,1}+interferogram{m,2}+interferogram{m,3}+interferogram{m,4};
+            for k=0:Nslowmod*Nspectra-1
+                for m=1:Ndelays
+                  ds                = 1:Ndatastates;
+                  temp_sig{m,k+1}   = sum(cat(3,signal{m,ds+k*Ndatastates}),3)/4;
+                  temp_int{m,k+1}   = sum(cat(3,interferogram{m,ds+k*Ndatastates}),3)/4; 
+                end
             end
-            % Reduce signal and interferogram to a single datastate (the calculated signal)
-            signal=signal(:,1);
-            interferogram=interferogram(:,1);
-            Ndatastates=1; % Once we have the signal, set only one datastate
+            % Save calculated signal and interferogram
+            signal                  = temp_sig;
+            interferogram           = temp_int;
         end
     case '4PM' % This case applies when we have four point modulation
-        tempsignal={}; tempinterferogram={};
+        temp_sig=cell(Ndelays,Nslowmod*Nspectra); temp_int=cell(Ndelays,Nslowmod*Nspectra);
         % Calculate the signal for the four point modulation, but first check the chopper
         switch Chopper
         case 'Chopper ON'
             for m=1:Ndelays
                 % Calculate the signal by taking chopper ON - chopper OFF for each SlowMod
                 for k=0:Nslowmod-1
-                    tempsignal{m,k+1}           = signal{m,2*(k+1)}-signal{m,2*k+1};
-                    tempinterferogram{m,k+1}    = interferogram{m,2*(k+1)}-interferogram{m,2*k+1};
+                    temp_sig{m,k+1}     = signal{m,2*(k+1)}-signal{m,2*k+1};
+                    temp_int{m,k+1}     = interferogram{m,2*(k+1)}-interferogram{m,2*k+1};
                 end
                 % Then combine all datastates together for each delay
-                tempsignal{m,1}                 = sum(cat(3,tempsignal{m,:}),3)/4;
-                tempinterferogram{m,1}          = sum(cat(3,tempinterferogram{m,:}),3)/4;
+                temp_sig{m,1}           = sum(cat(3,temp_sig{m,:}),3)/4;
+                temp_int{m,1}           = sum(cat(3,temp_int{m,:}),3)/4;
             end
             % Reduce signal and interferogram to a single datastate (the calculated signal)
-            signal          = tempsignal(:,1);
-            interferogram   = tempinterferogram(:,1);
-            Ndatastates     = 1; % Once we have the signal, set only one datastate
+            signal          = temp_sig(:,1);
+            interferogram   = temp_int(:,1);
         case 'Chopper OFF'
             % Calculate the signal by averaging all four (modulation) points
             for m=1:Ndelays
                 for k=1:Nslowmod
                     % Just combine all datastates together for each delay
-                    tempsignal{m,1}             = sum(cat(3,signal{m,:}),3)/4;
-                    tempinterferogram{m,1}      = sum(cat(3,interferogram{m,:}),3)/4;
+                    temp_sig{m,1}       = sum(cat(3,signal{m,:}),3)/4;
+                    temp_int{m,1}       = sum(cat(3,interferogram{m,:}),3)/4;
                 end
             end
-            signal          = tempsignal(:,1);
-            interferogram   = tempinterferogram(:,1);
-            Ndatastates     = 1; % Once we have the signal, set only one datastate
+            signal          = temp_sig(:,1);
+            interferogram   = temp_int(:,1);
         end
     end
     

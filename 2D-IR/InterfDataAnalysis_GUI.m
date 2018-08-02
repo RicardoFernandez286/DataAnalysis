@@ -24,9 +24,10 @@ function varargout = InterfDataAnalysis_GUI(varargin)
 
 % Last Modified by GUIDE v2.5 18-Jul-2018 19:45:33
 
-% Ricardo Fernández-Terán, v3.6b - 18.07.2018
+% Ricardo Fernández-Terán, v3.7c - 02.08.2018
 
 % ----CHANGELOG:
+% * Fixed bug when loading raw Transient 2D data. Now it should be a bit more general.
 % * Data list will now omit and not show the "temp" folders
 % * Implemented spectral subtraction module
 % * Implemented spectral diffusion module
@@ -83,7 +84,7 @@ else
 end
 
 % Update version text string
-handles.VersionText.String = "v3.6b - 18.07.2018";
+handles.VersionText.String = "v3.7c - 02.08.2018";
 
 % Disable annoying warnings
 warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
@@ -152,7 +153,7 @@ case 'normal' % Single click
     if  handles.is_dir(handles.sorted_index(index_selected))
         % Load the data (replace handles) and update the main handles
         error=0;
-        try
+%         try
            % Check the number of t2 delays
            OldNt2delays = length(handles.Population_delay.String);
            %%% Load the data
@@ -179,10 +180,10 @@ case 'normal' % Single click
            guidata(hObject,handles)
            % Delete progress bar
            delete(handles.WaitBar);
-        catch err
-           set(handles.ErrorText,'String', string(err.message));
-           error=1;
-        end
+%         catch err
+%            set(handles.ErrorText,'String', string(err.message));
+%            error=1;
+%         end
         if error == 0
             % Update the edit controls
             handles = UpdateEdits_2DIR(handles,1);
@@ -218,6 +219,8 @@ case 'open'
         files = dir(handles.rootdir);
         % Extract only those that are directories.
         subFolders = files([files.isdir]);
+        % Don't show the temp folders in the list
+        subFolders = subFolders(~contains({subFolders.name},"temp",'IgnoreCase',1));
     % Go to the selected folder
         cd (handles.rootdir);
     % Sort the names and create variables for the list
