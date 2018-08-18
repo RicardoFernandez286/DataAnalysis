@@ -1140,7 +1140,7 @@ guidata(hObject, handles);
 % --- Executes on button press in IntegralDynamics.
 function IntegralDynamics_Callback(hObject, eventdata, handles)
 % Ask the user what to plot
-integral_options    = {'Peak volume kinetics','Peak max-min kinetics','Peak volume difference kinetics'};
+integral_options    = {'Peak volume kinetics','Peak max-min kinetics','Peak volume difference kinetics','Noise analysis'};
 [integral_typeindx,doplot] = listdlg('ListString',integral_options,'OKstring','Plot','SelectionMode','single','ListSize',[200,100],'PromptString','Select kinetic analysis type:');
 
 if doplot == 0
@@ -1256,6 +1256,55 @@ switch integral_options{integral_typeindx}
         %     dlmwrite(filename,[[0;handles.delays] [wavenumbers;kindata]])
         % end
         guidata(hObject,handles)
+    case 'Noise analysis'
+        % Get the desired values to plot from user
+        handles.SelTraces = [];
+        
+        switch handles.InteractiveModeTick.Value
+            case 1
+                % Select points interactively, to finish hit RETURN
+                [RegionPositions,L] = SelectRegions(Axes);
+                % Separate the values into pump and probe, according to how the data is plotted
+                % i.e. convert from [x_min x_max y_min y_max] to [pump_min pump_max probe_min probe_max]
+                switch plot_pumpdirection
+                    case 'Horizontal'
+                        pump_ranges     = RegionPositions(:,1:2); 
+                        probe_ranges    = RegionPositions(:,3:4);
+                    case 'Vertical'
+                        pump_ranges     = RegionPositions(:,3:4); 
+                        probe_ranges    = RegionPositions(:,1:2);
+                end
+            case 0
+                RegionPositions_cell    = inputdlg({'Enter the pump regions (Format: min1 max1; min2 max2; ...): ','Enter the probe regions (Format: min1 max1; min2 max2; ...):'},'Define regions to integrate', [1 80]);
+                pump_ranges              = str2num(RegionPositions_cell{1});
+                probe_ranges             = str2num(RegionPositions_cell{2});
+                L = size(pump_ranges,1);
+                M = size(probe_ranges,1);
+                if L ~= M
+                    warndlg('Number of pump and probe ranges is different!')
+                    return
+                end
+        end
+
+        % Initialise variables
+        pump_idx    = zeros(L,2);
+        probe_idx   = zeros(L,2);
+        noise       = zeros(Ndelays,L);
+        
+        % Get the data to be plotted
+        for m=1:Ndelays
+            % Get the values from the 2D arrays for each population delay on the selected regions
+            % The data is by default in the format (w1,w3) (according to process2DIR.m)
+            for p=1:L
+                % Get the indices of the probe wavelengths
+                pump_idx(p,:)   = findClosestId2Val(PumpAxis{m,1},pump_ranges(p,:));
+                probe_idx(p,:)  = findClosestId2Val(ProbeAxis,probe_ranges(p,:));
+                tempdata        = PROC_2D_DATA{m,1}(pump_idx(p,1):pump_idx(p,2),probe_idx(p,1):probe_idx(p,2));
+                noise(m,p)      = std(tempdata(:));
+            end
+        end
+        warndlg(['The noise level is: ' num2str(noise)]);
+        guidata(hObject,handles)        
 end
 
 
@@ -1492,7 +1541,7 @@ end
 
 % --- Executes on button press in SaveProbeCal.
 function SaveProbeCal_Callback(hObject, eventdata, handles)
-ProbeAxis = [handles.ProbeAxis]';
+ProbeAxis = handles.ProbeAxis;
 rootdir = handles.rootdir;
 probecalfile= 'CalibratedProbe.csv';
 if exist(probecalfile,'file') == 0
