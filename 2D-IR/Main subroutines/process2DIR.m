@@ -155,7 +155,7 @@ end
     filter_type     = 'Median';
     filter_points   = 10;
     zeropad_npoints = 10;
-    apodize_gaussian= 1;
+    apodize_gaussian= 0;
     apodize_Gcoeff  = 2/3; % Percentage of the Nbins for the decay of the Gaussian
     probe_fitorder  = 2;
     phase_fitmethod = 'Shift bins'; % 'Shift wavenumbers' or 'Shift bins'
@@ -242,12 +242,11 @@ for m=1:Ndelays
             cos_exp=3;
     end
     q=1:Nbins;
-    cosine{m,k}             = (cos(pi*(q-binzero{m,k})/(2*(Nbins-binzero{m,k}))).^cos_exp)';
+    cosine{m,k}             = ((cos(pi*(q-binzero{m,k})/(2*(Nbins-binzero{m,k})))).^cos_exp)';
     box{m,k}                = (heaviside(q-binzero{m,k}))';
 
     % Gaussian
     if apodize_gaussian==1
-        q=1:Nbins;
         gaussian{m,k}           = (exp(-((q-binzero{m,k})./(apodize_Gcoeff.*Nbins)).^2))';
         apodize_function{m,k}   = cosine{m,k}.*gaussian{m,k};
     else
@@ -258,8 +257,8 @@ for m=1:Ndelays
     apo_interferogram{m,k}      = interferogram{m,k}.*apodize_function{m,k};
     
 % Multiply the signal by the apodization function (Use box! - discard data before BinZero + 1st point by 1/2)
-    apo_signal{m,k}             = signal{m,k}.*apodize_function{m,k}.*box{m,k};
     apodize_function{m,k}       = apodize_function{m,k}.*box{m,k};
+    apo_signal{m,k}             = signal{m,k}.*apodize_function{m,k};
     
 % Decide the FT size
     N_FTpoints{m,k}             = zeropad_factor*Nbins;

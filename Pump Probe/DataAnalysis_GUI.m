@@ -22,7 +22,7 @@ function varargout = DataAnalysis_GUI(varargin)
 
 % Edit the above text to modify the response to help DataAnalysis_GUI
 
-% Last Modified by GUIDE v2.5 29-May-2018 17:54:04
+% Last Modified by GUIDE v2.5 07-Aug-2018 21:45:23
 
 % Ricardo Fernández-Terán - v3.9a - 11.06.2018
 % ----CHANGELOG:
@@ -1838,200 +1838,209 @@ switch handles.DataTypeMenu.Value
         end
 end
 
-% --- Executes on button press in PowerDependence.
-function PowerDependence_Callback(hObject, eventdata, handles)
-% Get the data from user - The user should put all data in one directory, then indicate the power for each measurement
-AllFolderList = handles.DatafoldersList.String;
-rootdir = handles.CurrDir.String;
-% Ask user for the wavenumber to plot and the times to plot it
-prompt      = {'Enter desired wavenumber:','Enter time range to average (min):','Enter time range to average (max):'};
-dlg_title   = 'Plot of power dependence of signal';
-num_lines   = [1 20];
-SelTraces   = inputdlg(prompt,dlg_title,num_lines);
-WL          = str2double(SelTraces(1));
-Times       = transpose(str2double(SelTraces(2:3)));
-% Once we have the point, look for the index
-% WLindex = index of the closest match for the selected trace in the WL vector
-WLindex = findClosestId2Val(handles.cmprobe,WL);
-timeindex = findClosestId2Val(handles.delays,Times);
-tmin = timeindex(1);
-tmax = timeindex(2);
-% Then, ask the user to input the power for each trace in the current rootdir.
-% To skip a particular trace, enter -1. The power should be typed in the
-% same order as the FoldersList is displayed
-prompt = {'Enter the power values in the same order as the list (to skip a datafile use -1):'};
-dlg_title = 'Plot of power dependence of signal';
-num_lines = [1 50];
-DlgPowers = inputdlg(prompt,dlg_title,num_lines);
-DlgPowers = transpose(str2num(DlgPowers{:}));
-Npower = length(DlgPowers);
-% Remove all folders which have a -1 from the list
-i=0; j=1;
-while i < Npower
-    i=i+1;
-    if DlgPowers(i) ~= -1
-        SelPowers(j) = DlgPowers(i);
-        FolderList(j,1) = AllFolderList(i);
-        j=j+1;
-    end
-end    
-Npower = length(SelPowers);
-Avg=[];
-% Get the actual vectors from the Z matrix (one by one)
-p=0;
-while p < Npower
-        p=p+1;
-        datafilename = FolderList(p);
-        signalfile = strcat(rootdir,filesep,datafilename,filesep,datafilename,'_signal.csv');
-        signalfilech = char(signalfile);
-        tempsignal = csvread(signalfilech);
-        % Auto subtract background
-        k = 1;
-        t = handles.delays(k);
-        while t < 0
-            k = k+1;
-            t = handles.delays(k+1);
-        end
-        handles.j = 1;
-        handles.k = k;
-        set(handles.mintimeBkg,'String',num2str(handles.delays(1)));
-        set(handles.maxtimeBkg,'String',num2str(handles.delays(k)));
-        % Do the background subtraction
-        bkg = mean(tempsignal(1:k,:));
-        corrdata = tempsignal - bkg;
-        % Average the data within given times
-        Avg(:,p) = mean(corrdata(tmin:tmax,WLindex));
+% --- Executes on button press in Plot_Dependency.
+function Plot_Dependency_Callback(hObject, eventdata, handles)
+% Ask the user what to plot
+plot_options = {'Concentration dependence','Power dependence'};
+[plot_typeindx,doplot] = listdlg('ListString',plot_options,'OKstring','Plot','SelectionMode','single','ListSize',[180,60],'PromptString','Select slice type to plot:');
+
+if doplot == 0
+    return
 end
-fh = figure();
-Avg = transpose(Avg);
-plot(SelPowers,Avg,'Marker','o')
-nicetitle = {['POWER DEPENDENCE PLOT - SIGNAL AT ',num2str(handles.cmprobe(WLindex)),' cm^-^1'];['from ',num2str(tmin),' to ',num2str(tmax),' ',handles.timescale]}; 
-title(nicetitle,'FontSize',10)
-set(gca,'fontsize',12);
-xlabel(['Energy (' '\mu' 'J)'],'FontSize',13)
-ylabel('\DeltaAbs (mOD)','FontSize',13)
-axis tight
 
-% --- Executes on button press in ConcentrationDep.
-function ConcentrationDep_Callback(hObject, eventdata, handles)
-% Get the data from user - The user should put all data in one directory,
-% then indicate the concentration for each dataset
-AllFolderList = handles.DatafoldersList.String;
-rootdir = handles.CurrDir.String;
-% Ask user for the wavenumber to plot and the times to plot it
-prompt = {'Enter desired wavenumber(s) to plot, separated by a space:',['Enter time range: (in ' handles.timescale ')']};
-dlg_title = 'Concentration dependence of signal';
-num_lines = [1 30];
-defAns = {'',[num2str(handles.delays(1)) ' ' num2str(handles.delays(end))]};
-SelTraces = inputdlg(prompt,dlg_title,num_lines,defAns);
-WL = str2num(SelTraces{1});
-Times = str2num(SelTraces{2});
-% Once we have the point, look for the index
-% WLindex = index of the closest match for the selected trace in the WL vector
-WLindex = findClosestId2Val(handles.cmprobe,WL);
-timeindex = findClosestId2Val(handles.delays,Times);
-tmin = timeindex(1);
-tmax = timeindex(2);
-% Then, ask the user to input the concentration for each trace in the current rootdir.
-% To skip a particular trace, enter -1. The conc. should be typed in the
-% same order as the FoldersList is displayed
-prompt = {'Enter the concentration values in the same order as the file list (to skip a datafile use -1):','Enter concentration units:'};
-dlg_title = 'Plot of conc. dependence of signal';
-num_lines = [1 50];
-DlgConc = inputdlg(prompt,dlg_title,num_lines,{'','mM'});
-Concentrations = transpose(str2num(DlgConc{1}));
-ConcUnits = DlgConc{2};
-Nconc = length(Concentrations);
-SelConc=[];
-% Remove all folders which have a -1 from the list
-i=0; j=1;
-while i < Nconc
-    i=i+1;
-    if Concentrations(i) ~= -1
-        SelConc(j) = Concentrations(i);
-        FolderList(j,1) = AllFolderList(i);
-        j=j+1;
-    end
-end    
-Nconc = length(SelConc);
-[~,I]=sort(SelConc);
-% Get the actual vectors from the Z matrix (one by one) and plot them all
-% together for a given WL
-for WLn=1:length(WL)
-    fh = figure('Units','normalized','Position',[0.25+WLn*0.05 0.25+WLn*0.05 0.35 0.35]);
-    if WLn==1
-        cm=colormap(othercolor('Mrainbow',Nconc));
-    end
-    for p=1:Nconc
-            datafilename = FolderList(I(p));
-        switch handles.DataTypeMenu.Value
-            case 1 % Lab 2
-                signalfile = strcat(rootdir,filesep,datafilename,filesep,datafilename,'_signal.csv');
-            case 2 % Lab 1 and Lab 4
-                signalfile = strcat(rootdir,filesep,datafilename,filesep,datafilename,'_signal_sp0_sm0_du0.csv');
-        end
-            signalfilech = char(signalfile);
-            tempsignal = csvread(signalfilech);
-            % Auto subtract background
-            k = 1;
-            t = handles.delays(k);
-            while t < -1
-                k = k+1;
-                t = handles.delays(k+1);
+switch plot_options{plot_typeindx}
+    case 'Concentration dependence'
+        % Get the data from user - The user should put all data in one directory,
+        % then indicate the concentration for each dataset
+        AllFolderList = handles.DatafoldersList.String;
+        rootdir = handles.CurrDir.String;
+        % Ask user for the wavenumber to plot and the times to plot it
+        prompt = {'Enter desired wavenumber(s) to plot, separated by a space:',['Enter time range: (in ' handles.timescale ')']};
+        dlg_title = 'Concentration dependence of signal';
+        num_lines = [1 30];
+        defAns = {'',[num2str(handles.delays(1)) ' ' num2str(handles.delays(end))]};
+        SelTraces = inputdlg(prompt,dlg_title,num_lines,defAns);
+        WL = str2num(SelTraces{1});
+        Times = str2num(SelTraces{2});
+        % Once we have the point, look for the index
+        % WLindex = index of the closest match for the selected trace in the WL vector
+        WLindex = findClosestId2Val(handles.cmprobe,WL);
+        timeindex = findClosestId2Val(handles.delays,Times);
+        tmin = timeindex(1);
+        tmax = timeindex(2);
+        % Then, ask the user to input the concentration for each trace in the current rootdir.
+        % To skip a particular trace, enter -1. The conc. should be typed in the
+        % same order as the FoldersList is displayed
+        prompt = {'Enter the concentration values in the same order as the file list (to skip a datafile use -1):','Enter concentration units:'};
+        dlg_title = 'Plot of conc. dependence of signal';
+        num_lines = [1 50];
+        DlgConc = inputdlg(prompt,dlg_title,num_lines,{'','mM'});
+        Concentrations = transpose(str2num(DlgConc{1}));
+        ConcUnits = DlgConc{2};
+        Nconc = length(Concentrations);
+        SelConc=[];
+        % Remove all folders which have a -1 from the list
+        i=0; j=1;
+        while i < Nconc
+            i=i+1;
+            if Concentrations(i) ~= -1
+                SelConc(j) = Concentrations(i);
+                FolderList(j,1) = AllFolderList(i);
+                j=j+1;
             end
-            handles.j = 1;
-            handles.k = k;
-            set(handles.mintimeBkg,'String',num2str(handles.delays(1)));
-            set(handles.maxtimeBkg,'String',num2str(handles.delays(k)));
-            % Do the background subtraction
-            bkg = mean(tempsignal(1:k,:));
-            corrdata = tempsignal - bkg;
-            trace=corrdata(tmin:tmax,WLindex(WLn));
+        end    
+        Nconc = length(SelConc);
+        [~,I]=sort(SelConc);
+        % Get the actual vectors from the Z matrix (one by one) and plot them all
+        % together for a given WL
+        for WLn=1:length(WL)
+            fh = figure('Units','normalized','Position',[0.25+WLn*0.05 0.25+WLn*0.05 0.35 0.35]);
+            if WLn==1
+                cm=colormap(othercolor('Mrainbow',Nconc));
+            end
+            for p=1:Nconc
+                    datafilename = FolderList(I(p));
+                switch handles.DataTypeMenu.Value
+                    case 1 % Lab 2
+                        signalfile = strcat(rootdir,filesep,datafilename,filesep,datafilename,'_signal.csv');
+                    case 2 % Lab 1 and Lab 4
+                        signalfile = strcat(rootdir,filesep,datafilename,filesep,datafilename,'_signal_sp0_sm0_du0.csv');
+                end
+                    signalfilech = char(signalfile);
+                    tempsignal = csvread(signalfilech);
+                    % Auto subtract background
+                    k = 1;
+                    t = handles.delays(k);
+                    while t < -1
+                        k = k+1;
+                        t = handles.delays(k+1);
+                    end
+                    handles.j = 1;
+                    handles.k = k;
+                    set(handles.mintimeBkg,'String',num2str(handles.delays(1)));
+                    set(handles.maxtimeBkg,'String',num2str(handles.delays(k)));
+                    % Do the background subtraction
+                    bkg = mean(tempsignal(1:k,:));
+                    corrdata = tempsignal - bkg;
+                    trace=corrdata(tmin:tmax,WLindex(WLn));
+                    if handles.NormKin.Value == 1
+                        trace=trace/max([abs(min(trace(:))),abs(max(trace(:)))]);
+                    end
+                    % Plot the traces as a function of concentration for the current WL
+                    hold on
+                    plot(handles.delays(tmin:tmax),trace,'Color',cm(p,:),'LineWidth',1.5,'DisplayName',[num2str(SelConc(I(p))) ' ' ConcUnits])
+            end
+            nicetitle = {['CONCENTRATION DEPENDENCE PLOT - SIGNAL AT ',num2str(handles.cmprobe(WLindex(WLn)),'%4.f'),' cm^-^1'];['from ',num2str(handles.delays(tmin)),' to ',num2str(handles.delays(tmax)),' ',handles.timescale]}; 
+            title(nicetitle,'FontSize',10)
+            set(gca,'fontsize',12);
+            xlabel(['Delays (' handles.timescale ')'],'FontWeight','bold','FontSize',13)
             if handles.NormKin.Value == 1
-                trace=trace/max([abs(min(trace(:))),abs(max(trace(:)))]);
+                ylabel('Normalized \DeltaAbs','FontWeight','bold','FontSize',13)
+            else
+                ylabel('\DeltaAbs (mOD)','FontWeight','bold','FontSize',13)
             end
-            % Plot the traces as a function of concentration for the current WL
-            hold on
-            plot(handles.delays(tmin:tmax),trace,'Color',cm(p,:),'LineWidth',1.5,'DisplayName',[num2str(SelConc(I(p))) ' ' ConcUnits])
-    end
-    nicetitle = {['CONCENTRATION DEPENDENCE PLOT - SIGNAL AT ',num2str(handles.cmprobe(WLindex(WLn)),'%4.f'),' cm^-^1'];['from ',num2str(handles.delays(tmin)),' to ',num2str(handles.delays(tmax)),' ',handles.timescale]}; 
-    title(nicetitle,'FontSize',10)
-    set(gca,'fontsize',12);
-    xlabel(['Delays (' handles.timescale ')'],'FontWeight','bold','FontSize',13)
-    if handles.NormKin.Value == 1
-        ylabel('Normalized \DeltaAbs','FontWeight','bold','FontSize',13)
-    else
-        ylabel('\DeltaAbs (mOD)','FontWeight','bold','FontSize',13)
-    end
-    axis tight
-    legend(gca,'Location','best');
-    legend('boxoff');
-    set(gca,'xscale',handles.linlog);
-    box(gca,'on');
-    limits=xlim(gca);
-    % Add reference lines at zero
-    hline=refline(0,0);
-    hline.Color = [0.5 0.5 0.5];
-    hold(gca,'off')
-    ax = gca;
-    ax.Legend.String(end)=[];
-    
-    % Make the plot format constant
-    % Create a new figure with consistent format
-    fh.Units        = 'pixels';
-    fh.Position(3)  = 800;
-    fh.Position(4)  = 425;
-    fh.Color        = [1 1 1];
+            axis tight
+            legend(gca,'Location','best');
+            legend('boxoff');
+            set(gca,'xscale',handles.linlog);
+            box(gca,'on');
+            limits=xlim(gca);
+            % Add reference lines at zero
+            hline=refline(0,0);
+            hline.Color = [0.5 0.5 0.5];
+            hold(gca,'off')
+            ax = gca;
+            ax.Legend.String(end)=[];
 
-    % Make uniform, consistent format
-    ax.Units     = 'pixels';
-    ax.Position  = [75 55 680 320];  
-    ax.FontSize = 12;
-    ax.LineWidth = 1;
-    ax.TickLength = [0.015 0.035];
+            % Make the plot format constant
+            % Create a new figure with consistent format
+            fh.Units        = 'pixels';
+            fh.Position(3)  = 800;
+            fh.Position(4)  = 425;
+            fh.Color        = [1 1 1];
 
-    % Make the axes resizable
-    ax.Units = 'normalized';   
+            % Make uniform, consistent format
+            ax.Units     = 'pixels';
+            ax.Position  = [75 55 680 320];  
+            ax.FontSize = 12;
+            ax.LineWidth = 1;
+            ax.TickLength = [0.015 0.035];
+
+            % Make the axes resizable
+            ax.Units = 'normalized';   
+        end
+    case 'Power dependence'
+        % Get the data from user - The user should put all data in one directory, then indicate the power for each measurement
+        AllFolderList = handles.DatafoldersList.String;
+        rootdir = handles.CurrDir.String;
+        % Ask user for the wavenumber to plot and the times to plot it
+        prompt      = {'Enter desired wavenumber:','Enter time range to average (min):','Enter time range to average (max):'};
+        dlg_title   = 'Plot of power dependence of signal';
+        num_lines   = [1 20];
+        SelTraces   = inputdlg(prompt,dlg_title,num_lines);
+        WL          = str2double(SelTraces(1));
+        Times       = transpose(str2double(SelTraces(2:3)));
+        % Once we have the point, look for the index
+        % WLindex = index of the closest match for the selected trace in the WL vector
+        WLindex = findClosestId2Val(handles.cmprobe,WL);
+        timeindex = findClosestId2Val(handles.delays,Times);
+        tmin = timeindex(1);
+        tmax = timeindex(2);
+        % Then, ask the user to input the power for each trace in the current rootdir.
+        % To skip a particular trace, enter -1. The power should be typed in the
+        % same order as the FoldersList is displayed
+        prompt = {'Enter the power values in the same order as the list (to skip a datafile use -1):'};
+        dlg_title = 'Plot of power dependence of signal';
+        num_lines = [1 50];
+        DlgPowers = inputdlg(prompt,dlg_title,num_lines);
+        DlgPowers = transpose(str2num(DlgPowers{:}));
+        Npower = length(DlgPowers);
+        % Remove all folders which have a -1 from the list
+        i=0; j=1;
+        while i < Npower
+            i=i+1;
+            if DlgPowers(i) ~= -1
+                SelPowers(j) = DlgPowers(i);
+                FolderList(j,1) = AllFolderList(i);
+                j=j+1;
+            end
+        end    
+        Npower = length(SelPowers);
+        Avg=[];
+        % Get the actual vectors from the Z matrix (one by one)
+        p=0;
+        while p < Npower
+                p=p+1;
+                datafilename = FolderList(p);
+                signalfile = strcat(rootdir,filesep,datafilename,filesep,datafilename,'_signal.csv');
+                signalfilech = char(signalfile);
+                tempsignal = csvread(signalfilech);
+                % Auto subtract background
+                k = 1;
+                t = handles.delays(k);
+                while t < 0
+                    k = k+1;
+                    t = handles.delays(k+1);
+                end
+                handles.j = 1;
+                handles.k = k;
+                set(handles.mintimeBkg,'String',num2str(handles.delays(1)));
+                set(handles.maxtimeBkg,'String',num2str(handles.delays(k)));
+                % Do the background subtraction
+                bkg = mean(tempsignal(1:k,:));
+                corrdata = tempsignal - bkg;
+                % Average the data within given times
+                Avg(:,p) = mean(corrdata(tmin:tmax,WLindex));
+        end
+        fh = figure();
+        Avg = transpose(Avg);
+        plot(SelPowers,Avg,'Marker','o')
+        nicetitle = {['POWER DEPENDENCE PLOT - SIGNAL AT ',num2str(handles.cmprobe(WLindex)),' cm^-^1'];['from ',num2str(tmin),' to ',num2str(tmax),' ',handles.timescale]}; 
+        title(nicetitle,'FontSize',10)
+        set(gca,'fontsize',12);
+        xlabel(['Energy (' '\mu' 'J)'],'FontSize',13)
+        ylabel('\DeltaAbs (mOD)','FontSize',13)
+        axis tight
 end
 
 
@@ -2685,7 +2694,6 @@ datafilename = handles.datafilename;
                    end
                    % Clear error string
                    set(handles.ErrorText,'String', '');
-                   
            end
         catch err
            set(handles.ErrorText,'String', string(err.message));
@@ -2783,8 +2791,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-
 function BinScans_Callback(hObject, eventdata, handles)
 % Do nothing
 
@@ -2793,7 +2799,6 @@ function BinScans_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
 
 function plot_colourscheme_Callback(hObject, eventdata, handles)
 switch handles.rawcorr
@@ -2810,3 +2815,80 @@ function plot_colourscheme_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+% --- Executes on button press in AnisotropyCalc.
+function AnisotropyCalc_Callback(hObject, eventdata, handles)
+% Ask the user what to plot
+anisotropy_options = {'UV anisotropy','IR anisotropy','UV magic angle','IR magic angle'};
+[anisotropy_typeindx,doplot] = listdlg('ListString',anisotropy_options,'OKstring','Plot','SelectionMode','single','ListSize',[150,120],'PromptString','Select slice type to plot:');
+
+if doplot == 0
+    return
+end
+
+AnisotropyType  = anisotropy_options{anisotropy_typeindx};
+datafilename    = handles.datafilename;
+% Load the data (replace handles) and update the main handles
+        error=0; handles.Nscans = NaN;
+%         try
+           switch handles.DataTypeMenu.Value
+               case 1 % Lab 2: UV-Vis Pump - IR Probe (ns)
+                   handles = LoadDataIR2(handles);
+                   tempdir = strcat(handles.CurrDir.String,filesep,datafilename,filesep,'temp');
+                   if exist(tempdir{1},'dir') == 7
+                       cd(tempdir{1});
+                       filelist = dir('*signal*.csv');
+                       handles.Nscans = floor(length(filelist)./2);
+                       handles.Nscans_number.String = num2str(handles.Nscans);
+                   else
+                       handles.Nscans_number.String = 'N/A';
+                   end
+                   set(handles.ErrorText,'String', '');
+               case 2 % Lab 1: UV-Vis/IR Pump - IR probe (fs)
+                   handles = LoadDataIR1(handles,[],AnisotropyType);
+                   % TEMP dir story
+                   tempdir = strcat(handles.CurrDir.String,filesep,datafilename,filesep,'temp');
+                   if exist(tempdir{1},'dir') == 7
+                       handles.Nscans_number.String = num2str(handles.Nscans);
+                   else
+                       handles.Nscans_number.String = 'N/A';
+                   end
+                   % Clear error string
+                   set(handles.ErrorText,'String', '');
+           end
+%         catch err
+%            set(handles.ErrorText,'String', string(err.message));
+%            error=1;
+%         end
+        if error == 0
+                set(handles.axes1,'Visible','On')
+                % Initialise defaults and update the Edits for the first time:
+                handles = UpdateEdits(handles);
+                guidata(hObject,handles)
+                % Override default w/current status of linlog tick
+                switch handles.linlogtick.Value
+                    case 0
+                        handles.linlog = 'lin';
+                    case 1
+                        handles.linlog = 'log';
+                end
+        % Plot the data in the main window (for preview)
+        % Takes into account the current status of BkgSubTick
+        if exist('handles.rawcorr','var') == 0
+            switch handles.BkgSubTick.Value
+                case 1
+                    handles.rawcorr='CORRECTED';
+                case 0
+                    handles.rawcorr='RAW';
+            end
+        end
+        switch handles.rawcorr
+            case 'RAW'
+                plot2D(handles,handles.rawsignal,handles.axes1,'On');
+            case 'CORRECTED'
+                plot2D(handles,handles.corrdata,handles.axes1,'On');
+        end
+        % Update handles
+        guidata(hObject,handles)
+        end
+

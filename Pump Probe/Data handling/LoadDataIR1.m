@@ -1,4 +1,4 @@
-function handles = LoadDataIR1(handles,SpectrumToDisplay)
+function handles = LoadDataIR1(handles,SpectrumToDisplay,varargin)
 
 handles.removeduplicates = 1;
 %% READ from handles
@@ -27,8 +27,8 @@ slowmodID       = fopen([filename '_slowModulation.csv']);
     Nslowmod        = str2double(fgetl(slowmodID));
     % The rest of the lines contain the action matrices of all different modulations
     ModA            = strsplit(fgetl(slowmodID),':');
-    ModB            = strsplit(fgetl(slowmodID),':');
-    ModC            = strsplit(fgetl(slowmodID),':');
+    ModB            = strsplit(fgetl(slowmodID),':'); % IR pol
+    ModC            = strsplit(fgetl(slowmodID),':'); % UV pol
     ModSpec         = strsplit(fgetl(slowmodID),':');
     % In Lab 4, the piezo modulation is slow, so it is also included (in Lab 1 this would return -1)
     ModPiezo        = fgetl(slowmodID);
@@ -57,6 +57,13 @@ if ModPiezo ~= -1 % if not at the end of the file
     N_4PM       = length(str2num(ModPiezo{2}))./(N_modA*N_modB*N_modC*N_modSpec);
 else
     N_4PM = 1;
+end
+
+% Consider anisotropy or magic angle signal calculation
+if ~isempty(varargin)
+    anisotropy = varargin{1};
+else
+    anisotropy = 'NONE';
 end
 
 % Count the number of scans
@@ -114,13 +121,48 @@ for m=1:Nslowmod
     end
 end
 
-switch piezomod
-    case 'OFF' % The signal is the signal, just read it from the cell array
-        rawsignal         = tempsignal{SpectrumToDisplay,1};
-        noise             = tempnoise{SpectrumToDisplay,1};
-    case '4PM' % The signal comes from a four point modulation, average the four points
-        rawsignal         = sum(cat(3,tempsignal{:}),3)/4;
-        noise             = sum(cat(3,tempnoise{:}),3)/4;
+switch anisotropy
+    case 'NONE'
+        switch piezomod
+            case 'OFF' % The signal is the signal, just read it from the cell array
+                rawsignal         = tempsignal{SpectrumToDisplay,1};
+                noise             = tempnoise{SpectrumToDisplay,1};
+            case '4PM' % The signal comes from a four point modulation, average the four points
+                rawsignal         = sum(cat(3,tempsignal{:}),3)/4;
+                noise             = sum(cat(3,tempnoise{:}),3)/4;
+        end
+    case 'UV anisotropy'
+        par               = tempsignal{2,1};
+        perp              = tempsignal{1,1};
+        par_n             = tempnoise{2,1};
+        perp_n            = tempnoise{1,1};
+        
+        rawsignal         = (par - perp)./(par + 2.*perp);
+        noise             = abs(((par+2.*perp)-(par-perp))./(par+2.*perp).^2).*par_n + abs((-(par+2.*perp)-2.*(par-perp))./(par+2.*perp).^2).*perp_n;
+    case 'IR anisotropy'
+        par               = tempsignal{1,1};
+        perp              = tempsignal{2,1};
+        par_n             = tempnoise{1,1};
+        perp_n            = tempnoise{2,1};
+        
+        rawsignal         = (par - perp)./(par + 2.*perp);
+        noise             = abs(((par+2.*perp)-(par-perp))./(par+2.*perp).^2).*par_n + abs((-(par+2.*perp)-2.*(par-perp))./(par+2.*perp).^2).*perp_n;
+    case 'UV magic angle'
+        par               = tempsignal{2,1};
+        perp              = tempsignal{1,1};
+        par_n             = tempnoise{2,1};
+        perp_n            = tempnoise{1,1};
+        
+        rawsignal         = (par + 2.*perp)./3;
+        noise             = (par_n + 2.*perp_n)./3;
+    case 'IR magic angle'
+        par               = tempsignal{1,1};
+        perp              = tempsignal{2,1};
+        par_n             = tempnoise{1,1};
+        perp_n            = tempnoise{2,1};
+        
+        rawsignal         = (par + 2.*perp)./3;
+        noise             = (par_n + 2.*perp_n)./3;
 end
 
 % If Nspec = 0, then we have ONE spectrometer state (i.e. the spectrometer doesn't move)
@@ -191,13 +233,12 @@ handles.Nscans      = Nscans;
 handles = EnableControls(handles,'IRLab1');
 
 % Set default values for certain controls
-set(handles.maxDeltaAbs_text,'String',zminmax);
-handles.AddReplace1Dplot.Value = 1;
-handles.linlogtick.Value = 0;
-handles.SVD = 0;
-percentwhites = 5;
-handles.percentwhites = percentwhites;
-set(handles.percent_whites,'String',num2str(percentwhites));
+handles.maxDeltaAbs_text.String = zminmax;
+handles.AddReplace1Dplot.Value  = 1;
+handles.linlogtick.Value        = 0;
+handles.SVD                     = 0;
+handles.percentwhites           = 2;
+handles.percent_whites.String   = num2str(handles.percentwhites);
 
 % Set tmin/max
 handles.editTmin.String = num2str(min(delays));
