@@ -69,7 +69,7 @@ end
 tempfilelist    = dir(tempdir);
 tempfilenames   = {tempfilelist.name};
 % Select only "signal" files - Count the (total) number of datastates
-Nscans          = round(length(tempfilenames(contains(tempfilenames,"signal",'IgnoreCase',1)))/(3.*N_4PM));
+Nscans          = round(length(tempfilenames(contains(tempfilenames,"signal",'IgnoreCase',1)))/(3.*Nslowmod));
 
 % Whatever is not a 4-point modulation is a real "modulation"
 mod             = Nslowmod/N_4PM;
