@@ -20,11 +20,12 @@ timescale           = handles.timescale;
 rawcorr             = handles.rawcorr;
 plotranges          = handles.plotranges;
 plot_skiplevels     = str2double(handles.plot_skiplevels.String);
-plot_percentwhites  = handles.percentwhites; % Already a double, converted before
+plot_Nwhites        = handles.percentwhites; % Already a double, converted before
 plot_showcontours   = handles.ShowContoursTick.Value;
 zlimits             = str2num(handles.editMaxZ.String);
 symcolrange         = handles.SymmetricColourRange_tick.Value;
 LineStyle           = char(handles.ContourLineStyle.String);
+plot_colourscheme   = char(handles.plot_colourscheme.String{handles.plot_colourscheme.Value});
 
 %% Parse the plot ranges
 delaylim            = plotranges(1:2); %delaylim = [Min Max]
@@ -46,8 +47,7 @@ else
 end
 
 % Define the contours to plot
-step = (max_cut - min_cut)./Ncontours;
-plot_contours = min_cut:step:max_cut;
+plot_contours = linspace(min_cut,max_cut,Ncontours);
 
 %% Do the plot
 axes(where);
@@ -57,44 +57,59 @@ Z  = Zdata;
 contourf(where,X,Y,Z,plot_contours,'LineStyle','-','LineColor','flat');
 
 %% Make the plot format nice:
-% Colormap
+
+% Create the colormaps
+% Define the total number of colours and the total number of red/white/blue levels
 n_tot       = Ncontours;
-n_whites    = round(plot_percentwhites*n_tot/100);
-if n_whites == 0
-    n_whites = 1;
-end
-% If the colour range is symmetric
+
+% Check whether the colour range is symmetric
 if symcolrange == 1
-    percent_red     = 0.5-plot_percentwhites/200;
-    percent_blue    = 0.5-plot_percentwhites/200;
+    percent_red     = 0.5-plot_Nwhites/(2*Ncontours);
+    percent_blue    = 0.5-plot_Nwhites/(2*Ncontours);
 else
-    percent_red     = abs(maxabs/(abs(maxabs-minabs))) - plot_percentwhites/200;
-    percent_blue    = abs(minabs/(abs(maxabs-minabs))) - plot_percentwhites/200;
+    percent_red     = abs(maxabs/(abs(maxabs-minabs)))-plot_Nwhites/(2*Ncontours);
+    percent_blue    = 1 - percent_red - plot_Nwhites/(2*Ncontours);
 end
-n_blues     = round(n_tot*percent_blue);
-n_reds      = round(n_tot*percent_red);
-%% Create the colormaps
+n_reds      = round(n_tot*percent_red)+1;
+n_blues     = round(n_tot*percent_blue)+1;
+n_whites    = plot_Nwhites;
 
-% Load the red map
-map_red     = othercolor('YlOrRd9',n_reds);
-% % Load the blue map
-% map_blue    = flipud(othercolor('PuBu9',n_blues));
+% Decide which colour scheme to use
+switch plot_colourscheme
+    case 'RdOr/Wh/Bl'
+        % Generate the RED part of the map
+        map_red     = othercolor('YlOrRd9',n_reds);
+        
+        % Generate the BLUE part of the map
+        % This will use the same gradient as the red map, but conjugated (RGB -> BGR)
+        tmp_blue    = othercolor('YlOrRd9',n_blues);
+        map_blue    = flipud([tmp_blue(:,3) tmp_blue(:,2) tmp_blue(:,1)]);
+%         % An alternative blue (looks like "smoked" blue)        
+%         map_blue = flipud(othercolor('Blues1',n_blues));
 
-% Build the blue map from the red map
-ylord       = othercolor('YlOrRd9',n_blues);
-map_blue    = flipud([ylord(:,3) ylord(:,2) ylord(:,1)]);
-
-% Build the white map
-map_white   = ones(n_whites,3);
-
-% Renormalize the colour scale to make the white more striking
-for j=1:3
-    map_blue(:,j) = map_blue(:,j)/(max(map_blue(:,j)));
-    map_red(:,j) = map_red(:,j)/(max(map_red(:,j)));
+        % Generate WHITE part of the colormap
+        map_white   = ones(n_whites,3);
+        
+        % Renormalize the colour scale to make the white more striking
+        for j=1:3
+            map_blue(:,j) = map_blue(:,j)/(max(map_blue(:,j)));
+            map_red(:,j) = map_red(:,j)/(max(map_red(:,j)));
+        end
+        % Join the colormap "parts"
+        % The first/last element of the red/blue maps is white, so it is discarded
+        cmap    = [map_blue(1:end-1,:);map_white;map_red(2:end,:)];
+    case 'DRd/Ylw/Bl'
+        cmap    = othercolor('BuDRd_12',n_tot);
+    case 'Rd/Wh/Bl'
+        cmap    = b2r(min_cut,max_cut,n_tot,n_whites);
+    case 'DkRd/Wh/DkBl'
+        cmap    = darkb2r(min_cut,max_cut,n_tot,n_whites);
+    case 'Jet'
+        cmap    = jet(n_tot);
 end
-% Join the colormap "parts" and set colormap
-map = [map_blue(1:end-1,:);map_white;map_red(2:end,:)];
-colormap(map);
+
+% Set the colormap
+colormap(cmap);
 shading flat;
 
 % Set color axis limits
