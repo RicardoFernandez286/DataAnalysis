@@ -26,11 +26,13 @@ function handles = process2DIR(handles,ReProcess)
 %     The calculation routines were updated accordingly in MESS and now the chopper signal and all
 %     datastates should be calculated properly.
 %
-% Ricardo Fernández-Terán / 02.08.2018 / v3.2b
+% Ricardo Fernández-Terán / 22.08.2018 / v3.5a
 
 %% Choose between debug/manual mode and normal mode
 debug=0;
 autoplot=0*debug; show_int=1*debug;
+
+dummy = 'diff'; % Can be the dummy number of 'diff' (will plot 2 - 1) - more options coming soon
 
 %% DEBUG/MANUAL: THIS IS IMPLEMENTED IN ORDER TO TEST THE SCRIPT OR TO MANUALLY LOAD THE DATA
 if debug==1
@@ -73,6 +75,7 @@ if debug==1
     end
     Nspectra        = handles.Nspectra;
     Nbins           = handles.Nbins;
+    
     interferogram	= handles.interferogram;
     signal		    = handles.signal;
     rootdir         = handles.rootdir;
@@ -114,6 +117,7 @@ if debug==0 % Only during normal operation
         Ndatastates = 1;
     end
     Nspectra        = handles.Nspectra;
+    Ndummies        = handles.Ndummies;
     Nbins           = handles.Nbins;
     interferogram	= handles.interferogram;
     signal		    = handles.signal;
@@ -141,7 +145,7 @@ if debug==0 % Only during normal operation
     phase_method    = char(handles.phase_method.String{handles.phase_method.Value});
     phase_points    = str2double(handles.phase_Npoints.String);
     probe_calib     = handles.Probe_Calibration.Value;
-    binzero         = num2cell(-1*ones(Ndelays,Ndatastates*Nspectra));
+    binzero         = num2cell(-1*ones(Ndelays,Ndatastates*Nspectra*Ndummies));
     pumpcorrection  = handles.PumpCorrection_tick.Value;
     % If there is a calibrated WL file in the current ROOTDIR, use it
     if probe_calib == 0 && exist([rootdir filesep 'CalibratedProbe.csv'],'file') == 2
@@ -177,11 +181,11 @@ end
     end
     
 %% Process the data
-for k=1:Nspectra
+for k=1:Nspectra*Ndummies
 for m=1:Ndelays
     % Update the Wait Bar
     progress = progress + 1;
-    waitbar((progress/(Ndelays*Nspectra*2)+0.5),handles.WaitBar,['Processing data... (' num2str(progress) ' of ' num2str(Ndelays*Nspectra) ')']);
+    waitbar((progress/(Ndelays*Nspectra*Ndummies*2)+0.5),handles.WaitBar,['Processing data... (' num2str(progress) ' of ' num2str(Ndelays*Nspectra*Ndummies) ')']);
     
     % Remove background (and slow fluctuations in the data, if selected)
     if ReProcess == 0
@@ -257,8 +261,8 @@ for m=1:Ndelays
     apo_interferogram{m,k}      = interferogram{m,k}.*apodize_function{m,k};
     
 % Multiply the signal by the apodization function (Use box! - discard data before BinZero + 1st point by 1/2)
+    apo_signal{m,k}             = signal{m,k}.*apodize_function{m,k}.*box{m,k};
     apodize_function{m,k}       = apodize_function{m,k}.*box{m,k};
-    apo_signal{m,k}             = signal{m,k}.*apodize_function{m,k};
     
 % Decide the FT size
     N_FTpoints{m,k}             = zeropad_factor*Nbins;
@@ -399,24 +403,38 @@ end % Ndatastates
 if Transient2D
     switch Transient2D_mode
         case 1 % Show spectrum 1
-            PROC_2D_DATA = PROC_2D_DATA(:,1);
+            PROCDATA = PROC_2D_DATA(:,1);
         case 2 % Show spectrum 2
-            PROC_2D_DATA = PROC_2D_DATA(:,2);
+            PROCDATA = PROC_2D_DATA(:,2);
         case 3 % Show difference 1-2
             for m=1:Ndelays
-                PROC_2D_DATA{m,1} = PROC_2D_DATA{m,1} - PROC_2D_DATA{m,2};
+                PROCDATA{m,1} = PROC_2D_DATA{m,1} - PROC_2D_DATA{m,2};
             end
         case 4 % Show difference 2-1
             for m=1:Ndelays
-                PROC_2D_DATA{m,1} = PROC_2D_DATA{m,2} - PROC_2D_DATA{m,1};
+                PROCDATA{m,1} = PROC_2D_DATA{m,2} - PROC_2D_DATA{m,1};
             end
         case 5 % Show sum
             for m=1:Ndelays
-                PROC_2D_DATA{m,1} = PROC_2D_DATA{m,1} + PROC_2D_DATA{m,2};
+                PROCDATA{m,1} = PROC_2D_DATA{m,1} + PROC_2D_DATA{m,2};
             end
     end
+    PROC_2D_DATA    = PROCDATA;
 end
 
+%% Dummies processing
+if isnumeric(dummy)
+    PROC_2D_DATA        = PROC_2D_DATA(:,dummy);
+    warndlg(['Plotting dummy ' num2str(dummy)]);
+elseif strcmp(dummy,'diff')
+    for i=1:Ndelays
+        PROCDATA{i,1}   = PROC_2D_DATA{i,2} - PROC_2D_DATA{i,1};
+    end
+    PROC_2D_DATA        = PROCDATA;
+    warndlg('Plotting dummy 2 - dummy 1');
+end
+
+% interferogram   = 
 %% WRITE to handles
     handles.ProbeAxis           = ProbeAxis;
     handles.freq_fit            = freq_fit;

@@ -1,6 +1,6 @@
 function  handles = load2DIRlab1(handles)
 
-% Description: This function loads all 2DIR data in the file format from the Lab 1 MESS program.
+% Description: This function loads all 2DIR data in the file format from the Lab 1 & Lab 4 MESS program.
 % Usage: handles = load2DIRlab1(handles)
 % Inputs:
 %   Handles structure with fields:
@@ -22,7 +22,7 @@ function  handles = load2DIRlab1(handles)
 %     interferogram     (Cell array)
 %     signal			(Cell array)
 %
-% Ricardo Fernández-Terán / 02.08.2018 / v2.5b
+% Ricardo Fernández-Terán / 22.08.2018 / v3.0a
 
 %% DEBUG
 % datafilename = 'R3_mTiO2_Re1213_MeOH_4PM_2D_154022';
@@ -68,10 +68,12 @@ handles.ErrorText.String    = "";
 Nspectra        = csvread([filename '_NSpectra.csv']);
 Ndatastates     = csvread([filename '_Ndatastates.csv']);
 Nbins           = length(bins);
+Ndelays         = length(t2delays);
+
+% Interleaves and dummies
 % Ninterleave     = length(csvread([filename '_interleaves.csv']));
 Ninterleave     = 1;
-
-Ndelays     = length(t2delays);
+Ndummies        = csvread([filename '_dummies.csv']);
 
 % Read all the lines of the SlowModulation file
 slowmodID       = fopen([filename '_slowModulation.csv']);
@@ -171,20 +173,24 @@ totalspectra    = totalstates*Ndelays;
 endings={}; ShortEndings={}; n=0;
 
 if preview_mode == 0 % IF AT LEAST ONE SCAN HAS FINISHED
-    for p=0:Ninterleave-1
-        for i=0:Nspectra-1
-            for j=0:Nslowmod-1
+    for q=0:Ndummies-1
+        for p=0:Ninterleave-1
+            for i=0:Nspectra-1
+                for j=0:Nslowmod-1
                     for k=0:Ndatastates-1
                         n=n+1;
                         for m=0:Ndelays-1
-                            endings{m+1,n} = ['_ds' num2str(k) '_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '.csv'];
-                            ShortEndings{m+1,ceil(n/Ndatastates)} = ['_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '.csv'];
+                            endings{m+1,n}                          = ['_ds' num2str(k) '_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '.csv'];
+                            ShortEndings{m+1,ceil(n/Ndatastates)}   = ['_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '.csv'];
+                            endings_du{m+1,n}                       = ['_ds' num2str(k) '_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '_du' num2str(q) '.csv'];
+                            ShortEndings_du{m+1,ceil(n/Ndatastates)}= ['_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '_du' num2str(q) '.csv'];
                         end
                     end
+                end
             end
         end
     end
-    
+
 elseif preview_mode == 1 % IF THE MEASUREMENT IS STILL ONGOING AND THE FIRST SCAN DIDN'T FINISH YET
     for p=0:Ninterleave-1
         for i=0:Nspectra-1
@@ -192,8 +198,9 @@ elseif preview_mode == 1 % IF THE MEASUREMENT IS STILL ONGOING AND THE FIRST SCA
                     for k=0:Ndatastates-1
                         n=n+1;
                         for m=0:Ndelays-1
-                            endings{m+1,n} = ['_ds' num2str(k) '_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '_0.csv'];
-%                             ShortEndings{m+1,round(n/Ndatastates)} = ['_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '_0.csv'];
+                            endings{m+1,n}      = ['_ds' num2str(k) '_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '_0.csv'];
+                            endings_du{m+1,n}   = ['_ds' num2str(k) '_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '_du' num2str(q) '.csv' '.csv'];
+%                           ShortEndings{m+1,round(n/Ndatastates)} = ['_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '_0.csv'];
                         end
                     end
             end
@@ -208,6 +215,17 @@ exist_probe             = zeros(Ndelays,Ndatastates*Nslowmod*Ninterleave);
 exist_reference         = zeros(Ndelays,Ndatastates*Nslowmod*Ninterleave);
 exist_interf            = zeros(Ndelays,Ndatastates*Nslowmod*Ninterleave);
 
+% First, determine if new or old filename format
+filelist        = dir([rootdir filesep datafilename]);
+filenames       = {filelist.name};
+filenames       = filenames(~contains(filenames,"dummies"));
+find_dummies    = contains(filenames, "_du");
+if sum(find_dummies(:)) > 0
+    endings     = endings_du;
+    ShortEndings= ShortEndings_du;
+end
+
+% Then, do the file existence test
 for k=1:Ndatastates*Nslowmod*Ninterleave*Nspectra
     for m=1:Ndelays
       % For each dataset we need COUNTS, PROBE, REFERENCE & INTERFEROGRAM
@@ -228,8 +246,6 @@ all_missing         = sum([count_missing;probe_missing;reference_missing;interf_
 if all_missing == 0
 % Figure out whether data is "RAW" or "SIGNAL" type (according to the MESS configuration when saving)
 if autodetect_datatype == 1
-    filelist        = dir([rootdir filesep datafilename]);
-    filenames       = {filelist.name};
     find_signal     = strfind(filenames, "signal");
 
     if sum([find_signal{:}],'omitnan') == 0
@@ -397,12 +413,12 @@ case 'Raw'
     end
     
 case 'Signal'
-    for k=1:Nslowmod*Ninterleave*Nspectra
+    for k=1:Nslowmod*Ninterleave*Nspectra*Ndummies
     for m=1:Ndelays
         Ndatastates = 1;
         % Update the Wait Bar
         progress = progress+1;
-        waitbar(progress/(Nslowmod*Ndelays*Ninterleave*Nspectra*2),handles.WaitBar,['Loading data (signal) - Reading file ' num2str(progress) ' of ' num2str(Nslowmod*Ndelays*Ninterleave*Nspectra)]);
+        waitbar(progress/(Nslowmod*Ndelays*Ninterleave*Nspectra*Ndummies*2),handles.WaitBar,['Loading data (signal) - Reading file ' num2str(progress) ' of ' num2str(Nslowmod*Ndelays*Ninterleave*Nspectra*Ndummies)]);
       % Counts here are all 1's. Load them to ensure consistency...
         count{m,k}          = csvread([filename '_count' ShortEndings{m,k}]);
       % Load the interferogram and signal
@@ -435,16 +451,20 @@ case 'Signal'
     % Continue with the slow modulation, it's either OFF or 4PM (polarisations and so on... TBI - not needed yet)
         switch SlowMod
         case '4PM' % This case applies when we have four point modulation
-            tempsignal={}; tempinterferogram={};
+            temp_sig=cell(Ndelays,Ndummies);
+            temp_int=cell(Ndelays,Ndummies);
             % Calculate the signal for the four point modulation, the chopper was already considered in MESS
             % Calculate the signal by averaging all four (modulation) points
-                for m=1:Ndelays
-                    % Just combine all datastates together for each delay
-                    tempsignal{m,1}             = sum(cat(3,signal{m,:}),3)/4;
-                    tempinterferogram{m,1}      = sum(cat(3,interferogram{m,:}),3)/4;
+                for k=0:Ndummies-1
+                    for m=1:Ndelays
+                        % Just combine all datastates together for each delay
+                        sm              = 1:N_4PM;
+                        temp_sig{m,k+1} = sum(cat(3,signal{m,sm+k*N_4PM}),3)/N_4PM;
+                        temp_int{m,k+1} = sum(cat(3,interferogram{m,sm+k*N_4PM}),3)/N_4PM;
+                    end
                 end
-                signal          = tempsignal(:,1);
-                interferogram   = tempinterferogram(:,1);
+                signal          = temp_sig;
+                interferogram   = temp_int;
                 Ndatastates     = 1; % Once we have the signal, set only one datastate
         end
 end
@@ -474,6 +494,7 @@ handles.bins          =	bins;
 handles.t2delays      =	t2delays./1000; % in ps!
 handles.Ndelays       =	Ndelays;
 handles.Nspectra      =	Nspectra;
+handles.Ndummies      = Ndummies;
 handles.Ndatastates   =	Ndatastates;
 handles.Nbins         =	Nbins;
 handles.Nslowmod      =	Nslowmod;
