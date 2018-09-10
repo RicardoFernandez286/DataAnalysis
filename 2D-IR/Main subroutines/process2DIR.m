@@ -32,7 +32,7 @@ function handles = process2DIR(handles,ReProcess)
 debug=0;
 autoplot=0*debug; show_int=1*debug;
 
-dummy = 'diff'; % Can be the dummy number of 'diff' (will plot 2 - 1) - more options coming soon
+dummy = 1; % Can be the dummy number of 'diff' (will plot 2 - 1) - more options coming soon
 
 %% DEBUG/MANUAL: THIS IS IMPLEMENTED IN ORDER TO TEST THE SCRIPT OR TO MANUALLY LOAD THE DATA
 if debug==1
@@ -425,7 +425,7 @@ end
 %% Dummies processing
 if isnumeric(dummy)
     PROC_2D_DATA        = PROC_2D_DATA(:,dummy);
-    warndlg(['Plotting dummy ' num2str(dummy)]);
+%     warndlg(['Plotting dummy ' num2str(dummy)]);
 elseif strcmp(dummy,'diff')
     for i=1:Ndelays
         PROCDATA{i,1}   = PROC_2D_DATA{i,2} - PROC_2D_DATA{i,1};

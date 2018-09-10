@@ -153,7 +153,7 @@ case 'normal' % Single click
     if  handles.is_dir(handles.sorted_index(index_selected))
         % Load the data (replace handles) and update the main handles
         error=0;
-        try
+%         try
            % Check the number of t2 delays
            OldNt2delays = length(handles.Population_delay.String);
            %%% Load the data
@@ -180,10 +180,10 @@ case 'normal' % Single click
            guidata(hObject,handles)
            % Delete progress bar
            delete(handles.WaitBar);
-        catch err
-           set(handles.ErrorText,'String', string(err.message));
-           error=1;
-        end
+%         catch err
+%            set(handles.ErrorText,'String', string(err.message));
+%            error=1;
+%         end
         if error == 0
             % Update the edit controls
             handles = UpdateEdits_2DIR(handles,1);

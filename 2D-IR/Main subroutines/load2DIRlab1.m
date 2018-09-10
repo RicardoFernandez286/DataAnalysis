@@ -192,17 +192,19 @@ if preview_mode == 0 % IF AT LEAST ONE SCAN HAS FINISHED
     end
 
 elseif preview_mode == 1 % IF THE MEASUREMENT IS STILL ONGOING AND THE FIRST SCAN DIDN'T FINISH YET
-    for p=0:Ninterleave-1
-        for i=0:Nspectra-1
-            for j=0:Nslowmod-1
+    for q=0:Ndummies-1
+        for p=0:Ninterleave-1
+            for i=0:Nspectra-1
+                for j=0:Nslowmod-1
                     for k=0:Ndatastates-1
                         n=n+1;
                         for m=0:Ndelays-1
                             endings{m+1,n}      = ['_ds' num2str(k) '_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '_0.csv'];
-                            endings_du{m+1,n}   = ['_ds' num2str(k) '_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '_du' num2str(q) '.csv' '.csv'];
-%                           ShortEndings{m+1,round(n/Ndatastates)} = ['_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '_0.csv'];
+                            endings_du{m+1,n}   = ['_ds' num2str(k) '_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '_du' num2str(q) '.csv'];
+    %                       ShortEndings{m+1,round(n/Ndatastates)} = ['_sp' num2str(i) '_sm' num2str(j) '_de' num2str(m) '_in' num2str(p) '_0.csv'];
                         end
                     end
+                end
             end
         end
     end
