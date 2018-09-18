@@ -49,8 +49,10 @@ switch what
         end
         if pixel == 0
             y_data = interferogram;
+            label  = ' V';
         else
             y_data = signal(:,pixel);
+            label  = ' mOD';
         end
         yyaxis(where,'left')
         plot(where,time,y_data,'-ob','LineWidth',0.5,'MarkerSize',0.5);
@@ -67,6 +69,15 @@ switch what
         xlim(where,[min(time) max(time)]);
         zl = refline(where,0,0);
         zl.Color = [0.5 0.5 0.5];
+        % Show info about maximum/minimum values
+        maxvalue    = num2str(max(y_data),'%.3g');
+        minvalue    = num2str(min(y_data),'%.3g');
+        text(where,0.635,0.2,{['Max = ' maxvalue label];['Min = ' minvalue label]},'Units','normalized','FontSize',10);
+%         % Show interferometer contrast (wrong formula! needs to be checked!)
+%         if pixel == 0
+%             contrast    = num2str(100.*(max(y_data)-min(y_data)-mean(y_data)-mean(abs([max(y_data),min(y_data)])))./(max(y_data)-min(y_data)+mean(y_data)+mean(abs([max(y_data),min(y_data)]))),'%.3g');
+%             text(where,0.635,0.9,['Contrast: ' contrast '%'],'Units','normalized','FontSize',10);
+%         end
     case 'ph' % Plot phasing data
         %%% Plot the pump spectrum (real part of FFT[pyro])
         yyaxis(where,'left')
