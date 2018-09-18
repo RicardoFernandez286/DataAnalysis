@@ -531,13 +531,24 @@ PROC_2D_DATA        = handles.PROC_2D_DATA;
             if isempty(handles.SelTraces)
                 return
             end
+            EnT = 0;
         case 0
-            handles.SelTraces = inputdlg('Enter the coordinates of the points to plot along t2:',...
-                 'Input desired coordinates (format: x1,y1;x2,y2...)', [1 60]);
+            handles.SelTraces = inputdlg('Enter the coordinates of the points to plot along t2 (format: x1,y1;x2,y2...):',...
+                 'Input desired coordinates', [1 60]);
             if isempty(handles.SelTraces)
                 return
             end
-            handles.SelTraces = str2num(handles.SelTraces{:});
+            % Plot special cases
+            if strcmp(handles.SelTraces,'EnT-GSB')
+                handles.SelTraces = [1979,1979;1979,2028;2028,2028;2028,1979];
+                EnT = 1;
+            elseif strcmp(handles.SelTraces,'EnT-ESA')
+                handles.SelTraces = [1979,1967;1979,2017;2028,2017;2028,1967];
+                EnT = 1;
+            else
+                handles.SelTraces = str2num(handles.SelTraces{:});
+                EnT = 0;
+            end
     end
     L = size(handles.SelTraces,1);
     
@@ -597,60 +608,127 @@ for i=1:L
     end
 end
 
-% Create a new figure with consistent format
-fh = figure();
-fh.Position(3)  = 800;
-fh.Position(4)  = 425;
-fh.Color        = [1 1 1];
 
-% Define the axes
-axes2 = axes('Parent',fh);
-axes(axes2);
 
-% Plot the data
-cmap=colormap(othercolor('Mrainbow',L));
+% Prepare plot for EnT
+if EnT
+    if abs(max(kindata(:))) <= abs(min(kindata(:)))
+        kindata = -kindata;
+    end
+    
+    diagFW          = kindata(:,1)./max(max(abs(kindata(:,1:2))));
+    diagBW          = kindata(:,3)./max(max(abs(kindata(:,3:4))));
+    xpeakFW         = 10.*kindata(:,2)./max(max(abs(kindata(:,1:2))));
+    xpeakBW         = 10.*kindata(:,4)./max(max(abs(kindata(:,3:4))));
+    time            = handles.t2delays;
+    % Create figure
+    fh              = figure;
+    fh.Units        = 'normalized';
+    fh.Position(2)  = 0.1;
+    fh.Position(4)  = fh.Position(4)*2;
 
-% % Prepare plot for EnT
-% kindata = -kindata;
-% kindata(:,1:2) = kindata(:,1:2)./max(max(abs(kindata(:,1:2))));
-% kindata(:,2) = 10.*kindata(:,2);
-% kindata(:,3:4) = kindata(:,3:4)./max(max(abs(kindata(:,3:4))));
-% kindata(:,4) = 10.*kindata(:,4);
-% label = 'Normalised 2D signal (a.u.)';
-% caption{2} = ['(' num2str(round(PumpAxis{1,1}(pump_index(1,2)))) ', ' num2str(ProbeAxis(probe_index(2))) ') cm^{-1} \times10'];
+    fh.Color        = [1 1 1];
+    fh.Units        = 'pixels';
+    ax_FW           = subplot(2,1,1);
+    ax_BW           = subplot(2,1,2);
+    ax_FW.FontSize  = 12;
+    ax_BW.FontSize  = 12;
 
-% Plot the data
-cmap=colormap(othercolor('Mrainbow',L));
-for n=1:L
-   plot(handles.t2delays,kindata(:,n),'LineWidth',2,'Marker','o','MarkerSize',2,'color',cmap(n,:));
-   hold on
+    box(ax_FW,'on');
+    box(ax_BW,'on');
+
+    hold(ax_FW,'on');
+    hold(ax_BW,'on');
+
+    % Plot the diagonal peaks
+    plot(ax_FW,time,diagFW,'-or','LineWidth',1,'DisplayName','Diagonal Re(^{13}CO)');
+    plot(ax_BW,time,diagBW,'-ob','LineWidth',1,'DisplayName','Diagonal Re(^{12}CO)');
+
+    % Plot the cross peaks
+    plot(ax_FW,time,xpeakFW,'-^r','LineWidth',1,'DisplayName','Re(^{13}CO) \rightarrow Re(^{12}CO) \rm{\times10}');
+    plot(ax_BW,time,xpeakBW,'-vb','LineWidth',1,'DisplayName','Re(^{13}CO) \leftarrow Re(^{12}CO) \rm{\times10}');
+
+    % Set axes limits
+    axis(ax_FW,'tight');
+    axis(ax_BW,'tight');
+    
+    %%% Nice formatting
+    % Titles
+    title(ax_FW,'Forward energy transfer','FontSize',13);
+    title(ax_BW,'Backward energy transfer','FontSize',13);
+
+    % Axis labels
+    xlabel(ax_FW,'t_2 delay (ps)','FontWeight','bold','FontSize',12);
+    xlabel(ax_BW,'t_2 delay (ps)','FontWeight','bold','FontSize',12);
+
+    ylabel(ax_FW,'Normalised 2D signal','FontWeight','bold','FontSize',12);
+    ylabel(ax_BW,'Normalised 2D signal','FontWeight','bold','FontSize',12);
+
+    % Axis limits
+    xlim(ax_FW,[0 time(end)]);
+    xlim(ax_BW,[0 time(end)]);
+
+    ylim(ax_FW,[-0.1 1.1]);
+    ylim(ax_BW,[-0.1 1.1]);
+    % Add zero line
+    hline_FW = refline(ax_FW,[0 0]); hline_FW.Color = [0.5 0.5 0.5];
+    set(get(get(hline_FW,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
+    hline_BW = refline(ax_BW,[0 0]); hline_BW.Color = [0.5 0.5 0.5];
+    set(get(get(hline_BW,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
+    
+    % Legends
+    lh_FW = legend(ax_FW,'show');
+    legend(ax_FW,'boxoff','FontWeight','bold')
+    legend(ax_FW,{},'FontWeight','bold')
+
+    lh_BW = legend(ax_BW,'show');
+    legend(ax_BW,'boxoff')
+    legend(ax_BW,{},'FontWeight','bold')
+    % Make figure resizable
+    fh.Units        = 'normalized';
+else
+    % Create a new figure with consistent format
+    fh = figure();
+    fh.Position(3)  = 800;
+    fh.Position(4)  = 425;
+    fh.Color        = [1 1 1];
+    % Define the axes
+    axes2 = axes('Parent',fh);
+    axes(axes2);
+    cmap=colormap(othercolor('Mrainbow',L));
+    % Plot the data
+    for n=1:L
+       plot(axes2,handles.t2delays,kindata(:,n),'LineWidth',2,'Marker','o','MarkerSize',2,'color',cmap(n,:));
+       hold on
+    end
+    %%% Nice formatting
+    set(gca,'FontSize',14)
+    xlabel('t_{2} delay (ps)','FontSize',14,'FontWeight','bold');
+    ylabel(label,'FontSize',14,'FontWeight','bold')
+    % title([handles.datafilename;'WAITING TIME KINETICS';''],'Interpreter','none','FontSize',10)
+    axis tight
+
+    % Show only positive t2 times
+    xlim([0 max(t2delays)]);
+
+    % Create legend
+    legend(gca,caption,'FontSize',12)
+    legend('boxoff')
+    legend('Location','northeast')
+
+    % Set linear or log X scale
+    set(axes2,'xscale','lin');
+
+    % Add zero line
+    hline = refline(axes2,[0 0]); hline.Color = [0.5 0.5 0.5];
+    set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
+
+    axes2.Units     = 'pixels';
+    axes2.Position  = [75 75 675 320];
+    axes2.Units     = 'normalized';
 end
 
-%%% Nice formatting
-set(gca,'FontSize',14)
-xlabel('t_{2} delay (ps)','FontSize',14,'FontWeight','bold');
-ylabel(label,'FontSize',14,'FontWeight','bold')
-% title([handles.datafilename;'WAITING TIME KINETICS';''],'Interpreter','none','FontSize',10)
-axis tight
 
-% Show only positive t2 times
-xlim([0 max(t2delays)]);
-
-% Create legend
-legend(gca,caption,'FontSize',12)
-legend('boxoff')
-legend('Location','northeast')
-
-% Set linear or log X scale
-set(axes2,'xscale','lin');
-
-% Add zero line
-hline = refline(axes2,[0 0]); hline.Color = [0.5 0.5 0.5];
-set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
-
-axes2.Units     = 'pixels';
-axes2.Position  = [75 75 675 320];
-axes2.Units     = 'normalized';
 
 % Decide whether to save the plotted traces or not
 % if handles.DoSaveTraces==1

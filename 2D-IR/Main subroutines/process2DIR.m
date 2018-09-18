@@ -431,7 +431,7 @@ elseif strcmp(dummy,'diff')
         PROCDATA{i,1}   = PROC_2D_DATA{i,2} - PROC_2D_DATA{i,1};
     end
     PROC_2D_DATA        = PROCDATA;
-    warndlg('Plotting dummy 2 - dummy 1');
+%     warndlg('Plotting dummy 2 - dummy 1');
 end
 
 % interferogram   = 

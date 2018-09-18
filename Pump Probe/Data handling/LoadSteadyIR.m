@@ -23,7 +23,15 @@ if FileName ~= 0
     % X axis in Wavenumbers assumed
     switch FilterIndex
         case 2
-            [y,x,~] = ImportOpus(SteadyIRfile,'RatioAbsorption');
+            try
+                [y,x,~] = ImportOpus(SteadyIRfile,'RatioAbsorption');
+            catch
+                try
+                    [y,x,~] = ImportOpus(SteadyIRfile);
+                catch
+                    return
+                end
+            end
         case 1
             IRdata  =  csvread(SteadyIRfile);
             x       = IRdata(:,1);

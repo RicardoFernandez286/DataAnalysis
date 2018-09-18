@@ -1082,7 +1082,10 @@ switch interactive
         handles.SelTraces = inputdlg('Enter space-separated wavenumbers to plot:',...
              'Input desired wavenumbers', [1 50]);
         handles.SelTraces = transpose(str2num(handles.SelTraces{:}));
-        handles.SelTraces = sort(handles.SelTraces,1); 
+        handles.SelTraces = sort(handles.SelTraces,1);
+        if isempty(handles.SelTraces)
+            return
+        end
         % Check if RAW or CORR and give DATA
         switch handles.rawcorr
             case 'RAW'
@@ -1195,7 +1198,10 @@ switch interactive
         handles.SelTraces = inputdlg('Enter space-separated times to plot the transient spectra:',...
              ['Input desired times (in ',timescale,' )'], [1 50]);
         handles.SelTraces = transpose(str2num(handles.SelTraces{:}));
-        handles.SelTraces = sort(handles.SelTraces,1); 
+        handles.SelTraces = sort(handles.SelTraces,1);
+        if isempty(handles.SelTraces)
+            return
+        end
         % Check if RAW or CORR and give DATA
         switch handles.rawcorr
             case 'RAW'
