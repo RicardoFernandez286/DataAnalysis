@@ -253,25 +253,29 @@ set(handles.MaxNoise_text,'String',MaxNoise);
 set(handles.SNRnumber,'String',SNR);
 
 % Set defaults for background subtraction subunit
-handles.BkgSubTick.Value = 0;
+handles.BkgSubTick.Value = 1;
     % Show by default the background subtraction limits
     % from the first data point till just before time zero
     k = 1;
-    t = handles.delays(k);
-    while t < -1
-        k = k+1;
-        t = handles.delays(k+1);
-    end
-    handles.j = 1;
+    handles.j = 1;%     t = handles.delays(k);
+%     while t < -1
+%         k = k+1;
+%         t = handles.delays(k+1);
+%     end
+
     handles.k = k;
     set(handles.mintimeBkg,'String',num2str(handles.delays(1)));
     set(handles.maxtimeBkg,'String',num2str(handles.delays(k)));
 
     % Do the background subtraction and change status in handles.rawcorr
-    handles.bkg = mean(handles.rawsignal(1:k,:));
+    if k==1
+        handles.bkg = handles.rawsignal(1,:);
+    else
+        handles.bkg = mean(handles.rawsignal(1:k,:));
+    end
     handles.corrdata = handles.rawsignal - handles.bkg;
     % For Lab 1, due to perturbed FID, don't do BG sub
-    handles.rawcorr = 'RAW';
+    handles.rawcorr = 'CORR';
 else
     assert(exist([filename '_delays.csv'],'file') ~= 0,'Selected directory is empty or files are corrupt!')
 end

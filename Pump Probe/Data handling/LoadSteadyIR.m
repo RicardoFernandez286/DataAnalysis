@@ -24,7 +24,7 @@ if FileName ~= 0
     switch FilterIndex
         case 2
             try
-                [y,x,~] = ImportOpus(SteadyIRfile,'RatioAbsorption');
+                [y,x,~] = ImportOpus(SteadyIRfile,'RatioAbsorptionChanged');
             catch
                 try
                     [y,x,~] = ImportOpus(SteadyIRfile);

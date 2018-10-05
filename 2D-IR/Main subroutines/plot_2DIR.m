@@ -35,7 +35,7 @@ end
     LineWidth           = 0.5;
     plot_limittype      = 'Local'; % 'Global' will take min/max of the whole 2D set, while 'Local' will take only the selected region
     interpolate         = 0;
-    textcolor           = 'w';
+    textcolor           = 'none';
 % Read data
     ProbeAxis           = handles.ProbeAxis;
     PumpAxis            = handles.PumpAxis;
