@@ -482,35 +482,48 @@ n = str2num(handles.nSVD.String);
 figure()
 sv_axes = subplot(2,2,[3 4]);
 cmap = colormap(lines(length(n)));
-SVAL = diag(SV); SVAL = SVAL(n,:); SV_diag=diag(SVAL,0);
-scatter(n,SVAL,75,cmap,'filled','LineWidth',0.75);
+SVAL = diag(SV);
+sum_SVAL = sum(SVAL);
+SVAL = SVAL(n,:); SV_diag=diag(SVAL,0);
+scatter(sv_axes,n,SVAL,75,cmap,'filled','LineWidth',0.75);
+sv_axes.YScale = 'log';
 axis tight; yl = ylim; ylim([yl(1) 1.1.*yl(2)]); set(gca, 'FontSize', 10); set(gca,'xtick',n)
 %title(['Singular values of ',handles.datafilename],'Interpreter','none','FontWeight','bold');
 xlabel('SVD index','FontWeight','bold');
 ylabel('SVD magnitude','FontWeight','bold');
 % Plot the RH vectors (Wavelength)
-subplot(2,2,1)
+ax=subplot(2,2,1);
 plot(handles.cmprobe,WL(:,n)); axis tight;
+hold on
+plot(ax,[handles.cmprobe(1) handles.cmprobe(end)],[0,0],'-','LineWidth',0.75,'Color',[0.5 0.5 0.5])
+hold off
 xlabel('Wavenumbers (cm^{-1})','FontWeight','bold');
 ylabel('\DeltaAbs (mOD)','FontWeight','bold');
 % Plot the LH vectors (Time)
-subplot(2,2,2)
-plot(handles.delays,T(:,n)*SV_diag); axis tight;
-xlabel(['Delays ( ',handles.timescale,')'],'FontWeight','bold');
+ax=subplot(2,2,2);
+plot(ax,handles.delays,T(:,n)*SV_diag); axis tight;
+xlabel(['Delays (',handles.timescale,')'],'FontWeight','bold');
+if handles.linlogtick.Value
+    ax.XScale = 'log';
+end
+xl = xlim(ax);
+hold on
+plot(ax,[xl(1) xl(2)],[0,0],'-','LineWidth',0.75,'Color',[0.5 0.5 0.5])
+hold off
 
 %Add the cumulative information content as function of increasing SVD
 %components
-axes(sv_axes)
+axes(sv_axes);
 yyaxis(sv_axes,'right')
 sv_axes.YColor = 'r';
 cumulSV=zeros(length(n),1);
 for q=1:length(n)
-    cumulSV(q,1)=sum(SVAL(1:q))/sum(SVAL)*100;
+    cumulSV(q,1)=sum(SVAL(1:q))/sum_SVAL*100;
 end
 plot(transpose(n),cumulSV,'-or','LineWidth',0.75);
 text(transpose(n),cumulSV,num2str(cumulSV,3),'HorizontalAlignment','left','VerticalAlignment','top')
 ylabel('Cumulative content (%)','FontWeight','bold');
-ylim([70 100])
+ylim([1 100])
 
 % --- Executes on button press in SVD_fit.
 function SVD_fit_Callback(hObject, eventdata, handles)
