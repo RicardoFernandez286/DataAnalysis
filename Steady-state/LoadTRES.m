@@ -5,8 +5,8 @@ folder      = uigetdir();
 cd(folder);
 % Get list of files
 files       = dir(folder);
-% Remove . and ..
-files(1:2)  = [];
+% Remove directories
+files       = files(~[files.isdir]);
 % Remove TRES_data.dat (if it's there)
 files(strcmp({files.name},'TRES_data.dat')) = [];
 % Remove IRF.txt (if it's there)
