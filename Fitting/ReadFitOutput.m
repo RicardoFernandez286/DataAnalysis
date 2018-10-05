@@ -15,7 +15,7 @@ function handles = ReadFitOutput(parameters,handles,fitP,fitP_SD)
 % convolution of a sum of NumExp and an infinite component
 %
 %   Ricardo Fernández-Terán
-%   v1.0 / 2017-06-12
+%   v1.2 / 2018-10-05
 
 %% Read the input structure
 % Read given parameters
@@ -134,7 +134,7 @@ if NumExp ~= 0
                 Tau_SD{k}   = num2str(fitP_SD(var)/1000,2);
                 switch handles.timescale
                     case 'ns'
-                        longtimescale = 'µs';
+                        longtimescale = [char(956) 's'];
                     case 'ps'
                         longtimescale = 'ns';
                     case 'fs'
@@ -151,7 +151,7 @@ if NumExp ~= 0
                 Tau{k} = num2str(Tau_values(k)/1000);
                 switch handles.timescale
                     case 'ns'
-                        longtimescale = '\mus';
+                        longtimescale = [char(956) 's'];
                     case 'ps'
                         longtimescale = 'ns';
                     case 'fs'

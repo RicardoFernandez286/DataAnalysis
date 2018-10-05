@@ -9,7 +9,7 @@ function varargout = FitWindow(varargin)
 %     The response function is modelled as a normalised Gaussian.
 %     
 %   Ricardo Fernández-Terán
-%   v1.3 / 2017-07-25
+%   v1.5 / 2018-10-05
 
 % Last Modified by GUIDE v2.5 31-Oct-2017 21:24:54
 
@@ -927,6 +927,7 @@ end
     Output.Switches = [handles.GaussIRF_tick.Value handles.StretchedExp_tick.Value];
     
 function handles = UpdatePlot(handles)
+n_plotpoints = 10000;
 switch handles.FitDone
     case 1 % REAL FIT DONE
         % Read the inputs
@@ -950,18 +951,24 @@ switch handles.FitDone
             else
                 plotfunc = fitfunc;
             end
-            previewplot = plotfunc(p_values,t);
             limits = handles.ZL_xlim;
             % Redo the plots
             hold(handles.dataAxes,'on');
-            hold(handles.resAxes,'on')
+            hold(handles.resAxes,'on');
+            switch handles.LinLog
+                case 1
+                    timeaxis  = logspace(log10(limits(1)),log10(limits(2)),n_plotpoints);
+                case 0
+                    timeaxis  = linspace(limits(1),limits(2),n_plotpoints);
+            end
+            fitted_data   = double(plotfunc(p_values,timeaxis));
             if handles.fittype==2
                 dp(FitNo) = plot(handles.dataAxes,handles.Data_x,handles.Data_y(:,FitNo),'o','color',cmap(FitNo,:),'LineWidth',0.025);
-                fp(FitNo) = fplot(handles.dataAxes,previewplot,limits,'-','LineWidth',2,'MeshDensity',5000,'color',cmap(FitNo,:),'DisplayName',['SVD Component ' num2str(FitNo)]);
+                fp(FitNo) = plot(handles.dataAxes,timeaxis,fitted_data,'-','LineWidth',2,'color',cmap(FitNo,:),'DisplayName',['SVD Component ' num2str(FitNo)]);
                 rp(FitNo) = plot(handles.resAxes,handles.Data_x,(handles.Data_y(:,FitNo) - plotfunc(p_values,handles.Data_x)),'-o','color',cmap(FitNo,:));
             else
-                plot(handles.dataAxes,handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value),'o','color',[0.2 0.2 1])
-                fplot(handles.dataAxes,previewplot,limits,'-','LineWidth',2,'MeshDensity',5000,'color','b')
+                plot(handles.dataAxes,handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value),'o','color',[0.2 0.2 1])               
+                plot(handles.dataAxes,timeaxis,fitted_data,'-','LineWidth',2,'color','b')
                 plot(handles.resAxes,handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value) - plotfunc(p_values,handles.Data_x),'-o','color',[0.2 0.2 1]);
             end
             xlim(handles.dataAxes,limits);
@@ -994,13 +1001,20 @@ switch handles.FitDone
             % Redo the plots
             hold(handles.dataAxes,'on');
             hold(handles.resAxes,'on')
+            switch handles.LinLog
+                case 1
+                    timeaxis  = logspace(log10(limits(1)),log10(limits(2)),n_plotpoints);
+                case 0
+                    timeaxis  = linspace(limits(1),limits(2),n_plotpoints);
+            end
+            fitted_data   = double(plotfunc(p_values,timeaxis));
             if handles.fittype==2
                 dp(FitNo) = plot(handles.dataAxes,handles.Data_x,handles.Data_y(:,FitNo),'o','color',cmap(FitNo,:),'LineWidth',0.025);
-                fp(FitNo) = fplot(handles.dataAxes,previewplot,limits,'-','LineWidth',2,'MeshDensity',5000,'color',cmap(FitNo,:),'DisplayName',['SVD Component ' num2str(FitNo)]);
+                fp(FitNo) = plot(handles.dataAxes,timeaxis,fitted_data,'-','LineWidth',2,'color',cmap(FitNo,:),'DisplayName',['SVD Component ' num2str(FitNo)]);
                 rp(FitNo) = plot(handles.resAxes,handles.Data_x,(handles.Data_y(:,FitNo) - plotfunc(p_values,handles.Data_x)),'-o','color',cmap(FitNo,:));
             else
                 plot(handles.dataAxes,handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value),'o','color',[0.2 0.2 1])
-                fplot(handles.dataAxes,previewplot,limits,'-','LineWidth',2,'MeshDensity',5000,'color','b')
+                plot(handles.dataAxes,timeaxis,fitted_data,'-','LineWidth',2,'color','b')
                 plot(handles.resAxes,handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value) - plotfunc(p_values,handles.Data_x),'-o','color',[0.2 0.2 1]);
             end
             xlim(handles.dataAxes,limits);

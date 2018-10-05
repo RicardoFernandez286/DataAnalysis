@@ -562,7 +562,8 @@ FitType=2; % i.e. 1= LOCAL, 2 = GLOBAL SVD fit
     fh.Position(3)  = 800;
     fh.Position(4)  = 425;
     fh.Color        = [1 1 1];
-
+    fh.Units        = 'normalized';
+    
     % Define the axes
     handles.axes2 			= axes('Parent',fh);
     handles.axes2.Units     = 'pixels';
@@ -576,7 +577,7 @@ FitType=2; % i.e. 1= LOCAL, 2 = GLOBAL SVD fit
        if Taus(n) > 1000
            switch handles.timescale
                 case 'ns'
-                    newtimescale = ['\mu' 's'];
+                    newtimescale = '\mus';
                 case 'ps'
                     newtimescale = 'ns';
                 case 'fs'
@@ -630,12 +631,10 @@ FitType=2; % i.e. 1= LOCAL, 2 = GLOBAL SVD fit
     axis tight
     hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
     set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
-
+    
 % Plot the 2D residual surface
     % Initialise variables
     FitEval=zeros(length(handles.delays),nSVD);
-    GlobalFit=zeros(length(handles.delays),length(handles.cmprobe));
-    GlobalRes=zeros(length(handles.delays),length(handles.cmprobe));
     % Evaluate the fit functions with the fitted params
     for m=1:nSVD
         FitEval(:,m) = feval(FitFunc{m},fitP,handles.delays);
@@ -644,21 +643,29 @@ FitType=2; % i.e. 1= LOCAL, 2 = GLOBAL SVD fit
     GlobalFit=FitEval*transpose(SelWL);
     GlobalRes=data-GlobalFit;
     % Plot the fitted surface
-    figure;
+    fh = figure;
     ax = axes();
     plot2D(handles,GlobalFit,ax,'Off');
     title({handles.datafilename;['FITTED SURFACE';'']},'Interpreter','none')
+    cl=caxis(ax);
+    fh.Units        = 'normalized';
     % Plot the residual surface
-    figure
+    fh = figure;
     ax = axes();
     plot2D(handles,GlobalRes,ax,'Off')
     title({handles.datafilename;['RESIDUAL SURFACE';'']},'Interpreter','none');
+    caxis(ax,cl);
+    fh.Units        = 'normalized';
+    fh.Position(1)  =  fh.Position(1)-0.3;
     % Plot the residual surface with maximum scale
-    figure
+    fh = figure;
     ax = axes();
     plot2D(handles,GlobalRes,ax,'Off')
     caxis auto
-    title({handles.datafilename;['RESIDUAL SURFACE - max Z scale';'']},'Interpreter','none');   
+    title({handles.datafilename;['RESIDUAL SURFACE - max Z scale';'']},'Interpreter','none');
+    fh.Units        = 'normalized';
+    fh.Position(1)  =  fh.Position(1)-0.3;
+    fh.Position(2)  =  fh.Position(2)-0.3;
 % Everything Done! :)
 
 function editWLmax_Callback(hObject, eventdata, handles)
