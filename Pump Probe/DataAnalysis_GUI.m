@@ -2135,6 +2135,7 @@ switch handles.rawcorr
         XYZdata(2:m+1,2:n+1) = handles.corrdata;
         datafilename = char(strcat(handles.datafilename,'-CORRECTED'));
 end
+cd(handles.rootdir);
 dlmwrite(strcat(datafilename,'.dat'),XYZdata);
 helpdlg(['Data was saved in ' pwd filesep datafilename '.dat'],'Data saved successfully!');
 

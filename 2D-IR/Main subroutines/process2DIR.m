@@ -340,7 +340,6 @@ if pumpcorrection == 1
     magnitude_FFTsig{m,k}       = abs(FFT_ZPsig{m,k}-mean(FFT_ZPsig{m,k}))./(real(phased_FFTZPint{m,k}*ones(1,length(cmprobe))));
 else
     phased_FFTZPsig{m,k}        = real(FFT_ZPsig{m,k}.*phasingterm{m,k});
-%     magnitude_FFTsig{m,k}       = abs(FFT_ZPsig{m,k}-mean(FFT_ZPsig{m,k}));
     magnitude_FFTsig{m,k}       = abs(FFT_ZPsig{m,k});
 end
     
