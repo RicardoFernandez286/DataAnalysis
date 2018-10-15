@@ -22,7 +22,7 @@ function varargout = DataAnalysis_GUI(varargin)
 
 % Edit the above text to modify the response to help DataAnalysis_GUI
 
-% Last Modified by GUIDE v2.5 07-Aug-2018 21:45:23
+% Last Modified by GUIDE v2.5 15-Oct-2018 14:27:44
 
 % Ricardo Fernández-Terán - v3.9a - 11.06.2018
 % ----CHANGELOG:
@@ -190,7 +190,7 @@ case 'normal' % Single click
 % If directory
     if  handles.is_dir(handles.sorted_index(index_selected))
         % Load the data (replace handles) and update the main handles
-        error=0; handles.Nscans = NaN;
+        error=0; handles.Nscans = NaN; handles.RecalcScans = 0;
         try
            switch handles.DataTypeMenu.Value
                case 1 % Lab 2: UV-Vis Pump - IR Probe (ns)
@@ -2857,7 +2857,7 @@ AnisotropyType  = anisotropy_options{anisotropy_typeindx};
 datafilename    = handles.datafilename;
 % Load the data (replace handles) and update the main handles
         error=0; handles.Nscans = NaN;
-%         try
+        try
            switch handles.DataTypeMenu.Value
                case 1 % Lab 2: UV-Vis Pump - IR Probe (ns)
                    handles = LoadDataIR2(handles);
@@ -2873,14 +2873,134 @@ datafilename    = handles.datafilename;
                    set(handles.ErrorText,'String', '');
                case 2 % Lab 1: UV-Vis/IR Pump - IR probe (fs)
                    handles = LoadDataIR1(handles,[],AnisotropyType);
-                   % TEMP dir story
+                   TEMP dir story
                    tempdir = strcat(handles.CurrDir.String,filesep,datafilename,filesep,'temp');
                    if exist(tempdir{1},'dir') == 7
                        handles.Nscans_number.String = num2str(handles.Nscans);
                    else
                        handles.Nscans_number.String = 'N/A';
                    end
-                   % Clear error string
+                   Clear error string
+                   set(handles.ErrorText,'String', '');
+           end
+        catch err
+           set(handles.ErrorText,'String', string(err.message));
+           error=1;
+        end
+        if error == 0
+                set(handles.axes1,'Visible','On')
+                % Initialise defaults and update the Edits for the first time:
+                handles = UpdateEdits(handles);
+                guidata(hObject,handles)
+                % Override default w/current status of linlog tick
+                switch handles.linlogtick.Value
+                    case 0
+                        handles.linlog = 'lin';
+                    case 1
+                        handles.linlog = 'log';
+                end
+        % Plot the data in the main window (for preview)
+        % Takes into account the current status of BkgSubTick
+        if exist('handles.rawcorr','var') == 0
+            switch handles.BkgSubTick.Value
+                case 1
+                    handles.rawcorr='CORRECTED';
+                case 0
+                    handles.rawcorr='RAW';
+            end
+        end
+        switch handles.rawcorr
+            case 'RAW'
+                plot2D(handles,handles.rawsignal,handles.axes1,'On');
+            case 'CORRECTED'
+                plot2D(handles,handles.corrdata,handles.axes1,'On');
+        end
+        % Update handles
+        guidata(hObject,handles)
+        end
+
+
+
+function RecalculateSignal_Callback(hObject, eventdata, handles)
+Nscans          = handles.Nscans;
+datafilename    = char(handles.datafilename);
+tempdir         = [char(handles.CurrDir.String) filesep datafilename filesep 'temp'];
+tempdirOUT      = [char(handles.CurrDir.String) filesep datafilename 'temp'];
+% Check if the temp dir is outside (Lab 1)
+if exist(tempdir,'dir') == 0
+    tempdir     = tempdirOUT;
+end
+cd (char(tempdir));
+
+if  ~isnan(Nscans)
+    PlotScans = inputdlg(['Select scans to average (format m:n, m&n < ' num2str(Nscans) ')']);
+    if isempty(PlotScans)
+        return
+    else
+        PlotScans = str2num(PlotScans{:});
+    end
+else
+    warndlg('No individual scan data available!')
+    return
+end
+% Load the scan data depending on Lab 1 vs Lab 2
+switch handles.DataTypeMenu.Value
+    case 1 % Lab 2
+        % The first scan has no _n.csv termination
+            TempScanData    = csvread(char(strcat(tempdir,filesep,datafilename,'_signal.csv')));
+            TempScanNoise   = csvread(char(strcat(tempdir,filesep,datafilename,'_signal_noise.csv')));
+            ScanData        = zeros(size(TempScanData,1),size(TempScanData,2),Nscans);
+            ScanNoise       = zeros(size(TempScanData,1),size(TempScanData,2),Nscans);
+        if Nscans > 1
+            ScanData(:,:,1) = TempScanData;
+            ScanNoise(:,:,2)= TempScanNoise;
+            % Load scans 2 to Nscans
+            for i=2:Nscans
+                ScanNrch        = char(strcat(tempdir,filesep,datafilename,'_signal_',num2str(i-1),'.csv'));
+                ScanNoiseNrch   = strcat(tempdir,filesep,datafilename,'_signal_noise_',num2str(i-1),'.csv');
+                ScanData(:,:,i) = csvread(ScanNrch);
+                ScanNoise(:,:,i)= csvread(ScanNoiseNrch);
+            end
+            clear TempScanData;
+        else
+            ScanData(:,:,1) = TempScanData;
+        end
+    case 2 % Lab 1 & Lab 4
+        % The first scan has no _n.csv termination
+        % CHECK FOR LAB 4 - 4PM
+        warndlg('NOT IMPLEMENTED!');
+        return
+end
+% Write the actual selected scans back into handles
+handles.rawsignal   = mean(ScanData(:,:,PlotScans),3);
+handles.noise       = mean(ScanNoise(:,:,PlotScans),3);
+handles.RecalcScans = 1;
+% Load the data (replace handles) and update the main handles
+        error=0; handles.Nscans = NaN;
+%         try
+           switch handles.DataTypeMenu.Value
+               case 1 % Lab 2: UV-Vis Pump - IR Probe (ns)
+                   handles = LoadDataIR2(handles);
+                   tempdir = strcat(handles.CurrDir.String,filesep,datafilename,filesep,'temp');
+                   if exist(tempdir,'dir') == 7
+                       cd(tempdir);
+                       filelist = dir('*signal*.csv');
+                       handles.Nscans = floor(length(filelist)./2);
+                       handles.Nscans_number.String = num2str(handles.Nscans);
+                   else
+                       handles.Nscans_number.String = 'N/A';
+                   end
+                   set(handles.ErrorText,'String', '');
+               case 2 % Lab 1: UV-Vis/IR Pump - IR probe (fs)
+                   handles = LoadDataIR1(handles,[],AnisotropyType);
+                   TEMP dir story
+                   tempdir = strcat(handles.CurrDir.String,filesep,datafilename,filesep,'temp');
+                   if exist(tempdir{1},'dir') == 7
+                       handles.Nscans_number.String = num2str(handles.Nscans);
+                   else
+                       handles.Nscans_number.String = 'N/A';
+                   end
+                   Clear error string
                    set(handles.ErrorText,'String', '');
            end
 %         catch err
@@ -2918,4 +3038,3 @@ datafilename    = handles.datafilename;
         % Update handles
         guidata(hObject,handles)
         end
-

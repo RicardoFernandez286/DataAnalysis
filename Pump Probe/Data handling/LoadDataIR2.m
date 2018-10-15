@@ -19,27 +19,31 @@ if existcondition == 1
 % Read the files
 delays          = csvread(delayfile);
 cmprobe         = csvread(wavenumberfile);
-rawsignal       = csvread(signalfile);
-noise           = csvread(noisefile);
-  
+if handles.RecalcScans
+    rawsignal       = handles.rawsignal;
+    noise           = handles.noise;
+else
+    rawsignal       = csvread(signalfile);
+    noise           = csvread(noisefile);
+end
 % Read the plot ranges
-mintime = min(delays);
-maxtime = max(delays);
-minabs = min(rawsignal(:));
-maxabs = max(rawsignal(:));
-zminmax = round(max([abs(minabs) abs(maxabs)]),3);
-minwl = min(cmprobe);
-maxwl = max(cmprobe);
-Ncontours = 40; % 40 contours by default is OK
-plotranges = [mintime maxtime minwl maxwl zminmax Ncontours minabs maxabs];
+mintime     = min(delays);
+maxtime     = max(delays);
+minabs      = min(rawsignal(:));
+maxabs      = max(rawsignal(:));
+zminmax     = round(max([abs(minabs) abs(maxabs)]),3);
+minwl       = min(cmprobe);
+maxwl       = max(cmprobe);
+Ncontours   = 40; % 40 contours by default is OK
+plotranges  = [mintime maxtime minwl maxwl zminmax Ncontours minabs maxabs];
 
 %% WRITE to handles
 % Write the main variables
-handles.delays = delays;
-handles.cmprobe = cmprobe;
-handles.rawsignal = rawsignal;
-handles.noise = noise;
-handles.plotranges = plotranges;
+handles.delays      = delays;
+handles.cmprobe     = cmprobe;
+handles.rawsignal   = rawsignal;
+handles.noise       = noise;
+handles.plotranges  = plotranges;
 
 % Enable all controls that are greyed out by default
 handles = EnableControls(handles,'IRLab2');
