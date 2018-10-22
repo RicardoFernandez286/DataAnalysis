@@ -1563,34 +1563,47 @@ switch handles.DataTypeMenu.Value
 %                 TempScanData(end-1:end,:)=[];
             end
             % Store it
-            ScanData(:,i) = TempScanData(:,k);
-            % Caption it
-            caption(i) = string(['Scan ' num2str(i)]);   
+            ScanData(:,i) = TempScanData(:,k);   
         end
         clear TempScanData;
 end
-Nplots = Nscans;
+% Ask the user which scans to use if >15 scans
+if Nscans >= 15
+    plotscans   = inputdlg(['Please indicate which scans you want to plot (max: ' num2str(Nscans) '): '],'Select scans to plot');
+    plotscans   = str2num(plotscans{:});
+    ScanData    = ScanData(:,plotscans);
+    Nplots      = length(plotscans);
+else
+    Nplots      = Nscans;
+    plotscans   = 1:Nscans;
+end
+
 % Bin the scans if BinScans > 1
 BinScans = str2double(handles.BinScans.String);
 if BinScans > 1
-    s=1; i=1;
-    BinScanData=zeros(length(handles.delays),ceil(Nscans/BinScans));
-    while s < Nscans
+    i=1; s=1;
+    BinScanData=zeros(length(handles.delays),ceil(Nplots/BinScans));
+    while s < Nplots
         snew = s+BinScans;
-        if snew > Nscans 
-            m=[s:Nscans];
-            BinCaption(i)=string([num2str(s) ' to ' num2str(Nscans)]);
+        if snew > Nplots % Last bin
+            m=[s:Nplots];
+            BinCaption(i)=string([num2str(plotscans(s)) ' to ' num2str(plotscans(Nplots))]);
         else
             m=[s:snew-1];
-            BinCaption(i)=string([num2str(s) ' to ' num2str(snew-1)]);
+            BinCaption(i)=string([num2str(plotscans(s)) ' to ' num2str(plotscans(snew-1))]);
         end
         BinScanData(:,i)=mean(ScanData(:,m),2);
         s=snew; i=i+1;
     end
     RawScanData = ScanData;
     ScanData    = BinScanData;
-    Nplots      = ceil(Nscans/BinScans);
+    Nplots      = floor(Nplots/BinScans);
     caption     = BinCaption;
+else
+    for i=1:Nplots
+        % Caption it
+        caption(i) = string(['Scan ' num2str(plotscans(i))]);
+    end
 end
 
 % Normalise the data if NormKin = 1
@@ -1627,7 +1640,7 @@ handles.axes2.Children(end).LineWidth = 1.5;
 handles.axes2.Children(1).LineWidth = 1.5;
 
 % Nice formatting
-title({handles.datafilename;['KINETICS PER SCAN AT ',num2str(round(handles.cmprobe(k),0)),' cm-1']},'Interpreter','none')
+title({handles.datafilename;['KINETICS PER SCAN AT ',num2str(round(handles.cmprobe(k),0)),' cm^{-1}']},'Interpreter','none')
 xlabel(['Delays',' (',handles.timescale,')'],'FontSize',13,'FontWeight','bold')
 ylabel(label,'FontSize',13,'FontWeight','bold')
 axis tight
@@ -1727,29 +1740,44 @@ switch handles.DataTypeMenu.Value
         end
         clear TempScanData;
 end
-Nplots = Nscans;
+
+% Ask the user which scans to use if >15 scans
+if Nscans >= 15
+    plotscans   = inputdlg(['Please indicate which scans you want to plot (max: ' num2str(Nscans) '): '],'Select scans to plot');
+    plotscans   = str2num(plotscans{:});
+    ScanData    = ScanData(plotscans,:);
+    Nplots      = length(plotscans);
+else
+    Nplots      = Nscans;
+    plotscans   = 1:Nscans;
+end
 
 % Bin the scans if BinScans > 1
 BinScans = str2double(handles.BinScans.String);
 if BinScans > 1
-    s=1; i=1;
-    BinScanData=zeros(ceil(Nscans/BinScans),length(handles.cmprobe));
-    while s <= Nscans
+    i=1; s=1;
+    BinScanData=zeros(ceil(Nplots/BinScans),length(handles.cmprobe));
+    while s < Nplots
         snew = s+BinScans;
-        if snew > Nscans 
-            m=s:Nscans;
-            BinCaption(i)=string([num2str(s) ' to ' num2str(Nscans)]);
+        if snew > Nplots % Last bin
+            m=s:Nplots;
+            BinCaption(i)=string([num2str(plotscans(s)) ' to ' num2str(plotscans(Nplots))]);
         else
             m=s:snew-1;
-            BinCaption(i)=string([num2str(s) ' to ' num2str(snew-1)]);
+            BinCaption(i)=string([num2str(plotscans(s)) ' to ' num2str(plotscans(snew-1))]);
         end
         BinScanData(i,:)=mean(ScanData(m,:),1);
         s=snew; i=i+1;
     end
     RawScanData = ScanData;
-    ScanData = BinScanData;
-    Nplots = ceil(Nscans/BinScans);
-    caption = BinCaption;
+    ScanData    = BinScanData;
+    Nplots      = floor(Nplots/BinScans);
+    caption     = BinCaption;
+else
+    for i=1:Nplots
+        % Caption it
+        caption(i) = string(['Scan ' num2str(plotscans(i))]);
+    end
 end
 
 % Normalise the data if NormKin = 1
@@ -1791,6 +1819,7 @@ ylabel(label,'FontSize',13,'FontWeight','bold')
 axis tight
 hline       = refline(0,0); 
 hline.Color = [0.5 0.5 0.5];
+set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
 legend(gca,caption);
 legend(gca,'boxoff');
 legend(gca,'Location','bestoutside');

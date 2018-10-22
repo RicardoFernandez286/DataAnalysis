@@ -33,18 +33,18 @@ if FileName ~= 0
                 end
             end
         case 1
-            IRdata  =  csvread(SteadyIRfile);
+            IRdata  = dlmread(SteadyIRfile,'\t');
             x       = IRdata(:,1);
             y       = IRdata(:,2);
     end
     % Convert Y data to mOD
     y = 1000.*y;
     % Store data in Handles
-    handles.IRx = x;
-    handles.IRy = y;
-    handles.FTIRloaded.Value = 1;
-    handles.ShowFTIR.Visible = 'On';
-    handles.EraseFTIR.Visible = 'On';
+    handles.IRx                 = x;
+    handles.IRy                 = y;
+    handles.FTIRloaded.Value    = 1;
+    handles.ShowFTIR.Visible    = 'On';
+    handles.EraseFTIR.Visible   = 'On';
 else
     handles.IRloaded = 0;
 end
