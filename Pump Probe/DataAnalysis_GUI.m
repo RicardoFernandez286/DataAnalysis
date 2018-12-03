@@ -195,6 +195,8 @@ case 'normal' % Single click
            switch handles.DataTypeMenu.Value
                case 1 % Lab 2: UV-Vis Pump - IR Probe (ns)
                    handles = LoadDataIR2(handles);
+                   handles.probeunits   = 'Wavenumbers (cm^{-1})';
+                   handles.Xunits       = 'cm^{-1}';
                    tempdir = [char(handles.CurrDir.String) filesep char(datafilename) filesep 'temp'];
                    if exist(tempdir,'dir') == 7
                        cd(tempdir);
@@ -216,6 +218,37 @@ case 'normal' % Single click
                    handles.SymmetricColourRange_tick.Value = 1;
                case 2 % Lab 1: UV-Vis/IR Pump - IR probe (fs)
                    handles  = LoadDataIR1(handles,1);
+                   handles.probeunits = 'Wavenumbers (cm^{-1})';
+                   handles.Xunits       = 'cm^{-1}';
+                   handles.SlowMod_selector.Value   = 1;
+                   % TEMP dir story
+                   tempdir         = [char(handles.CurrDir.String) filesep char(datafilename) filesep 'temp'];
+                   tempdirOUT      = [char(handles.CurrDir.String) filesep char(datafilename) 'temp'];
+                   % Check if the temp dir is outside (Lab 1) or inside the data folder (Lab 4)
+                   if exist(tempdir,'dir') == 0
+                       tempdir     = tempdirOUT;
+                   end
+                   % Check if the temp dir really exists
+                   if exist(tempdir,'dir') == 7
+                       handles.Nscans_number.String = num2str(handles.Nscans);
+                   else
+                       handles.Nscans_number.String        = 'N/A';
+                       handles.KineticsPerScan.Enable      = 'Off';
+                       handles.SpectraPerScan.Enable       = 'Off';
+                       handles.BinScans.Visible            = 'Off';
+                       handles.BinScans.Enable             = 'Off';
+                       handles.text35.Visible              = 'Off';
+                       handles.text36.Visible              = 'Off';
+                       handles.text35.Enable               = 'Off';
+                       handles.text36.Enable               = 'Off';
+                   end
+                   % Clear error string
+                   set(handles.ErrorText,'String', '');
+                   handles.SymmetricColourRange_tick.Value = 1;
+               case 5 % TRUVIS
+                   handles  = LoadDataTRUVIS(handles,1);
+                   handles.probeunits   = 'Wavelength (nm)';
+                   handles.Xunits       = 'nm';
                    handles.SlowMod_selector.Value   = 1;
                    % TEMP dir story
                    tempdir         = [char(handles.CurrDir.String) filesep char(datafilename) filesep 'temp'];
@@ -392,7 +425,7 @@ plot(handles.cmprobe,handles.bkg,'LineWidth',1.5,'Color','r')
 % Formatting
 axis tight
 set(gca,'FontSize',12);
-xlabel(['Wavenumbers',' (cm^{-1})'],'FontSize',13,'FontWeight','bold');
+xlabel(handles.probeunits,'FontSize',13,'FontWeight','bold');
 ylabel('Background signal (m\DeltaOD)','FontSize',13,'FontWeight','bold');
 title(['Background of ',char(handles.datafilename)],'Interpreter','none','FontSize',12);
 hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
@@ -497,7 +530,7 @@ plot(handles.cmprobe,WL(:,n)); axis tight;
 hold on
 plot(ax,[handles.cmprobe(1) handles.cmprobe(end)],[0,0],'-','LineWidth',0.75,'Color',[0.5 0.5 0.5])
 hold off
-xlabel('Wavenumbers (cm^{-1})','FontWeight','bold');
+xlabel(handles.probeunits,'FontWeight','bold');
 ylabel('\DeltaAbs (mOD)','FontWeight','bold');
 % Plot the LH vectors (Time)
 ax=subplot(2,2,2);
@@ -639,7 +672,7 @@ FitType=2; % i.e. 1= LOCAL, 2 = GLOBAL SVD fit
     l=legend(legendlabel); legend('boxoff'); legend('Location','northeast');
     l.Interpreter = 'tex';
     set(gca,'FontSize',12);
-    xlabel('Wavenumbers (cm^{-1})','FontSize',13,'FontWeight','bold')
+    xlabel(handles.probeunits,'FontSize',13,'FontWeight','bold')
     ylabel('Amplitude','FontSize',13,'FontWeight','bold')
     axis tight
     hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
@@ -1128,16 +1161,16 @@ while i < L
         case 0
             ydata(:,i+1) = data(:,index);
             label = '\DeltaAbs (mOD)';
-            caption(i+1,1) = string(strcat(num2str(round(handles.cmprobe(index),0)),' cm^{-1}'));
+            caption(i+1,1) = string(strcat(num2str(round(handles.cmprobe(index),0)),[' ' handles.Xunits]));
         case 1
             maxval = max(data(:,index));
             minval = min(data(:,index));
             if abs(maxval) >= abs(minval)
                 ydata(:,i+1) = data(:,index)./maxval;
-                caption(i+1,1) = string(strcat(num2str(round(handles.cmprobe(index),0)),' cm^{-1}'));
+                caption(i+1,1) = string(strcat(num2str(round(handles.cmprobe(index),0)),[' ' handles.Xunits]));
             else
                 ydata(:,i+1) = data(:,index)./minval;
-                caption(i+1,1) = string(strcat(num2str(round(handles.cmprobe(index),0)),' cm^{-1} \times -1'));
+                caption(i+1,1) = string(strcat(num2str(round(handles.cmprobe(index),0)),[' ' handles.Xunits '\times -1']));
             end
             label = 'Normalised \DeltaAbs';
     end
@@ -1171,7 +1204,7 @@ xlabel(['Delays',' (',handles.timescale,')'],'FontSize',13,'FontWeight','bold');
 ylabel(label,'FontSize',13,'FontWeight','bold')
 axis tight
 if L == 1
-    legend(gca,[string(strcat(num2str(round(handles.cmprobe(index),0)),' cm^{-1}')),''],'FontSize',12)
+    legend(gca,[string(strcat(num2str(round(handles.cmprobe(index),0)),[' ' handles.Xunits])),''],'FontSize',12)
 else
     legend(gca,caption,'FontSize',12)
 end
@@ -1320,7 +1353,7 @@ for n=1:L
 end
 % Nice formatting
 set(gca,'FontSize',12)
-xlabel('Wavenumbers (cm^{-1})','FontSize',13,'FontWeight','bold')
+xlabel(handles.probeunits,'FontSize',13,'FontWeight','bold')
 ylabel(label,'FontSize',13,'FontWeight','bold')
 axis tight
 if handles.IncludeSteadyState.Value == 1
@@ -1814,7 +1847,7 @@ pl(1).LineWidth     = 1.5;
 % Nice formatting
 set(handles.axes2,'FontSize',12)
 title({handles.datafilename;['TR. SPECTRA PER SCAN AT ',num2str(handles.delays(k),'%.3g'),' ' handles.timescale]},'Interpreter','none','FontSize',12)
-xlabel('Wavenumbers (cm^{-1})','FontSize',13,'FontWeight','bold')
+xlabel(handles.probeunits,'FontSize',13,'FontWeight','bold')
 ylabel(label,'FontSize',13,'FontWeight','bold')
 axis tight
 hline       = refline(0,0); 
@@ -2611,7 +2644,7 @@ for n=1:L
 end
 % Nice formatting
 set(axes2,'FontSize',12)
-xlabel('Wavenumbers (cm^{-1})','FontWeight','bold','FontSize',13)
+xlabel(handles.probeunits,'FontWeight','bold','FontSize',13)
 ylabel('\DeltaAbs (mOD)','FontWeight','bold','FontSize',13)
 axis tight
 % Make the legend and hide every second entry if the number of plots is >15
