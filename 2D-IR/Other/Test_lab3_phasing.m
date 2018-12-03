@@ -19,15 +19,15 @@ c_0         = 2.99792458e-5;    % Speed of light in cm/fs
 
 %% Load files
 % Define the data folder
-datafolder  = 'D:\TESTDATA\LAB3\KSCN IONIC';
-
-% Load files [scattering]
-NR_scatt    = csvread([datafolder filesep '1134_pinhole_first_300fs_150_2050_NR_TD_7_spectra_.csv'])';
-RE_scatt    = csvread([datafolder filesep '1134_pinhole_first_300fs_150_2050_RE_TD_7_spectra_.csv'])';
+datafolder  = '\\idnetapp-chem.uzh.ch\g_chem_hamm$\Group\Data from instruments\Lab 3 - 2DIR\20181022\Parallel1752_ce_LiNO3_KSCN2iso_2mM_1750fs_150_2025';
 
 % Load files [Sample]
-NR_data     = csvread([datafolder filesep '1331_Ace_KSCN_1000fs_150_2050_NR_TD_19_spectra_.csv'])';
-RE_data     = csvread([datafolder filesep '1331_Ace_KSCN_1000fs_150_2050_RE_TD_21_spectra_.csv'])';
+NR_data    = csvread([datafolder filesep 'Parallel1823_ce_LiNO3_KSCN2iso_2mM_7500fs_150_2025_NR_TD_20_spectra_.csv'])';
+RE_data    = csvread([datafolder filesep 'Parallel1752_ce_LiNO3_KSCN2iso_2mM_1750fs_150_2025_RE_TD_27_spectra_.csv'])';
+
+% Load files [scattering]
+NR_scatt     = csvread([datafolder filesep 'Parallel1700_pinhole_300fs_150_2025_NR_TD_7_spectra_.csv'])';
+RE_scatt     = csvread([datafolder filesep 'Parallel1700_pinhole_300fs_150_2025_RE_TD_8_spectra_.csv'])';
 
 %% Preprocess
 % Define t1 time axis
@@ -87,7 +87,7 @@ RE_FT       = fft(RE_data,0.5*Nbins*zeropad_factor,1);
 PumpAxis = ((1:1:Nbins*0.5*zeropad_factor)-1)./(Nbins*0.5*zeropad_factor*HeNe*c_0);
 
 % Phase the spectrum
-Absorptive  = real((NR_FT + RE_FT).*exp(-1i*Phase_angle));
+Absorptive  = abs((NR_FT + RE_FT).*exp(-1i*Phase_angle));
 
 % Define the cut region
 cut_limits  = findClosestId2Val(PumpAxis,[ProbeAxis(1) ProbeAxis(end)]);
