@@ -22,7 +22,7 @@ function varargout = DataAnalysis_GUI(varargin)
 
 % Edit the above text to modify the response to help DataAnalysis_GUI
 
-% Last Modified by GUIDE v2.5 15-Oct-2018 14:27:44
+% Last Modified by GUIDE v2.5 04-Dec-2018 18:33:47
 
 % Ricardo Fernández-Terán - v3.9a - 11.06.2018
 % ----CHANGELOG:
@@ -1580,7 +1580,7 @@ switch handles.DataTypeMenu.Value
             caption = "Scan 1";
             ScanData(:,1) = TempScanData(:,k);
         end
-    case 2 % Lab 1 & Lab 4
+    case {2,5} % Lab 1, Lab 4 & TRUVIS
         % The first scan has no _n.csv termination
         ending = '_sp0_sm0_du0_';
         for i=1:Nscans
@@ -3027,7 +3027,7 @@ switch handles.DataTypeMenu.Value
         else
             ScanData(:,:,1) = TempScanData;
         end
-    case 2 % Lab 1 & Lab 4
+    case [2,5] % Lab 1 & Lab 4
         % The first scan has no _n.csv termination
         % CHECK FOR LAB 4 - 4PM
         warndlg('NOT IMPLEMENTED!');
@@ -3100,3 +3100,57 @@ handles.RecalcScans = 1;
         % Update handles
         guidata(hObject,handles)
         end
+
+
+% --- Executes on button press in ProbeMask.
+function ProbeMask_Callback(hObject, eventdata, handles)
+% Ask the user for the probe ranges to mask (with NaN)
+mask_regions = inputdlg('Enter the probe regions to mask (a,b;c,d; etc): ',...
+             'Mask probe regions', [1 50],{'395,406'});
+if isempty(mask_regions)
+    return
+end
+mask_regions = transpose(str2num(mask_regions{:}));
+mask_regions = sort(mask_regions,1);
+% Get the values to find in the WAVELENGTH vector
+value = mask_regions(:); % column 1= Wavelength
+% k = index of the closest match for each selected trace
+k = unique(findClosestId2Val(handles.cmprobe,transpose(value)));
+L = size(mask_regions,2);
+
+% Replace the data in the array by NaN's
+for i=1:L
+    handles.rawsignal(:,k(i):k(i+1))  = NaN;
+    handles.corrdata(:,k(i):k(i+1))   = NaN;
+end
+
+% Update handles
+guidata(hObject,handles)
+% Initialise defaults and update the Edits for the first time:
+handles = UpdateEdits(handles);
+guidata(hObject,handles)
+% Override default w/current status of linlog tick
+switch handles.linlogtick.Value
+    case 0
+        handles.linlog = 'lin';
+    case 1
+        handles.linlog = 'log';
+end
+% Plot the data in the main window (for preview)
+% Takes into account the current status of BkgSubTick
+if exist('handles.rawcorr','var') == 0
+switch handles.BkgSubTick.Value
+case 1
+    handles.rawcorr='CORRECTED';
+case 0
+    handles.rawcorr='RAW';
+end
+end
+switch handles.rawcorr
+case 'RAW'
+plot2D(handles,handles.rawsignal,handles.axes1,'On');
+case 'CORRECTED'
+plot2D(handles,handles.corrdata,handles.axes1,'On');
+end
+% Update handles
+guidata(hObject,handles)

@@ -1,6 +1,7 @@
 function handles = LoadDataTRUVIS(handles,SpectrumToDisplay,varargin)
 
 handles.removeduplicates = 1;
+cut2ndOrder = 1;
 %% READ from handles
 rootdir         = char(handles.CurrDir.String);
 datafilename    = char(handles.datafilename);
@@ -100,16 +101,8 @@ switch N_4PM
     case 4
         piezomod = '4PM';
 end
-
 delays          = csvread([filename '_delays.csv']);
-% If there is a calibrated probe file, use it. Otherwise, use the normal one
-if exist([rootdir filesep 'CalibratedProbe.csv'],'file') == 2
-    wavenumberfile='CalibratedProbe.csv';
-    cmprobe=csvread([rootdir filesep wavenumberfile]);
-else
-    cmprobe         = csvread([filename '_wavelengths.csv']);
-end
-
+cmprobe         = csvread([filename '_wavelengths.csv']);
 
 % Read the actual data
 rawsignal={}; noise={};
@@ -212,16 +205,27 @@ else
 end
     
 % Read the plot ranges
-mintime = -0.5;
-maxtime = max(delays);
-flatbl=findClosestId2Val(delays,mintime);
-minabs = min(rawsignal(flatbl:end,:));
-maxabs = max(rawsignal(flatbl:end,:));
-zminmax = round(max([abs(minabs) abs(maxabs)]),3);
+mintime         = -0.5;
+maxtime         = max(delays);
+flatbl          = findClosestId2Val(delays,mintime);
+minabs          = min(rawsignal(flatbl:end,:));
+maxabs          = max(rawsignal(flatbl:end,:));
+zminmax         = round(max([abs(minabs) abs(maxabs)]),3);
+Ncontours       = 50; % 10 contours by default is OK; need 50 contours to plot nicely with pFID
+
+% In TRUVIS, the 2nd order can overlap with the main band, in which case it
+% should be removed (only if using a grating)
 minwl = min(cmprobe);
 maxwl = max(cmprobe);
-Ncontours = 50; % 10 contours by default is OK; need 50 contours to plot nicely with pFID
-plotranges = [mintime maxtime minwl maxwl zminmax Ncontours minabs maxabs];
+if maxwl >= 2*minwl && cut2ndOrder
+    maxwl = 2*minwl;
+    maxwl_index = findClosestId2Val(cmprobe,maxwl);
+    rawsignal   = rawsignal(:,1:maxwl_index);
+    noise       = noise(:,1:maxwl_index);
+    cmprobe     = cmprobe(1:maxwl_index);
+end
+
+plotranges      = [mintime maxtime minwl maxwl zminmax Ncontours minabs maxabs];
 
 % % Average rows 1:n and subtract them (n=5)
 %     n=3; 
