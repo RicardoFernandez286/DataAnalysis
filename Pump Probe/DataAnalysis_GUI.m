@@ -2935,14 +2935,14 @@ datafilename    = handles.datafilename;
                    set(handles.ErrorText,'String', '');
                case 2 % Lab 1: UV-Vis/IR Pump - IR probe (fs)
                    handles = LoadDataIR1(handles,[],AnisotropyType);
-                   TEMP dir story
+                   % TEMP dir story
                    tempdir = strcat(handles.CurrDir.String,filesep,datafilename,filesep,'temp');
                    if exist(tempdir{1},'dir') == 7
                        handles.Nscans_number.String = num2str(handles.Nscans);
                    else
                        handles.Nscans_number.String = 'N/A';
                    end
-                   Clear error string
+                   % Clear error string
                    set(handles.ErrorText,'String', '');
            end
         catch err
