@@ -1589,7 +1589,7 @@ switch handles.DataTypeMenu.Value
             TempScanData = csvread(ScanNrch);
             % Average rows 1:n and subtract them
             n=3; 
-            TempScanData =  TempScanData(n:end,:) - mean(TempScanData(1:n-1,:),1);
+            TempScanData =  TempScanData - mean(TempScanData(1:n-1,:),1);
             if handles.removeduplicates == 1
 %                 % Average last 3 rows and collapse into a single row
 %                 TempScanData(end-2,:) = mean(TempScanData(end-2:end,:),1);
@@ -1598,7 +1598,7 @@ switch handles.DataTypeMenu.Value
             % Store it
             ScanData(:,i) = TempScanData(:,k);   
         end
-        clear TempScanData;
+%         clear TempScanData;
 end
 % Ask the user which scans to use if >15 scans
 if Nscans >= 15
