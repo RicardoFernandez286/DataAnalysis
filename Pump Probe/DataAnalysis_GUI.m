@@ -1177,12 +1177,12 @@ while i < L
     i=i+1;
 end
 % Create a new figure with consistent format
-fh = figure();
+fh = figure;
 fh.Position(3)  = 920;
 fh.Position(4)  = 425;
 fh.Color        = [1 1 1];
 
-% Define the axes
+% % Define the axes
 handles.axes2 = axes('Parent',fh);
 axes(handles.axes2);
 
@@ -1991,7 +1991,7 @@ switch plot_options{plot_typeindx}
                 switch handles.DataTypeMenu.Value
                     case 1 % Lab 2
                         signalfile = strcat(rootdir,filesep,datafilename,filesep,datafilename,'_signal.csv');
-                    case 2 % Lab 1 and Lab 4
+                    case {2,5} % Lab 1, Lab 4 & TRUVIS
                         signalfile = strcat(rootdir,filesep,datafilename,filesep,datafilename,'_signal_sp0_sm0_du0.csv');
                 end
                     signalfilech = char(signalfile);

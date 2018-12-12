@@ -1,6 +1,6 @@
 %% Read the data and calculate basic parameters
 % Settings
-Ncontours = 50;
+Ncontours = 20;
 
 % Read the data
 folder      = '\\idnetapp-chem.uzh.ch\g_chem_hamm$\Group\Data from instruments\Lab 2 - TRUVIS\2018\Probe tests';
@@ -29,7 +29,8 @@ contourf(dPP_Corr,Ncontours,'EdgeColor','flat');
 colorbar
 caxis([-1 1])
 pbaspect([1 1 1])
-colormap(darkb2r(-1,1,Ncontours,2))
+% colormap(darkb2r(-1,1,Ncontours,2))
+colormap(othercolor('BuDRd_18',Ncontours))
 dline = refline(1,0);
 dline.Color = 'w';
 xlabel('Probe array pixel');
@@ -40,7 +41,7 @@ contourf(dPR_Corr,Ncontours,'EdgeColor','flat');
 colorbar
 caxis([-1 1])
 pbaspect([1 1 1])
-colormap(othercolor('BuDRd_18',)
+colormap(othercolor('BuDRd_18',Ncontours))
 dline = refline(1,0);
 dline.Color = 'w';
 xlabel('Probe array pixel');
