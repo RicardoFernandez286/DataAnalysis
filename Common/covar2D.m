@@ -4,14 +4,7 @@ function cov2D = covar2D(Xmat,Ymat)
 % observable and each row is one observation
 
 Rmat        = corr(Xmat,Ymat);
+Sigma_mat   = std(Xmat,0,1)'*std(Ymat,0,1);
+cov2D       = Rmat.*(Sigma_mat);
 
-[Nrow Ncol] = size(Xmat);
-
-Sigma_mat   = zeros(Ncol,Ncol);
-for i=1:Ncol
-    Sigma_mat(i,:) = std(Xmat,2)
-end
-
-
-cov
 end
