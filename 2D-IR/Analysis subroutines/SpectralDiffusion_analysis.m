@@ -33,7 +33,6 @@ ProbeAxis           = handles.ProbeAxis;
 PumpAxis            = handles.PumpAxis;
 Ndelays             = handles.Ndelays;
 t2delays            = handles.t2delays;
-FFT_ZPsig           = handles.FFT_ZPsig;
 PROC_2D_DATA        = handles.PROC_2D_DATA;
 Npixels             = length(ProbeAxis);
 Nbins               = length(PumpAxis{1,1});

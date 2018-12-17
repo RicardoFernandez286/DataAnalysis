@@ -6,6 +6,7 @@ function Test_lab3_phasing(ax,Phase_angle)
 % Hardcoded settings
 probe_fitorder  = 2;    % Order of the polynomial to fit to the scattering calibration
 zeropad_factor  = 1;    % Zeropad the data by a factor X
+cos_exp         = 1;
 Ncontours       = 50;   % No. of contours to plot
 plot_Nwhites    = 2;    % No. of white levels
 plot_showlines  = 0;    % Show black lines or not (1 or 0)
@@ -19,42 +20,68 @@ c_0         = 2.99792458e-5;    % Speed of light in cm/fs
 
 %% Load files
 % Define the data folder
-datafolder  = '\\idnetapp-chem.uzh.ch\g_chem_hamm$\Group\Data from instruments\Lab 3 - 2DIR\20181022\Parallel1752_ce_LiNO3_KSCN2iso_2mM_1750fs_150_2025';
+rootdir     = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\RESULTS\2D-IR\LAB3 ANDREA\TwoDSpectra';
+dataname    = 'Parallel1538_solution_T11_newcal_250fs_150_2025_TD';
 
-% Load files [Sample]
-NR_data    = csvread([datafolder filesep 'Parallel1823_ce_LiNO3_KSCN2iso_2mM_7500fs_150_2025_NR_TD_20_spectra_.csv'])';
-RE_data    = csvread([datafolder filesep 'Parallel1752_ce_LiNO3_KSCN2iso_2mM_1750fs_150_2025_RE_TD_27_spectra_.csv'])';
+% Do the file reading
+filelist    = dir(rootdir);
+filenames   = {filelist.name}';
+filenames   = filenames(~[filelist.isdir]);
+pinholeFile = [rootdir filesep filenames{contains(filenames,'Pinhole','IgnoreCase',true)}];
+filename    = [rootdir filesep dataname '.csv'];
 
-% Load files [scattering]
-NR_scatt     = csvread([datafolder filesep 'Parallel1700_pinhole_300fs_150_2025_NR_TD_7_spectra_.csv'])';
-RE_scatt     = csvread([datafolder filesep 'Parallel1700_pinhole_300fs_150_2025_RE_TD_8_spectra_.csv'])';
+% Open the files
+ds1         = importdata(filename,',',1);
+ds2         = importdata(filename,',',36);
+ds3         = importdata(filename,',',71);
+ds4         = importdata(filename,',',106);
 
-%% Preprocess
-% Define t1 time axis
-Nbins       = size(RE_scatt,1) + size(NR_scatt,1);
-t1_delays   = linspace(-Nbins/2,Nbins/2,Nbins).*HeNe; % in fs
+ds1_pinhole = importdata(pinholeFile,',',1);
+ds2_pinhole = importdata(pinholeFile,',',36);
+ds3_pinhole = importdata(pinholeFile,',',71);
+ds4_pinhole = importdata(pinholeFile,',',106);
 
-% Remove "pixel 33"
-RE_scatt    = RE_scatt(:,1:end-1);
-NR_scatt    = NR_scatt(:,1:end-1);
+% Join the four states in a 3D array
+data(:,:,1) = ds1.data(1:end-1,:)';
+data(:,:,2) = ds2.data(1:end-1,:)';
+data(:,:,3) = ds3.data(1:end-1,:)';
+data(:,:,4) = ds4.data(1:end-1,:)';
 
-% Average values at time zero
-    % I have no idea
+pinhole(:,:,1) = ds1_pinhole.data(1:end-1,:)';
+pinhole(:,:,2) = ds2_pinhole.data(1:end-1,:)';
+pinhole(:,:,3) = ds3_pinhole.data(1:end-1,:)';
+pinhole(:,:,4) = ds4_pinhole.data(1:end-1,:)';
 
-% Join the NR and RE arrays
-NRRE_scatt  = [NR_scatt;RE_scatt];
+% Initialize some variables
+Nbins       = 0.5*(size(data,1)+1);
+Npixels     = size(data,2);
+t1delays    = linspace(0,Nbins-1,Nbins)*HeNe;
 
+% Split the data into rephasing and non-rephasing
+data_NR     = data(1:Nbins,:,:);
+data_RE     = data(Nbins:end,:,:);
+pinhole_NR  = pinhole(1:Nbins,:,:);
+pinhole_RE  = pinhole(Nbins:end,:,:);
+
+% Add the datastates to obtain the correct signal
+% CORRECT ADDITION: 1 - 2 + 3 - 4
+% signal_xx = Nbins x Npixels
+signal_NR   = data_NR(:,:,1) - data_NR(:,:,2) + data_NR(:,:,3) - data_NR(:,:,4);
+signal_RE   = data_RE(:,:,1) - data_RE(:,:,2) + data_RE(:,:,3) - data_RE(:,:,4);
+
+pinhole_NR  = pinhole_NR(:,:,1) - pinhole_NR(:,:,2) + pinhole_NR(:,:,3) - pinhole_NR(:,:,4);
+pinhole_RE  = pinhole_RE(:,:,1) - pinhole_RE(:,:,2) + pinhole_RE(:,:,3) - pinhole_RE(:,:,4);
 % Calculate w1 axis
 PumpAxis = ((1:1:Nbins)-1)./(Nbins*HeNe*c_0);
 
 % Calculate the power spectrum
-Power_spec = abs(fft(NRRE_scatt));
+Power_spec = abs(fft(pinhole_NR))+abs(fft(pinhole_RE));
 
 %% Fit w3 axis
 [~,binspecmax]          = max(sum(Power_spec,2));
 P                       = floor(Nbins/50);
 fitrange                = (binspecmax-P):(binspecmax+P);
-Npixels                 = size(NRRE_scatt,2);
+Npixels                 = size(signal_NR,2);
 pixels                  = transpose(1:1:Npixels);
 % Get the maxima for probe calibration    
 [~,maxindex]            = max(Power_spec,[],1);
@@ -72,22 +99,20 @@ ProbeAxis               = mdl(pixels);
 
 %% Process the SAMPLE
 
-% Remove "pixel 33"
-NR_data     = NR_data(:,1:end-1);
-RE_data     = RE_data(:,1:end-1);
-
-% Join the two arrays
-NRRE_data   = [NR_data;RE_data];
-
-% Fourier transform
-NR_FT       = fft(NR_data,0.5*Nbins*zeropad_factor,1);
-RE_FT       = fft(RE_data,0.5*Nbins*zeropad_factor,1);
-
 % Calculate the pump axis
-PumpAxis = ((1:1:Nbins*0.5*zeropad_factor)-1)./(Nbins*0.5*zeropad_factor*HeNe*c_0);
+PumpAxis = ((1:1:Nbins*zeropad_factor)-1)./(Nbins*zeropad_factor*HeNe*c_0);
+q=1:Nbins;
+cosine             = ((cos(pi*(q)/(2*Nbins))).^cos_exp)';
+box                = (heaviside(q))';
+apodize_function   = cosine.*box;
+apo_NR             = signal_NR.*apodize_function;
+apo_RE             = signal_RE.*apodize_function;
+% FFT and phase
+NR_FT              = fft(apo_NR,Nbins*zeropad_factor);
+RE_FT              = fft(apo_RE,Nbins*zeropad_factor);
 
 % Phase the spectrum
-Absorptive  = abs((NR_FT + RE_FT).*exp(-1i*Phase_angle));
+Absorptive  = real((NR_FT + RE_FT).*exp(-1i*Phase_angle));
 
 % Define the cut region
 cut_limits  = findClosestId2Val(PumpAxis,[ProbeAxis(1) ProbeAxis(end)]);

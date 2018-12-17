@@ -1,6 +1,7 @@
 %% Read the data and calculate basic parameters
 % Settings
 Ncontours = 20;
+plot      = 0;
 
 % Read the data
 folder      = '\\idnetapp-chem.uzh.ch\g_chem_hamm$\Group\Data from instruments\Lab 2 - TRUVIS\2018\Probe tests';
@@ -21,32 +22,33 @@ dIprobe     = probe_shots - mean(probe_shots,1);
 dIref       = ref_shots - mean(ref_shots,1);
 
 %% Calculate the correlation matrices (for δI)
-dPP_Corr = corr(dIprobe,dIprobe);
-dPR_Corr = corr(dIprobe,dIref);
+if plot==1
+    dPP_Corr = corr(dIprobe,dIprobe);
+    dPR_Corr = corr(dIprobe,dIref);
 
-figure
-contourf(dPP_Corr,Ncontours,'EdgeColor','flat');
-colorbar
-caxis([-1 1])
-pbaspect([1 1 1])
-% colormap(darkb2r(-1,1,Ncontours,2))
-colormap(othercolor('BuDRd_18',Ncontours))
-dline = refline(1,0);
-dline.Color = 'w';
-xlabel('Probe array pixel');
-ylabel('Probe array pixel');
+    figure
+    contourf(dPP_Corr,Ncontours,'EdgeColor','flat');
+    colorbar
+    caxis([-1 1])
+    pbaspect([1 1 1])
+    % colormap(darkb2r(-1,1,Ncontours,2))
+    colormap(othercolor('BuDRd_18',Ncontours))
+    dline = refline(1,0);
+    dline.Color = 'w';
+    xlabel('Probe array pixel');
+    ylabel('Probe array pixel');
 
-figure
-contourf(dPR_Corr,Ncontours,'EdgeColor','flat');
-colorbar
-caxis([-1 1])
-pbaspect([1 1 1])
-colormap(othercolor('BuDRd_18',Ncontours))
-dline = refline(1,0);
-dline.Color = 'w';
-xlabel('Probe array pixel');
-ylabel('Reference array pixel');
-
+    figure
+    contourf(dPR_Corr,Ncontours,'EdgeColor','flat');
+    colorbar
+    caxis([-1 1])
+    pbaspect([1 1 1])
+    colormap(othercolor('BuDRd_18',Ncontours))
+    dline = refline(1,0);
+    dline.Color = 'w';
+    xlabel('Probe array pixel');
+    ylabel('Reference array pixel');
+end
 
 %% Init figure
 fh = figure;
