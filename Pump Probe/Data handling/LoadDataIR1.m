@@ -235,7 +235,7 @@ handles = EnableControls(handles,'IRLab1');
 % Set default values for certain controls
 handles.maxDeltaAbs_text.String = zminmax;
 handles.AddReplace1Dplot.Value  = 1;
-handles.linlogtick.Value        = 0;
+handles.linlogtick.Value        = 1;
 handles.SVD                     = 0;
 handles.percentwhites           = 2;
 handles.percent_whites.String   = num2str(handles.percentwhites);

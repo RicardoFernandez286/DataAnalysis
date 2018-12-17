@@ -1588,8 +1588,9 @@ switch handles.DataTypeMenu.Value
             ScanNrch = char(ScanNr);
             TempScanData = csvread(ScanNrch);
             % Average rows 1:n and subtract them
-            n=3; 
+            n=10; 
             TempScanData =  TempScanData - mean(TempScanData(1:n-1,:),1);
+            TempScanData =  TempScanData(n:end,:);
             if handles.removeduplicates == 1
 %                 % Average last 3 rows and collapse into a single row
 %                 TempScanData(end-2,:) = mean(TempScanData(end-2:end,:),1);
