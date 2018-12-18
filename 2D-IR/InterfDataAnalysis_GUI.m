@@ -1093,7 +1093,7 @@ switch slice_options{slice_typeindx}
         % Plot the data
         cmap=colormap(othercolor('Mrainbow',Ndelays));
         for m=1:Ndelays
-           plot(handles.axes2,ProbeAxis,data(:,m),'-','LineWidth',2,'MarkerSize',2,'color',cmap(m,:),'DisplayName',['t_{2} = ' num2str(t2delays(m),'%.3g') ' ps']);
+           plot(handles.axes2,ProbeAxis,data(:,m),'-','LineWidth',2,'MarkerSize',2,'color',cmap(m,:),'DisplayName',[num2str(t2delays(m),'%.3g') ' ps']);
            hold on
         end
 
