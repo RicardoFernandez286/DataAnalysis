@@ -33,7 +33,15 @@ if FileName ~= 0
                 end
             end
         case 1
-            IRdata  = dlmread(SteadyIRfile,'\t');
+            try
+                IRdata  = dlmread(SteadyIRfile,'\t');
+            catch err
+                try
+                    IRdata  = csvread(SteadyIRfile);
+                catch err
+                    return
+                end
+            end
             x       = IRdata(:,1);
             y       = IRdata(:,2);
     end

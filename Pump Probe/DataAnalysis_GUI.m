@@ -1232,6 +1232,9 @@ function plotDeltaAbs_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 interactive = get(handles.InteractiveModeTick,'Value');
 handles.SelTraces = [];
+
+FontSize = 18; % 18 for papers (single column figure), 14 for presentations (can vary)
+
 switch interactive
     case 1
         timescale = handles.timescale;
@@ -1316,26 +1319,19 @@ switch handles.IncludeSteadyState.Value
         fh = figure();
         fh.Units        = 'pixels';
         fh.Position(2)  = fh.Position(2)-450*scale;
-        fh.Position(3)  = 880;
+        fh.Position(3)  = 890;
         fh.Position(4)  = 425+325*scale;
         fh.Color        = [1 1 1];
         % Create the FTIR axis
         ax1             = axes('Parent',fh);
-        ax1.Units       = 'pixels';
-%       ax1.Position    = [75 400 675 125];
-        ax1.Position    = [75 400 675 320*scale];
-%         title(ax1,{handles.datafilename;[handles.rawcorr,' DATA - TRANSIENT SPECTRA';'']},'Interpreter','none')
-        ax1.Units       = 'normalized';
-        ax1.FontSize    = 12;
         % Create the transient spectra axis
         ax2             = axes('Parent',fh);
-        ax2.FontSize    = 12;
         linkaxes([ax1,ax2],'x');
         where = ax2;
     case 0
         % Create a new figure with consistent format
         fh = figure();
-        fh.Position(3)  = 880;
+        fh.Position(3)  = 890;
         fh.Position(4)  = 425;
         fh.Color        = [1 1 1];
         % Define the axes
@@ -1354,29 +1350,14 @@ end
 % Nice formatting
 set(gca,'FontSize',12)
 xlabel(handles.probeunits,'FontSize',13,'FontWeight','bold')
-ylabel(label,'FontSize',13,'FontWeight','bold')
+ylabel(where,label,'FontSize',13,'FontWeight','bold')
 axis tight
-if handles.IncludeSteadyState.Value == 1
-    ylabel(ax1,'Abs (mOD)','FontWeight','bold','FontSize',14)
-    xl = xlim(where);
-    xl_idx      = findClosestId2Val(handles.IRx,xl);
-    xl_idx      = sort(xl_idx);
-    IRy         = handles.IRy - min(handles.IRy(xl_idx(1):xl_idx(2)));
-    minmaxIRy   = [min(IRy(xl_idx(1):xl_idx(2))) max(IRy(xl_idx(1):xl_idx(2)))];
-    plot(ax1,handles.IRx,IRy,'LineWidth',1.5,'Marker','none','color','black','DisplayName','FTIR');
-    xlim(ax1,xl);
-    ylim(ax1,minmaxIRy);
-    set(ax1, 'XTick', []);
-%     set(ax1, 'YTick', []);
-    ax1.FontSize = 14;
-    ax2.FontSize = 14;
-end
 legend('show');
 legend('boxoff')
 legend('Location','bestoutside')
 
 where.Units       = 'pixels';
-where.Position    = [75 75 675 320];
+where.Position    = [80 75 675 320];
 where.Units       = 'normalized';
 
 if L >= 15
@@ -1385,7 +1366,7 @@ if L >= 15
     end
 end
 
-legend(ax2,{},'FontSize',12)
+legend(ax2,{},'FontSize',FontSize)
 
 % Disable warning of negative X limits
 warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
@@ -1393,6 +1374,29 @@ warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
 % Refline
 hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
 set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
+% Nice formatting for the combined plot
+if handles.IncludeSteadyState.Value == 1
+    xl = xlim(where);
+    xl_idx      = findClosestId2Val(handles.IRx,xl);
+    xl_idx      = sort(xl_idx);
+    IRy         = handles.IRy - min(handles.IRy(xl_idx(1):xl_idx(2)));
+    minmaxIRy   = [min(IRy(xl_idx(1):xl_idx(2))) max(IRy(xl_idx(1):xl_idx(2)))];
+    plot(ax1,handles.IRx,IRy,'LineWidth',1.5,'Marker','none','color','black','DisplayName','FTIR');
+    xlim(ax1,xl);
+    ylim(ax1,minmaxIRy);
+    set(ax1, 'XTickLabel', []); % To remove only the labels, otherwise use XTick
+%   set(ax1, 'YTick', []);
+    ax1.FontSize = FontSize;
+    ax2.FontSize = FontSize;
+    ylabel(ax1,'Abs (mOD)','FontWeight','bold','FontSize',FontSize)
+    legend(ax1,'show');
+    legend(ax1,'boxoff')
+    legend(ax1,'Location','bestoutside')
+    ax1.Units       = 'pixels';
+    ax1.Position    = [80 400 675 320*scale];
+    ax1.Units       = 'normalized';
+end
+
 guidata(hObject,handles)
 
 % --- Executes on button press in ExitButton.
