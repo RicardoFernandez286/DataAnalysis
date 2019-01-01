@@ -1312,19 +1312,19 @@ end
 switch handles.IncludeSteadyState.Value
     case 1
         % Create a new figure with consistent format
+        scale           = 50/100;
         fh = figure();
         fh.Units        = 'pixels';
-        fh.Position(2)  = fh.Position(2)-150;
+        fh.Position(2)  = fh.Position(2)-450*scale;
         fh.Position(3)  = 880;
-        fh.Position(4)  = 550;
+        fh.Position(4)  = 425+325*scale;
         fh.Color        = [1 1 1];
         % Create the FTIR axis
         ax1             = axes('Parent',fh);
         ax1.Units       = 'pixels';
-        ax1.Position    = [75 400 675 125];
-        plot(ax1,handles.IRx,handles.IRy,'LineWidth',1.5,'Marker','none','color','black');
+%       ax1.Position    = [75 400 675 125];
+        ax1.Position    = [75 400 675 320*scale];
 %         title(ax1,{handles.datafilename;[handles.rawcorr,' DATA - TRANSIENT SPECTRA';'']},'Interpreter','none')
-        ylabel(ax1,'Abs (mOD)','FontWeight','bold','FontSize',13)
         ax1.Units       = 'normalized';
         ax1.FontSize    = 12;
         % Create the transient spectra axis
@@ -1357,9 +1357,19 @@ xlabel(handles.probeunits,'FontSize',13,'FontWeight','bold')
 ylabel(label,'FontSize',13,'FontWeight','bold')
 axis tight
 if handles.IncludeSteadyState.Value == 1
-    xl = xlim;
+    ylabel(ax1,'Abs (mOD)','FontWeight','bold','FontSize',14)
+    xl = xlim(where);
+    xl_idx      = findClosestId2Val(handles.IRx,xl);
+    xl_idx      = sort(xl_idx);
+    IRy         = handles.IRy - min(handles.IRy(xl_idx(1):xl_idx(2)));
+    minmaxIRy   = [min(IRy(xl_idx(1):xl_idx(2))) max(IRy(xl_idx(1):xl_idx(2)))];
+    plot(ax1,handles.IRx,IRy,'LineWidth',1.5,'Marker','none','color','black','DisplayName','FTIR');
     xlim(ax1,xl);
+    ylim(ax1,minmaxIRy);
     set(ax1, 'XTick', []);
+%     set(ax1, 'YTick', []);
+    ax1.FontSize = 14;
+    ax2.FontSize = 14;
 end
 legend('show');
 legend('boxoff')
@@ -2593,7 +2603,7 @@ switch OffsetAvg
         dlg_title       = 'Define offset region';
         num_lines       = [1 60];
         n_pix           = length(handles.cmprobe);
-        defaultans      = {[num2str(handles.cmprobe(n_pix*0.75),4) ' ' num2str(handles.cmprobe(n_pix),'%.3g')]};
+        defaultans      = {[num2str(handles.cmprobe(round(n_pix*0.75)),4) ' ' num2str(handles.cmprobe(n_pix),'%.3g')]};
         selectoffset    = inputdlg(prompt,dlg_title,num_lines,defaultans);
         OffsetWLs       = str2num(selectoffset{:});
         index           = findClosestId2Val(handles.cmprobe,OffsetWLs);
