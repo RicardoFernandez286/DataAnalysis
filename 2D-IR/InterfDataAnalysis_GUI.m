@@ -158,7 +158,7 @@ if rootdir ~= 0 % the user selected a directory
         handles.Ndelays     = Ndelays;
         handles.filenames   = filenames_delays;
         % Write to the front panel
-        handles.Population_delay.String = num2str(handles.t2delays);
+        handles.Population_delay.String = num2str(sort(handles.t2delays));
         set(handles.DatafoldersList,'String',SampleName,'Value',1)
         handles.WaitBar         = waitbar(0,'Loading data...');
         for j=0:Ndelays
@@ -1093,7 +1093,7 @@ switch slice_options{slice_typeindx}
         % Plot the data
         cmap=colormap(othercolor('Mrainbow',Ndelays));
         for m=1:Ndelays
-           plot(handles.axes2,ProbeAxis,data(:,m),'-','LineWidth',2,'MarkerSize',2,'color',cmap(m,:),'DisplayName',['t_{2} = ' num2str(t2delays(m),'%.3g') ' ps']);
+           plot(handles.axes2,ProbeAxis,data(:,m),'-','LineWidth',2,'MarkerSize',2,'color',cmap(m,:),'DisplayName',[num2str(t2delays(m),'%.3g') ' ps']);
            hold on
         end
 

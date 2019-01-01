@@ -20,8 +20,8 @@ c_0         = 2.99792458e-5;    % Speed of light in cm/fs
 
 %% Load files
 % Define the data folder
-rootdir     = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\RESULTS\2D-IR\LAB3 ANDREA\TwoDSpectra';
-dataname    = 'Parallel1538_solution_T11_newcal_250fs_150_2025_TD';
+rootdir     = 'C:\Users\apasti\Desktop\ternary 2d\TwoDSpectra_T9';
+dataname    = 'Parallel1659_solution_T9_2000fs_150_2025_TD';
 
 % Do the file reading
 filelist    = dir(rootdir);

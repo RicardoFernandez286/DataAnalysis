@@ -34,7 +34,11 @@ if CurrDelay == 0
 else
     filenames_delays    = filenames(~contains(filenames,'Pinhole','IgnoreCase',true));
     filenames_delays    = filenames_delays(~contains(filenames_delays,'Phases','IgnoreCase',true));
+    t2delays            = handles.t2delays;
+    [handles.t2delays,t2Index]    = sort(t2delays);
+    filenames_delays    = filenames_delays(t2Index);
     filename            = filenames_delays{CurrDelay};
+    filename            = [rootdir filesep filename];
 end
 
 phasefile       = [rootdir filesep 'Phases.txt'];
