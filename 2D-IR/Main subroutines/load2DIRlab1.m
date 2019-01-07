@@ -443,8 +443,13 @@ case 'Signal'
     % Cut the data to equal length
         startcut            = Int_size(m,k)-min(Int_size);
         count{m,k}          = count{m,k}(startcut+1:end);
-        interferogram{m,k}  = interferogram{m,k}(startcut+1:end);
-        signal{m,k}         = signal{m,k}(startcut+1:end,:);
+        if strcmp(Chopper,'Wobbler')
+            interferogram{m,k}  = interferogram{m,k}(startcut+1:end)/4;
+            signal{m,k}         = signal{m,k}(startcut+1:end,:)/4;
+        else
+            interferogram{m,k}  = interferogram{m,k}(startcut+1:end);
+            signal{m,k}         = signal{m,k}(startcut+1:end,:);
+        end
         t1delays{m,k}       = t1delays{m,k}(startcut+1:end,:);
 % %       %Normalize the interferogram
 % %       interferogram{m,k}  = interferogram{m,k}./mean(interferogram{m,k});
