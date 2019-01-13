@@ -1396,7 +1396,7 @@ if handles.IncludeSteadyState.Value == 1
     ax1.Position    = [80 400 675 320*scale];
     ax1.Units       = 'normalized';
 end
-
+% dlmwrite([char(handles.datafilename) '_traces.dat'],[[0;handles.delays(k)],[handles.cmprobe;ydata']]);
 guidata(hObject,handles)
 
 % --- Executes on button press in ExitButton.
