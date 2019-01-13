@@ -615,6 +615,9 @@ PROC_2D_DATA        = handles.PROC_2D_DATA;
             elseif strcmp(handles.SelTraces,'EnT-ESA')
                 handles.SelTraces = [1979,1967;1979,2017;2028,2017;2028,1967];
                 EnT = 1;
+            elseif strcmp(handles.SelTraces,'Andrea')
+                handles.SelTraces = [1985,1985;1985,2062;2062,2062;2062,1985];
+                EnT = 2;
             else
                 handles.SelTraces = str2num(handles.SelTraces{:});
                 EnT = 0;
@@ -681,7 +684,7 @@ end
 
 
 % Prepare plot for EnT
-if EnT
+if EnT ~= 0
     if abs(max(kindata(:))) <= abs(min(kindata(:)))
         kindata = -kindata;
     end
@@ -701,22 +704,37 @@ if EnT
     fh.Units        = 'pixels';
     ax_FW           = subplot(2,1,1);
     ax_BW           = subplot(2,1,2);
-    ax_FW.FontSize  = 12;
-    ax_BW.FontSize  = 12;
+    ax_FW.FontSize  = 16;
+    ax_BW.FontSize  = 16;
 
     box(ax_FW,'on');
     box(ax_BW,'on');
 
     hold(ax_FW,'on');
     hold(ax_BW,'on');
-
+    switch EnT
+        case 1
+            diag1 = 'Diagonal Re(^{13}CO)';
+            diag2 = 'Diagonal Re(^{12}CO)';
+            xpeak1= 'Re(^{13}CO) \rightarrow Re(^{12}CO) \rm{\times10}';
+            xpeak2= 'Re(^{13}CO) \leftarrow Re(^{12}CO) \rm{\times10}';
+            titFW = 'Forward energy transfer';
+            titBW = 'Backward energy transfer';
+        case 2
+            diag2 = 'Diagonal SCN^{-}';
+            diag1 = 'Diagonal S^{13}C^{15}N^{-}';
+            xpeak2= 'SCN^{-} \rightarrow S^{13}C^{15}N^{-} \rm{\times 10}';
+            xpeak1= 'SCN^{-} \leftarrow S^{13}C^{15}N^{-} \rm{\times 10}';
+            titBW = 'Downhill transfer';
+            titFW = 'Uphill transfer';
+    end
     % Plot the diagonal peaks
-    plot(ax_FW,time,diagFW,'-or','LineWidth',1,'DisplayName','Diagonal Re(^{13}CO)');
-    plot(ax_BW,time,diagBW,'-ob','LineWidth',1,'DisplayName','Diagonal Re(^{12}CO)');
+    plot(ax_FW,time,diagFW,'-or','LineWidth',1,'DisplayName',diag1);
+    plot(ax_BW,time,diagBW,'-ob','LineWidth',1,'DisplayName',diag2);
 
     % Plot the cross peaks
-    plot(ax_FW,time,xpeakFW,'-^r','LineWidth',1,'DisplayName','Re(^{13}CO) \rightarrow Re(^{12}CO) \rm{\times10}');
-    plot(ax_BW,time,xpeakBW,'-vb','LineWidth',1,'DisplayName','Re(^{13}CO) \leftarrow Re(^{12}CO) \rm{\times10}');
+    plot(ax_FW,time,xpeakFW,'-^r','LineWidth',1,'DisplayName',xpeak1);
+    plot(ax_BW,time,xpeakBW,'-vb','LineWidth',1,'DisplayName',xpeak2);
 
     % Set axes limits
     axis(ax_FW,'tight');
@@ -724,15 +742,15 @@ if EnT
     
     %%% Nice formatting
     % Titles
-    title(ax_FW,'Forward energy transfer','FontSize',13);
-    title(ax_BW,'Backward energy transfer','FontSize',13);
+    title(ax_FW,titFW,'FontSize',16);
+    title(ax_BW,titBW,'FontSize',16);
 
     % Axis labels
-    xlabel(ax_FW,'t_2 delay (ps)','FontWeight','bold','FontSize',12);
-    xlabel(ax_BW,'t_2 delay (ps)','FontWeight','bold','FontSize',12);
+    xlabel(ax_FW,'t_2 delay (ps)','FontWeight','bold','FontSize',16);
+    xlabel(ax_BW,'t_2 delay (ps)','FontWeight','bold','FontSize',16);
 
-    ylabel(ax_FW,'Normalised 2D signal','FontWeight','bold','FontSize',12);
-    ylabel(ax_BW,'Normalised 2D signal','FontWeight','bold','FontSize',12);
+    ylabel(ax_FW,'Normalised 2D signal','FontWeight','bold','FontSize',16);
+    ylabel(ax_BW,'Normalised 2D signal','FontWeight','bold','FontSize',16);
 
     % Axis limits
     xlim(ax_FW,[0 time(end)]);

@@ -33,6 +33,14 @@ ProbeAxis           = handles.ProbeAxis;
 PumpAxis            = handles.PumpAxis;
 Ndelays             = handles.Ndelays;
 t2delays            = handles.t2delays;
+
+% Count how many delays < 0
+N_negdelays         = length(t2delays(t2delays < 0));
+% Take only positive delays
+t2delays            = t2delays(t2delays>=0);
+Ndelays             = length(t2delays);
+
+
 PROC_2D_DATA        = handles.PROC_2D_DATA;
 Npixels             = length(ProbeAxis);
 Nbins               = length(PumpAxis{1,1});
@@ -41,10 +49,10 @@ popdelay            = handles.Population_delay.Value;
 
 % Hardcoded settings
 Interp_method       = 'InterpFT'; % 2D FFT, InterpFT, Mesh 
-Interp_order        = 4; % Multiplies Npixels by a factor to interpolate in the probe dimension
+Interp_order        = 8; % Multiplies Npixels by a factor to interpolate in the probe dimension
 % Fit_type            = 'Quadratic'; % 'Quadratic' 'None' - Sets the type of fit to calculate the minima along the slices
 N_pointsParabola    = 10; % No. of X points to fit a parabola on each side of the peak: [-x (peak) +x]
-intensity_threshold = 60/100; % Intensity threshold for the linear fit to get the CLS or IvCLS
+intensity_threshold = 80/100; % Intensity threshold for the linear fit to get the CLS or IvCLS
 textcolor           = 'none'; % 'none' or RGB color
 fit_method          = 'LSQ'; % 'GA' or 'LSQ' for Genetic algorithm or Least-squares
 
@@ -52,12 +60,12 @@ fit_method          = 'LSQ'; % 'GA' or 'LSQ' for Genetic algorithm or Least-squa
 warning('off','MATLAB:polyfit:RepeatedPointsOrRescale');
 
 % Initialize variables (ensures only the current analysis is saved)
-CLS_Xdata     = NaN;
-CLS_Ydata     = NaN;
-IvCLS_Xdata   = NaN;
-IvCLS_Ydata   = NaN;
-NLS_Xdata     = NaN;
-NLS_Ydata     = NaN;
+CLS_Xdata     = {};
+CLS_Ydata     = {};
+IvCLS_Xdata   = {};
+IvCLS_Ydata   = {};
+NLS_Xdata     = {};
+NLS_Ydata     = {};
 
 %% Ask the user which method to use
 specdif_options     = {'CLS','IvCLS','NLS','CLS+IvCLS','Gaussian Fit'};
@@ -70,11 +78,11 @@ end
 %% Interpolate the data along the probe axis (interpolation along w1 can be performed by apodisation)
 switch Interp_method
     case '2D FFT'
-        for m=1:Ndelays
+        for m=1:Ndelays+N_negdelays
             Interp_Data{m,1}    = real(fft(ifft(PROC_2D_DATA{m,1},2),Npixels.*Interp_order,2));
         end
     case 'InterpFT'
-        for m=1:Ndelays
+        for m=1:Ndelays+N_negdelays
             Interp_Data{m,1}    = interpft(PROC_2D_DATA{m,1},Npixels.*Interp_order,2);
         end
     case 'Mesh'
@@ -125,12 +133,15 @@ switch specdif_options{specdif_typeindx}
         pump_indexes        = pump_idxrange(1):1:pump_idxrange(end);
         Npeaks              = length(pump_indexes);
         min_values          = zeros(Npeaks,Ndelays);
-        SpecDif_ind         = zeros(Ndelays,1);
-        for m=1:Ndelays
+        SpecDif_ind         = zeros(Ndelays+N_negdelays,1);
+        pump_cut            = cell(Ndelays+N_negdelays);
+        CLS_Xdata           = cell(Ndelays+N_negdelays);
+        CLS_Ydata           = cell(Ndelays+N_negdelays);
+        for m=(1+N_negdelays):(Ndelays+N_negdelays)
             % Get the data around the minimum
             [peak_val,peak_pos] = min(Interp_Data{m,1}(pump_indexes,probe_indexes),[],2);
             peak_pos            = peak_pos + probe_idxrange(1);
-            % Fit a quadratic polynomial within 2 points around the minimum 
+            % Fit a quadratic polynomial within N points around the minimum 
             %   and find the analytical vertex of the parabola
             for i=1:Npeaks
                 probe_segment   = Interp_ProbeAxis(peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola);
@@ -140,27 +151,30 @@ switch specdif_options{specdif_typeindx}
             end
             % Fit a line around the minimum according to the intensity cutoff
             peak_val            = peak_val/max(abs(peak_val));
-            above_threshold     = abs(peak_val) >= intensity_threshold;
-            pump_cut            = pump_indexes(above_threshold);
-            mdl                 = fit(PumpAxis{1,1}(pump_cut),min_values(above_threshold,m),'poly1','Robust','Bisquare');
+            above_threshold     = abs(peak_val) >= max(abs(peak_val)).*intensity_threshold;
+            pump_cut{m}         = pump_indexes(above_threshold);
+            mdl                 = fit(PumpAxis{1,1}(pump_cut{m}),min_values(above_threshold,m),'poly1','Robust','Bisquare');
             CLS_coeff           = coeffvalues(mdl);
             SpecDif_ind(m)      = CLS_coeff(1);
+            % Save the spectral diffusion data
+            CLS_Xdata{m}      = PumpAxis{1,1}(pump_cut{m});
+            CLS_Ydata{m}      = min_values(above_threshold,:);
         end
         SpecDif_name = 'CLS';
-%         hold on
-%         plot(PumpAxis{1,1}(pump_cut),min_values(above_threshold,popdelay),'Color','w','LineWidth',2)
-%         hold off
-        % Save the spectral diffusion data
-        CLS_Xdata     = PumpAxis{1,1}(pump_cut);
-        CLS_Ydata     = min_values(above_threshold,:);
+        % Save CLS to file
+        csvwrite([char(handles.rootdir) filesep char(handles.datafilename) '_CLS.csv'],[handles.t2delays,SpecDif_ind])
+        
     case 'IvCLS'
         % Minima in w1 for each value of w3
         probe_indexes       = probe_idxrange(1):1:probe_idxrange(end);
         pump_indexes        = pump_idxrange(1):1:pump_idxrange(end);
         Npeaks              = length(probe_indexes);
         min_values          = zeros(Npeaks,Ndelays);
-        SpecDif_ind         = zeros(Ndelays,1);
-        for m=1:Ndelays
+        SpecDif_ind         = zeros(Ndelays+N_negdelays,1);
+        probe_cut           = cell(Ndelays+N_negdelays);
+        IvCLS_Xdata         = cell(Ndelays+N_negdelays);
+        IvCLS_Ydata         = cell(Ndelays+N_negdelays);
+        for m=(1+N_negdelays):(Ndelays+N_negdelays)
             % Get the data around the minimum
             [peak_val,peak_pos] = min(Interp_Data{m,1}(pump_indexes,probe_indexes),[],1);
             peak_pos            = peak_pos + pump_idxrange(1);
@@ -174,17 +188,18 @@ switch specdif_options{specdif_typeindx}
             end
             % Fit a line around the minimum according to the intensity cutoff
             peak_val            = peak_val/max(abs(peak_val));
-            above_threshold     = abs(peak_val) >= intensity_threshold;
-            probe_cut           = probe_indexes(above_threshold);
+            above_threshold     = abs(peak_val) >= max(abs(peak_val)).*intensity_threshold;
+            probe_cut{m}        = probe_indexes(above_threshold);
             mdl                 = fit(min_values(above_threshold,m),Interp_ProbeAxis(probe_cut)','poly1','Robust','Bisquare');
             IvCLS_coeff         = coeffvalues(mdl);
             SpecDif_ind(m)      = 1./IvCLS_coeff(1);
+            % Save the spectral diffusion data
+            IvCLS_Xdata{m}      = min_values(above_threshold,:);
+            IvCLS_Ydata{m}      = Interp_ProbeAxis(probe_cut{m});
         end
         SpecDif_name    = 'IvCLS';
-        % Save the spectral diffusion data
-        IvCLS_Xdata     = min_values(above_threshold,:);
-        IvCLS_Ydata     = Interp_ProbeAxis(probe_cut);
     case 'NLS'
+        %%% Not yet implemented.
         
     case 'CLS+IvCLS'
         % IvCLS
@@ -193,8 +208,11 @@ switch specdif_options{specdif_typeindx}
         pump_indexes        = pump_idxrange(1):1:pump_idxrange(end);
         Npeaks              = length(probe_indexes);
         min_values          = zeros(Npeaks,Ndelays);
-        IvCLS_value         = zeros(Ndelays,1);
-        for m=1:Ndelays
+        IvCLS_value         = zeros(Ndelays+N_negdelays,1);
+        probe_cut           = cell(Ndelays+N_negdelays);
+        IvCLS_Xdata         = cell(Ndelays+N_negdelays);
+        IvCLS_Ydata         = cell(Ndelays+N_negdelays);
+        for m=(1+N_negdelays):(Ndelays+N_negdelays)
             % Get the data around the minimum
             [peak_val,peak_pos] = min(Interp_Data{m,1}(pump_indexes,probe_indexes),[],1);
             peak_pos            = peak_pos + pump_idxrange(1);
@@ -208,16 +226,16 @@ switch specdif_options{specdif_typeindx}
             end
             % Fit a line around the minimum according to the intensity cutoff
             peak_val            = peak_val/max(abs(peak_val));
-            above_threshold     = abs(peak_val) >= intensity_threshold;
-            probe_cut           = probe_indexes(above_threshold);
+            above_threshold     = abs(peak_val) >= max(abs(peak_val)).*intensity_threshold;
+            probe_cut{m}        = probe_indexes(above_threshold);
             mdl                 = fit(min_values(above_threshold,m),Interp_ProbeAxis(probe_cut)','poly1','Robust','Bisquare');
             IvCLS_coeff         = coeffvalues(mdl);
             IvCLS_value(m)      = 1./IvCLS_coeff(1);
+            % Save the spectral diffusion data
+            IvCLS_Xdata{m}      = min_values(above_threshold,:);
+            IvCLS_Ydata{m}      = Interp_ProbeAxis(probe_cut{m});
         end
         SpecDif_name    = 'IvCLS';
-        % Save the spectral diffusion data
-        IvCLS_Xdata     = min_values(above_threshold,:);
-        IvCLS_Ydata     = Interp_ProbeAxis(probe_cut);
         
         % CLS
         % Minima in w3 for each value of w1
@@ -225,12 +243,15 @@ switch specdif_options{specdif_typeindx}
         pump_indexes        = pump_idxrange(1):1:pump_idxrange(end);
         Npeaks              = length(pump_indexes);
         min_values          = zeros(Npeaks,Ndelays);
-        CLS_value           = zeros(Ndelays,1);
-        for m=1:Ndelays
+        CLS_value           = zeros(Ndelays+N_negdelays,1);
+        pump_cut            = cell(Ndelays+N_negdelays);
+        CLS_Xdata           = cell(Ndelays+N_negdelays);
+        CLS_Ydata           = cell(Ndelays+N_negdelays);
+        for m=(1+N_negdelays):(Ndelays+N_negdelays)
             % Get the data around the minimum
             [peak_val,peak_pos] = min(Interp_Data{m,1}(pump_indexes,probe_indexes),[],2);
             peak_pos            = peak_pos + probe_idxrange(1);
-            % Fit a quadratic polynomial within 2 points around the minimum 
+            % Fit a quadratic polynomial within N points around the minimum 
             %   and find the analytical vertex of the parabola
             for i=1:Npeaks
                 probe_segment   = Interp_ProbeAxis(peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola);
@@ -240,16 +261,16 @@ switch specdif_options{specdif_typeindx}
             end
             % Fit a line around the minimum according to the intensity cutoff
             peak_val            = peak_val/max(abs(peak_val));
-            above_threshold     = abs(peak_val) >= intensity_threshold;
-            pump_cut            = pump_indexes(above_threshold);
-            mdl                 = fit(PumpAxis{1,1}(pump_cut),min_values(above_threshold,m),'poly1','Robust','Bisquare');
+            above_threshold     = abs(peak_val) >= max(abs(peak_val)).*intensity_threshold;
+            pump_cut{m}         = pump_indexes(above_threshold);
+            mdl                 = fit(PumpAxis{1,1}(pump_cut{m}),min_values(above_threshold,m),'poly1','Robust','Bisquare');
             CLS_coeff           = coeffvalues(mdl);
             CLS_value(m)        = CLS_coeff(1);
+            % Save the spectral diffusion data
+            CLS_Xdata{m}        = PumpAxis{1,1}(pump_cut{m});
+            CLS_Ydata{m}        = min_values(above_threshold,:);
         end
         SpecDif_name = 'CLS';
-        % Save the spectral diffusion data
-        CLS_Xdata     = PumpAxis{1,1}(pump_cut);
-        CLS_Ydata     = min_values(above_threshold,:);
 end
 
 %% Fit and plot the spectral diffusion kinetics
@@ -271,6 +292,11 @@ end
     end
 
 %% Make the plots and fit the data
+% Reload the t2 delays for plotting and fitting
+t2delays = handles.t2delays;
+t2limit  = max(t2delays);
+t2delays = t2delays(t2delays<=t2limit);
+
 switch specdif_options{specdif_typeindx}
     case 'CLS+IvCLS'
         % Fit a bixeponential function to the centerline slope decay, assuming a Kubo lineshape
@@ -332,7 +358,7 @@ switch specdif_options{specdif_typeindx}
         % Make the plot nice
         ylabel(ax,'CLS','FontWeight','bold','FontSize',12);
         xlabel(ax,'Waiting time, t_2 (ps)','FontWeight','bold','FontSize',12);
-        ylim(ax,[0,max(FittedSpecDiff)]);
+        ylim(ax,[0,max([max(FittedSpecDiff),max(CLS_value(t2delays>=0))])]);
         % curr_xlim = xlim(ax);
         xlim(ax,[0,max(t2delays)]);
         % Make the axis size consistent
@@ -382,7 +408,7 @@ switch specdif_options{specdif_typeindx}
         % Make the plot nice
         ylabel(ax,'IvCLS','FontWeight','bold','FontSize',12);
         xlabel(ax,'Waiting time, t_2 (ps)','FontWeight','bold','FontSize',12);
-        ylim(ax,[0,maxvalue]);
+        ylim(ax,[0,max([maxvalue,max(IvCLS_value(t2delays>=0))])]);
         % curr_xlim = xlim(ax);
         xlim(ax,[0,max(t2delays)]);
         % Make the axis size consistent
@@ -455,7 +481,7 @@ switch specdif_options{specdif_typeindx}
         % Make the plot nice
         ylabel(ax,SpecDif_name,'FontWeight','bold','FontSize',12);
         xlabel(ax,'Waiting time, t_2 (ps)','FontWeight','bold','FontSize',12);
-        ylim(ax,[0,maxvalue]);
+        ylim(ax,[0,max([maxvalue,max(SpecDif_ind(t2delays>=0))])]);
         % curr_xlim = xlim(ax);
         xlim(ax,[0,max(t2delays)]);
 
