@@ -1773,6 +1773,7 @@ switch handles.DataTypeMenu.Value
             ScanNr   = strcat(tempdir,filesep,datafilename,'_signal',ending,num2str(i-1),'.csv');
             ScanNrch = char(ScanNr);
             TempScanData = csvread(ScanNrch);
+            handles.removeduplicates =0;
             if handles.removeduplicates == 1
                 % Average rows 1:n and subtract them (n=5)
                 n=5; 
