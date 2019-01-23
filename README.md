@@ -12,7 +12,7 @@ The second one, **InterfDataAnalysis_GUI** is designed to process, phase, plot a
 
 # 2. Basic requirements
 The first implementation of the program was done in MATLAB R2016a, but current development will always run in the latest release.
-### 2.1 Current MATLAB version: R2018a
+### 2.1 Current MATLAB version: R2018b
 
 Both GUIs need a file, **"GUIoptions.txt"**, to be present in the root of the __C:__ drive.
 This could be changed to a more general location in a later release.
