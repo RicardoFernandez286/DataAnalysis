@@ -20,8 +20,8 @@ c_0         = 2.99792458e-5;    % Speed of light in cm/fs
 
 %% Load files
 % Define the data folder
-rootdir     = 'C:\Users\apasti\Desktop\ternary 2d\TwoDSpectra_T9';
-dataname    = 'Parallel1659_solution_T9_2000fs_150_2025_TD';
+rootdir     = '\\idnetapp-chem.uzh.ch\g_chem_hamm$\Group\Data from instruments\Lab 3 - 2DIR\20181216\TwoDSpectra';
+dataname    = 'Parallel2244_solution_T19_75000fs_150_2025_TD';
 
 % Do the file reading
 filelist    = dir(rootdir);
@@ -112,7 +112,7 @@ NR_FT              = fft(apo_NR,Nbins*zeropad_factor);
 RE_FT              = fft(apo_RE,Nbins*zeropad_factor);
 
 % Phase the spectrum
-Absorptive  = real((NR_FT + RE_FT).*exp(-1i*Phase_angle));
+Absorptive  = abs((NR_FT + RE_FT).*exp(-1i*Phase_angle));
 
 % Define the cut region
 cut_limits  = findClosestId2Val(PumpAxis,[ProbeAxis(1) ProbeAxis(end)]);
