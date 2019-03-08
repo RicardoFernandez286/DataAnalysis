@@ -34,126 +34,55 @@ autoplot=0*debug; show_int=1*debug;
 
 dummy = 1; % Can be the dummy number of 'diff' (will plot 2 - 1) - more options coming soon
 
-%% DEBUG/MANUAL: THIS IS IMPLEMENTED IN ORDER TO TEST THE SCRIPT OR TO MANUALLY LOAD THE DATA
-if debug==1
-    %%% FOR MANUAL LOADING OF OLD LAB 4 2D DATA
-%     bkg_sub=0;
-%     zeropad_factor=2;
-%     zeropad_next2k=1;
-%     cmprobe=1:32;
-%     phase_points=50;
-%     apodise_method='Box';
-%     phase_method='Linear';
-%     
-%     m=1;k=1;
-%     folder='D:\Data old format\20.02.18';
-%     dataset=char("20.02.18.16'38'19 1.50");
-%     t2_delay_ps = dataset(end-3:end);
-%     
-%     probe_calib=2;
-%     wavenumberfile='CalibratedProbe.csv';
-%     saved_probe=csvread(wavenumberfile);
-%     
-%     int = dlmread([folder filesep dataset ' _av pyro'],'\t'); interferogram{1,1}= int(:,2); clear int;
-%     sig = dlmread([folder filesep dataset ' _av int'],'\t'); signal{1,1}= sig; clear sig;
-%     bins = 1:length(interferogram{1,1});
-%     binzero=num2cell(-1);
-% 
-%     Ndelays=1;Nspectra=1;Ndatastates=1;Nslowmod=1;Nbins=bins(end);t2delays=1;
-% 
-% end
-    %%% FOR MANUAL PROCESSING OF OLD LAB 1 or LAB 4 (new) 2D DATA
+%% READ from handles
+
 % Read data
-    cmprobe         = handles.cmprobe;
-    t1delays        = handles.t1delays;
-    datatype        = handles.datatype;
-    Ndelays         = handles.Ndelays;
-    if strcmp(datatype,'Raw')
-        Ndatastates = handles.Ndatastates;
-    else
-        Ndatastates = 1;
-    end
-    Nspectra        = handles.Nspectra;
-    Nbins           = handles.Nbins;
-    
-    interferogram	= handles.interferogram;
-    signal		    = handles.signal;
-    rootdir         = handles.rootdir;
-    
+cmprobe         = handles.cmprobe;
+t1delays        = handles.t1delays;
+datatype        = handles.datatype;
+Ndelays         = handles.Ndelays;
+if strcmp(datatype,'Raw')
+    Ndatastates = handles.Ndatastates;
+else
+    Ndatastates = 1;
+end
+Nspectra        = handles.Nspectra;
+Ndummies        = handles.Ndummies;
+Nbins           = handles.Nbins;
+interferogram	= handles.interferogram;
+signal		    = handles.signal;
+rootdir         = handles.rootdir;
+
 % Read GUI options
-    bkg_sub         = 1;
-    zeropad_enable  = 1;
-    if zeropad_enable == 1
-        zeropad_factor  = 2;
-    else
-        zeropad_factor  = 0;
-    end
-    zeropad_next2k  = 1;
-    apodise_method  = 'Cos';
-    phase_method    = 'Constant';
-    phase_points    = 50;
-    probe_calib     = 0;
-    binzero         = num2cell(-1*ones(Ndelays,Ndatastates));
-    pumpcorrection  = 0;
-    % If there is a calibrated WL file in the current ROOTDIR, use it
-    if probe_calib == 0 && exist([rootdir filesep 'CalibratedProbe.csv'],'file') == 2
-        probe_calib = 2;
-        wavenumberfile='CalibratedProbe.csv';
-        saved_probe=csvread([rootdir filesep wavenumberfile]);
-    end
+bkg_sub         = handles.BkgSubTick.Value;
+zeropad_enable  = handles.zeropad_tick.Value;
+if zeropad_enable == 1
+    zeropad_factor  = str2double(handles.zeropad_factor.String);
+else
+    zeropad_factor  = 0;
+end
+% Determine whether the data is transient 2D or not, then read the mode
+if handles.DataTypeMenu.Value == 3
+    Transient2D         = 1;
+    Transient2D_mode    = handles.Transient2D_mode.Value;
+else
+    Transient2D         = 0;
+    Transient2D_mode    = 0;
 end
 
-%% READ from handles
-if debug==0 % Only during normal operation
-    
-% Read data
-    cmprobe         = handles.cmprobe;
-    t1delays        = handles.t1delays;
-    datatype        = handles.datatype;
-    Ndelays         = handles.Ndelays;
-    if strcmp(datatype,'Raw')
-        Ndatastates = handles.Ndatastates;
-    else
-        Ndatastates = 1;
-    end
-    Nspectra        = handles.Nspectra;
-    Ndummies        = handles.Ndummies;
-    Nbins           = handles.Nbins;
-    interferogram	= handles.interferogram;
-    signal		    = handles.signal;
-    rootdir         = handles.rootdir;
-    
-% Read GUI options
-    bkg_sub         = handles.BkgSubTick.Value;
-    zeropad_enable  = handles.zeropad_tick.Value;
-    if zeropad_enable == 1
-        zeropad_factor  = str2double(handles.zeropad_factor.String);
-    else
-        zeropad_factor  = 0;
-    end
-    % Determine whether the data is transient 2D or not, then read the mode
-    if handles.DataTypeMenu.Value == 3
-        Transient2D         = 1;
-        Transient2D_mode    = handles.Transient2D_mode.Value;
-    else
-        Transient2D         = 0;
-        Transient2D_mode    = 0;
-    end
-    
-    zeropad_next2k  = handles.zeropad_next2k.Value;
-    apodise_method  = char(handles.apodise_method.String{handles.apodise_method.Value});
-    phase_method    = char(handles.phase_method.String{handles.phase_method.Value});
-    phase_points    = str2double(handles.phase_Npoints.String);
-    probe_calib     = handles.Probe_Calibration.Value;
-    binzero         = num2cell(-1*ones(Ndelays,Ndatastates*Nspectra*Ndummies));
-    pumpcorrection  = handles.PumpCorrection_tick.Value;
-    % If there is a calibrated WL file in the current ROOTDIR, use it
-    if probe_calib == 0 && exist([rootdir filesep 'CalibratedProbe.csv'],'file') == 2
-        probe_calib = 2;
-        wavenumberfile='CalibratedProbe.csv';
-        saved_probe=csvread([rootdir filesep wavenumberfile]);
-    end    
-end
+zeropad_next2k  = handles.zeropad_next2k.Value;
+apodise_method  = char(handles.apodise_method.String{handles.apodise_method.Value});
+phase_method    = char(handles.phase_method.String{handles.phase_method.Value});
+phase_points    = str2double(handles.phase_Npoints.String);
+probe_calib     = handles.Probe_Calibration.Value;
+binzero         = num2cell(-1*ones(Ndelays,Ndatastates*Nspectra*Ndummies));
+pumpcorrection  = handles.PumpCorrection_tick.Value;
+% If there is a calibrated WL file in the current ROOTDIR, use it
+if probe_calib == 0 && exist([rootdir filesep 'CalibratedProbe.csv'],'file') == 2
+    probe_calib = 2;
+    wavenumberfile='CalibratedProbe.csv';
+    saved_probe=csvread([rootdir filesep wavenumberfile]);
+end    
 
 % Hardcoded settings
     filter_type     = 'Median';

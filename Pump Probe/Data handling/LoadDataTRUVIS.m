@@ -1,6 +1,7 @@
-function handles = LoadDataIR1(handles,SpectrumToDisplay,varargin)
+function handles = LoadDataTRUVIS(handles,SpectrumToDisplay,varargin)
 
 handles.removeduplicates = 1;
+cut2ndOrder = 1;
 %% READ from handles
 rootdir         = char(handles.CurrDir.String);
 datafilename    = char(handles.datafilename);
@@ -100,16 +101,8 @@ switch N_4PM
     case 4
         piezomod = '4PM';
 end
-
 delays          = csvread([filename '_delays.csv']);
-% If there is a calibrated probe file, use it. Otherwise, use the normal one
-if exist([rootdir filesep 'CalibratedProbe.csv'],'file') == 2
-    wavenumberfile='CalibratedProbe.csv';
-    cmprobe=csvread([rootdir filesep wavenumberfile]);
-else
-    cmprobe         = csvread([filename '_wavenumbers.csv']);
-end
-
+cmprobe         = csvread([filename '_wavelengths.csv']);
 
 % Read the actual data
 rawsignal={}; noise={};
@@ -175,22 +168,64 @@ if N_modSpec >= 2
     cmprobe     = 10^7./(WL_nm + ShiftWL);
 end
 
-% Timescale is in picoseconds! (nicer to understand)
-delays = delays/1000;
-handles.timescale = 'ps';
-handles.timescalemenu.Value = 2;
-
+% Determine whether the electronic delay was used (ns) or the delay stage (fs)
+fid         = fopen([filename '_meta.txt']); 
+metadata    = textscan(fid,'%s','delimiter','\n');
+metadata    = metadata{:};
+fclose(fid);
+ED_con_LN   = find(~cellfun(@isempty,strfind(metadata,'Electronic delay:')));
+ED_con_txt  = strsplit(metadata{ED_con_LN(1)},': ');
+ED_con_TF   = ~contains(ED_con_txt{2},'Not','IgnoreCase',1);
+UV_con_LN   = find(~cellfun(@isempty,strfind(metadata,'UV stage:')));
+UV_con_txt  = strsplit(metadata{UV_con_LN(1)},': ');
+UV_con_TF   = ~contains(UV_con_txt{2},'Not','IgnoreCase',1);
+Stage_LN    = find(~cellfun(@isempty,strfind(metadata,'Stage: ')));
+if isempty(Stage_LN)
+    if ED_con_TF && ~UV_con_TF
+        % If both are connected, assume it is the EDelay
+        handles.timescale = 'ns';
+        handles.timescalemenu.Value = 1;
+    else
+        % Otherwise, assume it is the UV stage
+        delays = delays/1000;
+        handles.timescale = 'ps';
+        handles.timescalemenu.Value = 2;
+    end
+else
+    Stage_txt   = strsplit(metadata{Stage_LN(1)},'Stage: ');
+    switch Stage_txt{2}
+        case 'Elec delay'
+            handles.timescale = 'ns';
+            handles.timescalemenu.Value = 1;
+        case 'UV delay'
+            delays = delays/1000;
+            handles.timescale = 'ps';
+            handles.timescalemenu.Value = 2;  
+    end
+end
+    
 % Read the plot ranges
-mintime = -0.5;
-maxtime = max(delays);
-flatbl=findClosestId2Val(delays,mintime);
-minabs = min(rawsignal(flatbl:end,:));
-maxabs = max(rawsignal(flatbl:end,:));
-zminmax = round(max([abs(minabs) abs(maxabs)]),3);
+mintime         = -0.5;
+maxtime         = max(delays);
+flatbl          = findClosestId2Val(delays,mintime);
+minabs          = min(rawsignal(flatbl:end,:));
+maxabs          = max(rawsignal(flatbl:end,:));
+zminmax         = round(max([abs(minabs) abs(maxabs)]),3);
+Ncontours       = 50; % 10 contours by default is OK; need 50 contours to plot nicely with pFID
+
+% In TRUVIS, the 2nd order can overlap with the main band, in which case it
+% should be removed (only if using a grating)
 minwl = min(cmprobe);
 maxwl = max(cmprobe);
-Ncontours = 50; % 10 contours by default is OK; need 50 contours to plot nicely with pFID
-plotranges = [mintime maxtime minwl maxwl zminmax Ncontours minabs maxabs];
+if maxwl >= 2*minwl && cut2ndOrder
+    maxwl = 2*minwl;
+    maxwl_index = findClosestId2Val(cmprobe,maxwl);
+    rawsignal   = rawsignal(:,1:maxwl_index);
+    noise       = noise(:,1:maxwl_index);
+    cmprobe     = cmprobe(1:maxwl_index);
+end
+
+plotranges      = [mintime maxtime minwl maxwl zminmax Ncontours minabs maxabs];
 
 % % Average rows 1:n and subtract them (n=5)
 %     n=3; 

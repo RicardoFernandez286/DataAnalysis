@@ -15,7 +15,7 @@ function plot2D(handles,Zdata,where,TitleOnOff)
 %% READ from handles
 datafilename        = handles.datafilename;
 delays              = handles.delays;
-cmprobe             = handles.cmprobe;
+probe               = handles.cmprobe;
 timescale           = handles.timescale;
 rawcorr             = handles.rawcorr;
 plotranges          = handles.plotranges;
@@ -51,7 +51,7 @@ plot_contours = linspace(min_cut,max_cut,Ncontours);
 
 %% Do the plot
 axes(where);
-X  = cmprobe;
+X  = probe;
 Y  = delays;
 Z  = Zdata;
 contourf(where,X,Y,Z,plot_contours,'LineStyle','-','LineColor','flat');
@@ -127,7 +127,7 @@ hcb.TickLength=0.0125;
 title(hcb,{'\DeltaAbs';'(mOD)'},'FontWeight','bold','FontSize',10,'FontWeight','normal');
 
 % Label other axes
-xlabel(where,['Wavenumbers' ' (cm^{-1})'],'FontWeight','bold')
+xlabel(where,handles.probeunits,'FontWeight','bold')
 ylabel(where,['Delays' ' (' timescale ')'],'FontWeight','bold')
 hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
 if strcmp(TitleOnOff,'On')
@@ -137,6 +137,7 @@ end
 % Adjust the limits (if given) -> MISSING "IF GIVEN" PART
 xlim(WLlim)
 ylim(delaylim)
+
 
 % Log/linear time axis
 set(where,'yscale',handles.linlog)

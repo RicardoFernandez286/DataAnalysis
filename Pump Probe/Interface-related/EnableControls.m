@@ -37,6 +37,7 @@ switch Option
         handles.text35.Enable               = 'On';
         handles.text36.Enable               = 'On';
         handles.RecalculateSignal.Enable    = 'On';
+        handles.ProbeMask.Enable            = 'On';
     case 'TRES'
         handles.BkgSubTick.Enable           = 'On';
         handles.mintimeBkg.Enable           = 'On';
@@ -74,4 +75,5 @@ switch Option
         handles.text35.Enable               = 'Off';
         handles.text36.Enable               = 'Off';
         handles.RecalculateSignal.Enable    = 'Off';
+        handles.ProbeMask.Enable            = 'On';
 end

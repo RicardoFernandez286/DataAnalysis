@@ -35,7 +35,7 @@ end
     LineWidth           = 0.5;
     plot_limittype      = 'Local'; % 'Global' will take min/max of the whole 2D set, while 'Local' will take only the selected region
     interpolate         = 0;
-    textcolor           = 'w';
+    textcolor           = 'none';
 % Read data
     ProbeAxis           = handles.ProbeAxis;
     PumpAxis            = handles.PumpAxis;
@@ -60,6 +60,11 @@ if debug==0
     popdelay            = handles.Population_delay.Value;
     symcolrange         = handles.SymColRange_tick.Value;
     EditProbeAxis       = handles.EditProbeAxis_tick.Value;
+    
+    % Read the selection
+    m = popdelay;
+    k = 1;
+
     % Determine if spectral diffusion analysis have been performed or not and whether to plot them
     if handles.ShowSpecDiff.Value && handles.SpecDiff
         Plot_SpecDiff   = 1;
@@ -92,10 +97,6 @@ end
 % Hide the axes for now, until everything is ready
 plotaxis.Visible='Off';
 hold(plotaxis,'off');
-
-% Read the selection
-m = popdelay;
-k = 1;
 
 % Cut the datasets in half (only half the frequencies are real)
 L                   = round(length(PumpAxis{m,k})/2);
@@ -385,16 +386,16 @@ end
 if Plot_SpecDiff
     hold(plotaxis,'on')
     % CLS
-    if ~isnan(CLS_Xdata)
-        plot(plotaxis,CLS_Xdata,CLS_Ydata(:,popdelay),'LineWidth',2,'Color','w')
+    if ~isempty(CLS_Xdata) && ~isempty(CLS_Xdata{m})
+        plot(plotaxis,CLS_Xdata{m},CLS_Ydata{m}(:,popdelay),'LineWidth',2,'Color','w')
     end
     % IvCLS
-    if ~isnan(IvCLS_Xdata)
-        plot(plotaxis,IvCLS_Xdata(:,popdelay),IvCLS_Ydata,'LineWidth',2,'Color','y')
+    if ~isempty(IvCLS_Xdata) && ~isempty(IvCLS_Xdata{m})
+        plot(plotaxis,IvCLS_Xdata{m}(:,popdelay),IvCLS_Ydata{m},'LineWidth',2,'Color','y')
     end
     % NLS
-    if ~isnan(IvCLS_Xdata)
-        plot(plotaxis,NLS_Xdata,NLS_Ydata,'LineWidth',2,'Color','m')
+    if ~isempty(NLS_Xdata) && ~isempty(NLS_Xdata{m})
+        plot(plotaxis,NLS_Xdata{m},NLS_Ydata{m},'LineWidth',2,'Color','m')
     end
     hold(plotaxis,'off')
 end

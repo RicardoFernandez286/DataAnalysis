@@ -22,7 +22,7 @@ function varargout = DataAnalysis_GUI(varargin)
 
 % Edit the above text to modify the response to help DataAnalysis_GUI
 
-% Last Modified by GUIDE v2.5 15-Oct-2018 14:27:44
+% Last Modified by GUIDE v2.5 04-Dec-2018 18:33:47
 
 % Ricardo Fernández-Terán - v3.9a - 11.06.2018
 % ----CHANGELOG:
@@ -195,6 +195,8 @@ case 'normal' % Single click
            switch handles.DataTypeMenu.Value
                case 1 % Lab 2: UV-Vis Pump - IR Probe (ns)
                    handles = LoadDataIR2(handles);
+                   handles.probeunits   = 'Wavenumbers (cm^{-1})';
+                   handles.Xunits       = 'cm^{-1}';
                    tempdir = [char(handles.CurrDir.String) filesep char(datafilename) filesep 'temp'];
                    if exist(tempdir,'dir') == 7
                        cd(tempdir);
@@ -216,6 +218,37 @@ case 'normal' % Single click
                    handles.SymmetricColourRange_tick.Value = 1;
                case 2 % Lab 1: UV-Vis/IR Pump - IR probe (fs)
                    handles  = LoadDataIR1(handles,1);
+                   handles.probeunits = 'Wavenumbers (cm^{-1})';
+                   handles.Xunits       = 'cm^{-1}';
+                   handles.SlowMod_selector.Value   = 1;
+                   % TEMP dir story
+                   tempdir         = [char(handles.CurrDir.String) filesep char(datafilename) filesep 'temp'];
+                   tempdirOUT      = [char(handles.CurrDir.String) filesep char(datafilename) 'temp'];
+                   % Check if the temp dir is outside (Lab 1) or inside the data folder (Lab 4)
+                   if exist(tempdir,'dir') == 0
+                       tempdir     = tempdirOUT;
+                   end
+                   % Check if the temp dir really exists
+                   if exist(tempdir,'dir') == 7
+                       handles.Nscans_number.String = num2str(handles.Nscans);
+                   else
+                       handles.Nscans_number.String        = 'N/A';
+                       handles.KineticsPerScan.Enable      = 'Off';
+                       handles.SpectraPerScan.Enable       = 'Off';
+                       handles.BinScans.Visible            = 'Off';
+                       handles.BinScans.Enable             = 'Off';
+                       handles.text35.Visible              = 'Off';
+                       handles.text36.Visible              = 'Off';
+                       handles.text35.Enable               = 'Off';
+                       handles.text36.Enable               = 'Off';
+                   end
+                   % Clear error string
+                   set(handles.ErrorText,'String', '');
+                   handles.SymmetricColourRange_tick.Value = 1;
+               case 5 % TRUVIS
+                   handles  = LoadDataTRUVIS(handles,1);
+                   handles.probeunits   = 'Wavelength (nm)';
+                   handles.Xunits       = 'nm';
                    handles.SlowMod_selector.Value   = 1;
                    % TEMP dir story
                    tempdir         = [char(handles.CurrDir.String) filesep char(datafilename) filesep 'temp'];
@@ -392,7 +425,7 @@ plot(handles.cmprobe,handles.bkg,'LineWidth',1.5,'Color','r')
 % Formatting
 axis tight
 set(gca,'FontSize',12);
-xlabel(['Wavenumbers',' (cm^{-1})'],'FontSize',13,'FontWeight','bold');
+xlabel(handles.probeunits,'FontSize',13,'FontWeight','bold');
 ylabel('Background signal (m\DeltaOD)','FontSize',13,'FontWeight','bold');
 title(['Background of ',char(handles.datafilename)],'Interpreter','none','FontSize',12);
 hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
@@ -497,7 +530,7 @@ plot(handles.cmprobe,WL(:,n)); axis tight;
 hold on
 plot(ax,[handles.cmprobe(1) handles.cmprobe(end)],[0,0],'-','LineWidth',0.75,'Color',[0.5 0.5 0.5])
 hold off
-xlabel('Wavenumbers (cm^{-1})','FontWeight','bold');
+xlabel(handles.probeunits,'FontWeight','bold');
 ylabel('\DeltaAbs (mOD)','FontWeight','bold');
 % Plot the LH vectors (Time)
 ax=subplot(2,2,2);
@@ -639,7 +672,7 @@ FitType=2; % i.e. 1= LOCAL, 2 = GLOBAL SVD fit
     l=legend(legendlabel); legend('boxoff'); legend('Location','northeast');
     l.Interpreter = 'tex';
     set(gca,'FontSize',12);
-    xlabel('Wavenumbers (cm^{-1})','FontSize',13,'FontWeight','bold')
+    xlabel(handles.probeunits,'FontSize',13,'FontWeight','bold')
     ylabel('Amplitude','FontSize',13,'FontWeight','bold')
     axis tight
     hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
@@ -1128,28 +1161,28 @@ while i < L
         case 0
             ydata(:,i+1) = data(:,index);
             label = '\DeltaAbs (mOD)';
-            caption(i+1,1) = string(strcat(num2str(round(handles.cmprobe(index),0)),' cm^{-1}'));
+            caption(i+1,1) = string(strcat(num2str(round(handles.cmprobe(index),0)),[' ' handles.Xunits]));
         case 1
             maxval = max(data(:,index));
             minval = min(data(:,index));
             if abs(maxval) >= abs(minval)
                 ydata(:,i+1) = data(:,index)./maxval;
-                caption(i+1,1) = string(strcat(num2str(round(handles.cmprobe(index),0)),' cm^{-1}'));
+                caption(i+1,1) = string(strcat(num2str(round(handles.cmprobe(index),0)),[' ' handles.Xunits]));
             else
                 ydata(:,i+1) = data(:,index)./minval;
-                caption(i+1,1) = string(strcat(num2str(round(handles.cmprobe(index),0)),' cm^{-1} \times -1'));
+                caption(i+1,1) = string(strcat(num2str(round(handles.cmprobe(index),0)),[' ' handles.Xunits '\times -1']));
             end
             label = 'Normalised \DeltaAbs';
     end
     i=i+1;
 end
 % Create a new figure with consistent format
-fh = figure();
+fh = figure;
 fh.Position(3)  = 920;
 fh.Position(4)  = 425;
 fh.Color        = [1 1 1];
 
-% Define the axes
+% % Define the axes
 handles.axes2 = axes('Parent',fh);
 axes(handles.axes2);
 
@@ -1171,7 +1204,7 @@ xlabel(['Delays',' (',handles.timescale,')'],'FontSize',13,'FontWeight','bold');
 ylabel(label,'FontSize',13,'FontWeight','bold')
 axis tight
 if L == 1
-    legend(gca,[string(strcat(num2str(round(handles.cmprobe(index),0)),' cm^{-1}')),''],'FontSize',12)
+    legend(gca,[string(strcat(num2str(round(handles.cmprobe(index),0)),[' ' handles.Xunits])),''],'FontSize',12)
 else
     legend(gca,caption,'FontSize',12)
 end
@@ -1199,6 +1232,9 @@ function plotDeltaAbs_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 interactive = get(handles.InteractiveModeTick,'Value');
 handles.SelTraces = [];
+
+FontSize = 18; % 18 for papers (single column figure), 14 for presentations (can vary)
+
 switch interactive
     case 1
         timescale = handles.timescale;
@@ -1279,30 +1315,23 @@ end
 switch handles.IncludeSteadyState.Value
     case 1
         % Create a new figure with consistent format
+        scale           = 50/100;
         fh = figure();
         fh.Units        = 'pixels';
-        fh.Position(2)  = fh.Position(2)-150;
-        fh.Position(3)  = 880;
-        fh.Position(4)  = 550;
+        fh.Position(2)  = fh.Position(2)-450*scale;
+        fh.Position(3)  = 890;
+        fh.Position(4)  = 425+325*scale;
         fh.Color        = [1 1 1];
         % Create the FTIR axis
         ax1             = axes('Parent',fh);
-        ax1.Units       = 'pixels';
-        ax1.Position    = [75 400 675 125];
-        plot(ax1,handles.IRx,handles.IRy,'LineWidth',1.5,'Marker','none','color','black');
-%         title(ax1,{handles.datafilename;[handles.rawcorr,' DATA - TRANSIENT SPECTRA';'']},'Interpreter','none')
-        ylabel(ax1,'Abs (mOD)','FontWeight','bold','FontSize',13)
-        ax1.Units       = 'normalized';
-        ax1.FontSize    = 12;
         % Create the transient spectra axis
         ax2             = axes('Parent',fh);
-        ax2.FontSize    = 12;
         linkaxes([ax1,ax2],'x');
         where = ax2;
     case 0
         % Create a new figure with consistent format
         fh = figure();
-        fh.Position(3)  = 880;
+        fh.Position(3)  = 890;
         fh.Position(4)  = 425;
         fh.Color        = [1 1 1];
         % Define the axes
@@ -1320,20 +1349,15 @@ for n=1:L
 end
 % Nice formatting
 set(gca,'FontSize',12)
-xlabel('Wavenumbers (cm^{-1})','FontSize',13,'FontWeight','bold')
-ylabel(label,'FontSize',13,'FontWeight','bold')
+xlabel(handles.probeunits,'FontSize',13,'FontWeight','bold')
+ylabel(where,label,'FontSize',13,'FontWeight','bold')
 axis tight
-if handles.IncludeSteadyState.Value == 1
-    xl = xlim;
-    xlim(ax1,xl);
-    set(ax1, 'XTick', []);
-end
 legend('show');
 legend('boxoff')
 legend('Location','bestoutside')
 
 where.Units       = 'pixels';
-where.Position    = [75 75 675 320];
+where.Position    = [80 75 675 320];
 where.Units       = 'normalized';
 
 if L >= 15
@@ -1342,7 +1366,7 @@ if L >= 15
     end
 end
 
-legend(ax2,{},'FontSize',12)
+legend(ax2,{},'FontSize',FontSize)
 
 % Disable warning of negative X limits
 warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
@@ -1350,6 +1374,29 @@ warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
 % Refline
 hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
 set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
+% Nice formatting for the combined plot
+if handles.IncludeSteadyState.Value == 1
+    xl = xlim(where);
+    xl_idx      = findClosestId2Val(handles.IRx,xl);
+    xl_idx      = sort(xl_idx);
+    IRy         = handles.IRy - min(handles.IRy(xl_idx(1):xl_idx(2)));
+    minmaxIRy   = [min(IRy(xl_idx(1):xl_idx(2))) max(IRy(xl_idx(1):xl_idx(2)))];
+    plot(ax1,handles.IRx,IRy,'LineWidth',1.5,'Marker','none','color','black','DisplayName','FTIR');
+    xlim(ax1,xl);
+    ylim(ax1,minmaxIRy);
+    set(ax1, 'XTickLabel', []); % To remove only the labels, otherwise use XTick
+%   set(ax1, 'YTick', []);
+    ax1.FontSize = FontSize;
+    ax2.FontSize = FontSize;
+    ylabel(ax1,'Abs (mOD)','FontWeight','bold','FontSize',FontSize)
+    legend(ax1,'show');
+    legend(ax1,'boxoff')
+    legend(ax1,'Location','bestoutside')
+    ax1.Units       = 'pixels';
+    ax1.Position    = [80 400 675 320*scale];
+    ax1.Units       = 'normalized';
+end
+% dlmwrite([char(handles.datafilename) '_traces.dat'],[[0;handles.delays(k)],[handles.cmprobe;ydata']]);
 guidata(hObject,handles)
 
 % --- Executes on button press in ExitButton.
@@ -1547,7 +1594,7 @@ switch handles.DataTypeMenu.Value
             caption = "Scan 1";
             ScanData(:,1) = TempScanData(:,k);
         end
-    case 2 % Lab 1 & Lab 4
+    case {2,5} % Lab 1, Lab 4 & TRUVIS
         % The first scan has no _n.csv termination
         ending = '_sp0_sm0_du0_';
         for i=1:Nscans
@@ -1555,42 +1602,56 @@ switch handles.DataTypeMenu.Value
             ScanNrch = char(ScanNr);
             TempScanData = csvread(ScanNrch);
             % Average rows 1:n and subtract them
-            n=3; 
-            TempScanData =  TempScanData(n:end,:) - mean(TempScanData(1:n-1,:),1);
+            n=10; 
+            TempScanData =  TempScanData - mean(TempScanData(1:n-1,:),1);
+            TempScanData =  TempScanData(n:end,:);
             if handles.removeduplicates == 1
 %                 % Average last 3 rows and collapse into a single row
 %                 TempScanData(end-2,:) = mean(TempScanData(end-2:end,:),1);
 %                 TempScanData(end-1:end,:)=[];
             end
             % Store it
-            ScanData(:,i) = TempScanData(:,k);
-            % Caption it
-            caption(i) = string(['Scan ' num2str(i)]);   
+            ScanData(:,i) = TempScanData(:,k);   
         end
-        clear TempScanData;
+%         clear TempScanData;
 end
-Nplots = Nscans;
+% Ask the user which scans to use if >15 scans
+if Nscans >= 15
+    plotscans   = inputdlg(['Please indicate which scans you want to plot (max: ' num2str(Nscans) '): '],'Select scans to plot');
+    plotscans   = str2num(plotscans{:});
+    ScanData    = ScanData(:,plotscans);
+    Nplots      = length(plotscans);
+else
+    Nplots      = Nscans;
+    plotscans   = 1:Nscans;
+end
+
 % Bin the scans if BinScans > 1
 BinScans = str2double(handles.BinScans.String);
 if BinScans > 1
-    s=1; i=1;
-    BinScanData=zeros(length(handles.delays),ceil(Nscans/BinScans));
-    while s < Nscans
+    i=1; s=1;
+    BinScanData=zeros(length(handles.delays),ceil(Nplots/BinScans));
+    while s < Nplots
         snew = s+BinScans;
-        if snew > Nscans 
-            m=[s:Nscans];
-            BinCaption(i)=string([num2str(s) ' to ' num2str(Nscans)]);
+        if snew > Nplots % Last bin
+            m=[s:Nplots];
+            BinCaption(i)=string([num2str(plotscans(s)) ' to ' num2str(plotscans(Nplots))]);
         else
             m=[s:snew-1];
-            BinCaption(i)=string([num2str(s) ' to ' num2str(snew-1)]);
+            BinCaption(i)=string([num2str(plotscans(s)) ' to ' num2str(plotscans(snew-1))]);
         end
         BinScanData(:,i)=mean(ScanData(:,m),2);
         s=snew; i=i+1;
     end
     RawScanData = ScanData;
     ScanData    = BinScanData;
-    Nplots      = ceil(Nscans/BinScans);
+    Nplots      = floor(Nplots/BinScans);
     caption     = BinCaption;
+else
+    for i=1:Nplots
+        % Caption it
+        caption(i) = string(['Scan ' num2str(plotscans(i))]);
+    end
 end
 
 % Normalise the data if NormKin = 1
@@ -1627,7 +1688,7 @@ handles.axes2.Children(end).LineWidth = 1.5;
 handles.axes2.Children(1).LineWidth = 1.5;
 
 % Nice formatting
-title({handles.datafilename;['KINETICS PER SCAN AT ',num2str(round(handles.cmprobe(k),0)),' cm-1']},'Interpreter','none')
+title({handles.datafilename;['KINETICS PER SCAN AT ',num2str(round(handles.cmprobe(k),0)),' cm^{-1}']},'Interpreter','none')
 xlabel(['Delays',' (',handles.timescale,')'],'FontSize',13,'FontWeight','bold')
 ylabel(label,'FontSize',13,'FontWeight','bold')
 axis tight
@@ -1712,6 +1773,7 @@ switch handles.DataTypeMenu.Value
             ScanNr   = strcat(tempdir,filesep,datafilename,'_signal',ending,num2str(i-1),'.csv');
             ScanNrch = char(ScanNr);
             TempScanData = csvread(ScanNrch);
+            handles.removeduplicates =0;
             if handles.removeduplicates == 1
                 % Average rows 1:n and subtract them (n=5)
                 n=5; 
@@ -1727,29 +1789,44 @@ switch handles.DataTypeMenu.Value
         end
         clear TempScanData;
 end
-Nplots = Nscans;
+
+% Ask the user which scans to use if >15 scans
+if Nscans >= 15
+    plotscans   = inputdlg(['Please indicate which scans you want to plot (max: ' num2str(Nscans) '): '],'Select scans to plot');
+    plotscans   = str2num(plotscans{:});
+    ScanData    = ScanData(plotscans,:);
+    Nplots      = length(plotscans);
+else
+    Nplots      = Nscans;
+    plotscans   = 1:Nscans;
+end
 
 % Bin the scans if BinScans > 1
 BinScans = str2double(handles.BinScans.String);
 if BinScans > 1
-    s=1; i=1;
-    BinScanData=zeros(ceil(Nscans/BinScans),length(handles.cmprobe));
-    while s <= Nscans
+    i=1; s=1;
+    BinScanData=zeros(ceil(Nplots/BinScans),length(handles.cmprobe));
+    while s < Nplots
         snew = s+BinScans;
-        if snew > Nscans 
-            m=s:Nscans;
-            BinCaption(i)=string([num2str(s) ' to ' num2str(Nscans)]);
+        if snew > Nplots % Last bin
+            m=s:Nplots;
+            BinCaption(i)=string([num2str(plotscans(s)) ' to ' num2str(plotscans(Nplots))]);
         else
             m=s:snew-1;
-            BinCaption(i)=string([num2str(s) ' to ' num2str(snew-1)]);
+            BinCaption(i)=string([num2str(plotscans(s)) ' to ' num2str(plotscans(snew-1))]);
         end
         BinScanData(i,:)=mean(ScanData(m,:),1);
         s=snew; i=i+1;
     end
     RawScanData = ScanData;
-    ScanData = BinScanData;
-    Nplots = ceil(Nscans/BinScans);
-    caption = BinCaption;
+    ScanData    = BinScanData;
+    Nplots      = floor(Nplots/BinScans);
+    caption     = BinCaption;
+else
+    for i=1:Nplots
+        % Caption it
+        caption(i) = string(['Scan ' num2str(plotscans(i))]);
+    end
 end
 
 % Normalise the data if NormKin = 1
@@ -1786,11 +1863,12 @@ pl(1).LineWidth     = 1.5;
 % Nice formatting
 set(handles.axes2,'FontSize',12)
 title({handles.datafilename;['TR. SPECTRA PER SCAN AT ',num2str(handles.delays(k),'%.3g'),' ' handles.timescale]},'Interpreter','none','FontSize',12)
-xlabel('Wavenumbers (cm^{-1})','FontSize',13,'FontWeight','bold')
+xlabel(handles.probeunits,'FontSize',13,'FontWeight','bold')
 ylabel(label,'FontSize',13,'FontWeight','bold')
 axis tight
 hline       = refline(0,0); 
 hline.Color = [0.5 0.5 0.5];
+set(get(get(hline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
 legend(gca,caption);
 legend(gca,'boxoff');
 legend(gca,'Location','bestoutside');
@@ -1929,7 +2007,7 @@ switch plot_options{plot_typeindx}
                 switch handles.DataTypeMenu.Value
                     case 1 % Lab 2
                         signalfile = strcat(rootdir,filesep,datafilename,filesep,datafilename,'_signal.csv');
-                    case 2 % Lab 1 and Lab 4
+                    case {2,5} % Lab 1, Lab 4 & TRUVIS
                         signalfile = strcat(rootdir,filesep,datafilename,filesep,datafilename,'_signal_sp0_sm0_du0.csv');
                 end
                     signalfilech = char(signalfile);
@@ -2533,7 +2611,7 @@ switch OffsetAvg
         dlg_title       = 'Define offset region';
         num_lines       = [1 60];
         n_pix           = length(handles.cmprobe);
-        defaultans      = {[num2str(handles.cmprobe(n_pix*0.75),4) ' ' num2str(handles.cmprobe(n_pix),'%.3g')]};
+        defaultans      = {[num2str(handles.cmprobe(round(n_pix*0.75)),4) ' ' num2str(handles.cmprobe(n_pix),'%.3g')]};
         selectoffset    = inputdlg(prompt,dlg_title,num_lines,defaultans);
         OffsetWLs       = str2num(selectoffset{:});
         index           = findClosestId2Val(handles.cmprobe,OffsetWLs);
@@ -2584,7 +2662,7 @@ for n=1:L
 end
 % Nice formatting
 set(axes2,'FontSize',12)
-xlabel('Wavenumbers (cm^{-1})','FontWeight','bold','FontSize',13)
+xlabel(handles.probeunits,'FontWeight','bold','FontSize',13)
 ylabel('\DeltaAbs (mOD)','FontWeight','bold','FontSize',13)
 axis tight
 % Make the legend and hide every second entry if the number of plots is >15
@@ -2875,14 +2953,14 @@ datafilename    = handles.datafilename;
                    set(handles.ErrorText,'String', '');
                case 2 % Lab 1: UV-Vis/IR Pump - IR probe (fs)
                    handles = LoadDataIR1(handles,[],AnisotropyType);
-                   TEMP dir story
+                   % TEMP dir story
                    tempdir = strcat(handles.CurrDir.String,filesep,datafilename,filesep,'temp');
                    if exist(tempdir{1},'dir') == 7
                        handles.Nscans_number.String = num2str(handles.Nscans);
                    else
                        handles.Nscans_number.String = 'N/A';
                    end
-                   Clear error string
+                   % Clear error string
                    set(handles.ErrorText,'String', '');
            end
         catch err
@@ -2967,7 +3045,7 @@ switch handles.DataTypeMenu.Value
         else
             ScanData(:,:,1) = TempScanData;
         end
-    case 2 % Lab 1 & Lab 4
+    case [2,5] % Lab 1 & Lab 4
         % The first scan has no _n.csv termination
         % CHECK FOR LAB 4 - 4PM
         warndlg('NOT IMPLEMENTED!');
@@ -3040,3 +3118,57 @@ handles.RecalcScans = 1;
         % Update handles
         guidata(hObject,handles)
         end
+
+
+% --- Executes on button press in ProbeMask.
+function ProbeMask_Callback(hObject, eventdata, handles)
+% Ask the user for the probe ranges to mask (with NaN)
+mask_regions = inputdlg('Enter the probe regions to mask (a,b;c,d; etc): ',...
+             'Mask probe regions', [1 50],{'395,406'});
+if isempty(mask_regions)
+    return
+end
+mask_regions = transpose(str2num(mask_regions{:}));
+mask_regions = sort(mask_regions,1);
+% Get the values to find in the WAVELENGTH vector
+value = mask_regions(:); % column 1= Wavelength
+% k = index of the closest match for each selected trace
+k = unique(findClosestId2Val(handles.cmprobe,transpose(value)));
+L = size(mask_regions,2);
+
+% Replace the data in the array by NaN's
+for i=1:L
+    handles.rawsignal(:,k(i):k(i+1))  = NaN;
+    handles.corrdata(:,k(i):k(i+1))   = NaN;
+end
+
+% Update handles
+guidata(hObject,handles)
+% Initialise defaults and update the Edits for the first time:
+handles = UpdateEdits(handles);
+guidata(hObject,handles)
+% Override default w/current status of linlog tick
+switch handles.linlogtick.Value
+    case 0
+        handles.linlog = 'lin';
+    case 1
+        handles.linlog = 'log';
+end
+% Plot the data in the main window (for preview)
+% Takes into account the current status of BkgSubTick
+if exist('handles.rawcorr','var') == 0
+switch handles.BkgSubTick.Value
+case 1
+    handles.rawcorr='CORRECTED';
+case 0
+    handles.rawcorr='RAW';
+end
+end
+switch handles.rawcorr
+case 'RAW'
+plot2D(handles,handles.rawsignal,handles.axes1,'On');
+case 'CORRECTED'
+plot2D(handles,handles.corrdata,handles.axes1,'On');
+end
+% Update handles
+guidata(hObject,handles)

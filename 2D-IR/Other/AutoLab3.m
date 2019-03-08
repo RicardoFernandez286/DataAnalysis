@@ -1,8 +1,8 @@
-m=4;
-n=4;
+m=1;
+n=1;
 
 N_phases    = m*n;
-phase       = linspace(-pi,pi,N_phases);
+phase       = linspace(-0.7,-0.7,N_phases);
 
 fh = figure;
 fh.Color = [1 1 1];

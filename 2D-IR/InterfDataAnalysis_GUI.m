@@ -24,7 +24,7 @@ function varargout = InterfDataAnalysis_GUI(varargin)
 
 % Last Modified by GUIDE v2.5 18-Jul-2018 19:45:33
 
-% Ricardo Fernández-Terán, v3.8d - 22.08.2018
+% Ricardo Fernández-Terán, v4.5a - 17.12.2018
 
 % ----CHANGELOG:
 % * Fixed bug when loading raw Transient 2D data. Now it should be a bit more general.
@@ -84,7 +84,7 @@ else
 end
 
 % Update version text string
-handles.VersionText.String = "v3.8d - 22.08.2018";
+handles.VersionText.String = "v4.5a - 17.12.2018";
 
 % Disable annoying warnings
 warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
@@ -110,36 +110,84 @@ varargout{1} = handles.output;
 
 % --- Executes on button press in BrowseRootDirButton.
 function BrowseRootDirButton_Callback(hObject, eventdata, handles)
-rootdir = uigetdir(handles.defaultdir); handles.rootdir = rootdir;
+rootdir = uigetdir(handles.defaultdir); 
+handles.rootdir = rootdir;
 if rootdir ~= 0 % the user selected a directory
     % Update text label
     set(handles.CurrDir, 'String', rootdir);
-    % Put list of subfolders into subFolders
-        % Get a list of all files and folders in this folder.
-        files = dir(rootdir);
-        % Extract only those that are directories.
-        subFolders = files([files.isdir]);
-        % Don't show the temp folders in the list
-        subFolders = subFolders(~contains({subFolders.name},"temp",'IgnoreCase',1));
-    % Go to the selected folder
-        cd (rootdir);
-    % Sort the names and create variables for the list
-        dir_struct = subFolders;
-        [sorted_names,sorted_index] = sortrows({dir_struct.name}');
-        handles.file_names = sorted_names;
-        handles.is_dir = [dir_struct.isdir];
-        handles.sorted_index = sorted_index;
+    if handles.DataTypeMenu.Value ~= 4
+        % Put list of subfolders into subFolders
+            % Get a list of all files and folders in this folder.
+            files = dir(rootdir);
+            % Extract only those that are directories.
+            subFolders = files([files.isdir]);
+            % Don't show the temp folders in the list
+            subFolders = subFolders(~contains({subFolders.name},"temp",'IgnoreCase',1));
+        % Go to the selected folder
+            cd (rootdir);
+        % Sort the names and create variables for the list
+            dir_struct = subFolders;
+            [sorted_names,sorted_index] = sortrows({dir_struct.name}');
+            handles.file_names = sorted_names;
+            handles.is_dir = [dir_struct.isdir];
+            handles.sorted_index = sorted_index;
+            guidata(hObject,handles)
+        % Update DatafoldersList, removing ".." and "." from the visible list
+            handles.file_names = handles.file_names(3:end);
+            set(handles.DatafoldersList,'String',handles.file_names,'Value',1)
+            guidata(hObject,handles)
+    else
+        filelist            = dir(rootdir);
+        filenames           = {filelist.name}';
+        filenames           = filenames(~[filelist.isdir]);
+        filenames_delays    = filenames(~contains(filenames,'Pinhole','IgnoreCase',true));
+        filenames_delays    = filenames_delays(~contains(filenames_delays,'Phases','IgnoreCase',true));
+               
+        % Read the formatted strings of each filename
+        Ndelays         = length(filenames_delays);
+        time            = zeros(1,Ndelays);
+        for i=1:Ndelays
+            parts       = strsplit(filenames_delays{i},'_');
+            time_str    = strsplit(parts{end-3},'fs');
+            time(i)     = str2double(time_str{1})./1000;
+        end
+        SampleName      = [parts{2:end-4}];
+        
+        % WRITE TO HANDLES
+        handles.t2delays    = time';
+        handles.Ndelays     = Ndelays;
+        handles.filenames   = filenames_delays;
+        % Write to the front panel
+        handles.Population_delay.String = num2str(sort(handles.t2delays));
+        set(handles.DatafoldersList,'String',SampleName,'Value',1)
+        handles.WaitBar         = waitbar(0,'Loading data...');
+        for j=0:Ndelays
+            handles             = load2DIRlab3(handles,j);
+            guidata(hObject,handles)
+        end
+        % Delete progress bar
+        delete(handles.WaitBar);
+        % Update the edit controls
+        handles = UpdateEdits_2DIR(handles,1);
+        % Plot the data in the main window (for preview)
+        plot_2DIR(handles,handles.MainAxes);   
+        set(handles.MainAxes,'Visible','On')
+        % Generate the secondary plot (show phasing data by default)
+%         SecondaryPlot(handles,handles.SecondaryAxes,'td');
+        set(handles.SecondaryAxes,'Visible','Off')
+        % Enable disabled controls
+        EnableControls_2DIR(handles)
+        % Update handles
         guidata(hObject,handles)
-    % Update DatafoldersList, removing ".." and "." from the visible list
-        handles.file_names = handles.file_names(3:end);
-        set(handles.DatafoldersList,'String',handles.file_names,'Value',1)
-        guidata(hObject,handles)
+    end
 else 
     handles.CurrDir.String = 'Please select a directory!  :(';
 end
 
 % --- Executes on selection change in DatafoldersList.
 function DatafoldersList_Callback(hObject, eventdata, handles)
+if handles.DataTypeMenu.Value ~= 4 % Only do something if not Lab 3
+    
 % Determine whether the user double-clicked the folder or not
 switch get(gcf,'SelectionType')
 case 'normal' % Single click
@@ -167,7 +215,9 @@ case 'normal' % Single click
            end
            guidata(hObject,handles)
            %%% Process the data
-           handles = process2DIR(handles,0);
+           if handles.DataTypeMenu.Value ~= 4
+               handles = process2DIR(handles,0);
+           end
            % Set t2 delay control values
            handles.Population_delay.String = num2str(handles.t2delays);
            % Ensure that datasets with less t2 delays are loaded correctly
@@ -233,7 +283,8 @@ case 'open'
     % Update DatafoldersList, removing ".." and "." from the visible list
         handles.file_names = handles.file_names(3:end);
         set(handles.DatafoldersList,'String',handles.file_names,'Value',1)
-    guidata(hObject,handles)    
+    guidata(hObject,handles)
+end
 end
 
 
@@ -457,22 +508,41 @@ function BkgSubTick_Callback(hObject, eventdata, handles)
 
 % --- Executes on button press in ApplyChanges.
 function ApplyChanges_Callback(hObject, eventdata, handles)
-% Reprocess the data without reloading
-handles = process2DIR(handles,1);
-guidata(hObject,handles);
-% Clear error string
-set(handles.ErrorText,'String', "");
-% Update the edit controls
-handles = UpdateEdits_2DIR(handles,1);
-% Plot the data in the main window (for preview)
-plot_2DIR(handles,handles.MainAxes);   
-set(handles.MainAxes,'Visible','On')
-% Generate the secondary plot (show phasing data by default)
-SecondaryPlot(handles,handles.SecondaryAxes,'ph');
-set(handles.SecondaryAxes,'Visible','On')
-    handles.ShowTimeDomain.Value = 0;
-    handles.ShowProbeCalibration.Value = 0;
-    handles.ShowPhasing.Value = 1;
+if handles.DataTypeMenu.Value ~= 4
+    % Reprocess the data without reloading
+    handles = process2DIR(handles,1);
+    guidata(hObject,handles);
+    % Clear error string
+    set(handles.ErrorText,'String', "");
+    % Update the edit controls
+    handles = UpdateEdits_2DIR(handles,1);
+    % Plot the data in the main window (for preview)
+    plot_2DIR(handles,handles.MainAxes);   
+    set(handles.MainAxes,'Visible','On')
+    % Generate the secondary plot (show phasing data by default)
+    SecondaryPlot(handles,handles.SecondaryAxes,'ph');
+    set(handles.SecondaryAxes,'Visible','On')
+        handles.ShowTimeDomain.Value = 0;
+        handles.ShowProbeCalibration.Value = 0;
+        handles.ShowPhasing.Value = 1;
+else
+    handles.WaitBar         = waitbar(0,'Loading data...');
+        for j=0:handles.Ndelays
+            handles             = load2DIRlab3(handles,j);
+            guidata(hObject,handles)
+        end
+        % Update the edit controls
+        handles = UpdateEdits_2DIR(handles,1);
+        % Plot the data in the main window (for preview)
+        plot_2DIR(handles,handles.MainAxes);   
+        set(handles.MainAxes,'Visible','On')
+
+        set(handles.SecondaryAxes,'Visible','Off')
+        % Enable disabled controls
+        EnableControls_2DIR(handles)
+        % Update handles
+        guidata(hObject,handles)
+end
 % Delete progress bar
 delete(handles.WaitBar);
 
@@ -545,6 +615,9 @@ PROC_2D_DATA        = handles.PROC_2D_DATA;
             elseif strcmp(handles.SelTraces,'EnT-ESA')
                 handles.SelTraces = [1979,1967;1979,2017;2028,2017;2028,1967];
                 EnT = 1;
+            elseif strcmp(handles.SelTraces,'Andrea')
+                handles.SelTraces = [1985,1985;1985,2062;2062,2062;2062,1985];
+                EnT = 2;
             else
                 handles.SelTraces = str2num(handles.SelTraces{:});
                 EnT = 0;
@@ -611,7 +684,7 @@ end
 
 
 % Prepare plot for EnT
-if EnT
+if EnT ~= 0
     if abs(max(kindata(:))) <= abs(min(kindata(:)))
         kindata = -kindata;
     end
@@ -631,22 +704,37 @@ if EnT
     fh.Units        = 'pixels';
     ax_FW           = subplot(2,1,1);
     ax_BW           = subplot(2,1,2);
-    ax_FW.FontSize  = 12;
-    ax_BW.FontSize  = 12;
+    ax_FW.FontSize  = 16;
+    ax_BW.FontSize  = 16;
 
     box(ax_FW,'on');
     box(ax_BW,'on');
 
     hold(ax_FW,'on');
     hold(ax_BW,'on');
-
+    switch EnT
+        case 1
+            diag1 = 'Diagonal Re(^{13}CO)';
+            diag2 = 'Diagonal Re(^{12}CO)';
+            xpeak1= 'Re(^{13}CO) \rightarrow Re(^{12}CO) \rm{\times10}';
+            xpeak2= 'Re(^{13}CO) \leftarrow Re(^{12}CO) \rm{\times10}';
+            titFW = 'Forward energy transfer';
+            titBW = 'Backward energy transfer';
+        case 2
+            diag2 = 'Diagonal SCN^{-}';
+            diag1 = 'Diagonal S^{13}C^{15}N^{-}';
+            xpeak2= 'SCN^{-} \rightarrow S^{13}C^{15}N^{-} \rm{\times 10}';
+            xpeak1= 'SCN^{-} \leftarrow S^{13}C^{15}N^{-} \rm{\times 10}';
+            titBW = 'Downhill transfer';
+            titFW = 'Uphill transfer';
+    end
     % Plot the diagonal peaks
-    plot(ax_FW,time,diagFW,'-or','LineWidth',1,'DisplayName','Diagonal Re(^{13}CO)');
-    plot(ax_BW,time,diagBW,'-ob','LineWidth',1,'DisplayName','Diagonal Re(^{12}CO)');
+    plot(ax_FW,time,diagFW,'-or','LineWidth',1,'DisplayName',diag1);
+    plot(ax_BW,time,diagBW,'-ob','LineWidth',1,'DisplayName',diag2);
 
     % Plot the cross peaks
-    plot(ax_FW,time,xpeakFW,'-^r','LineWidth',1,'DisplayName','Re(^{13}CO) \rightarrow Re(^{12}CO) \rm{\times10}');
-    plot(ax_BW,time,xpeakBW,'-vb','LineWidth',1,'DisplayName','Re(^{13}CO) \leftarrow Re(^{12}CO) \rm{\times10}');
+    plot(ax_FW,time,xpeakFW,'-^r','LineWidth',1,'DisplayName',xpeak1);
+    plot(ax_BW,time,xpeakBW,'-vb','LineWidth',1,'DisplayName',xpeak2);
 
     % Set axes limits
     axis(ax_FW,'tight');
@@ -654,15 +742,15 @@ if EnT
     
     %%% Nice formatting
     % Titles
-    title(ax_FW,'Forward energy transfer','FontSize',13);
-    title(ax_BW,'Backward energy transfer','FontSize',13);
+    title(ax_FW,titFW,'FontSize',16);
+    title(ax_BW,titBW,'FontSize',16);
 
     % Axis labels
-    xlabel(ax_FW,'t_2 delay (ps)','FontWeight','bold','FontSize',12);
-    xlabel(ax_BW,'t_2 delay (ps)','FontWeight','bold','FontSize',12);
+    xlabel(ax_FW,'t_2 delay (ps)','FontWeight','bold','FontSize',16);
+    xlabel(ax_BW,'t_2 delay (ps)','FontWeight','bold','FontSize',16);
 
-    ylabel(ax_FW,'Normalised 2D signal','FontWeight','bold','FontSize',12);
-    ylabel(ax_BW,'Normalised 2D signal','FontWeight','bold','FontSize',12);
+    ylabel(ax_FW,'Normalised 2D signal','FontWeight','bold','FontSize',16);
+    ylabel(ax_BW,'Normalised 2D signal','FontWeight','bold','FontSize',16);
 
     % Axis limits
     xlim(ax_FW,[0 time(end)]);
@@ -732,11 +820,11 @@ end
 
 % Decide whether to save the plotted traces or not
 % if handles.DoSaveTraces==1
-%     wavenumbers=transpose(handles.cmprobe(k));
-    filename    = char(strcat(handles.CurrDir.String,filesep,handles.datafilename,'_traces.dat'));
-%     data        = [[[0;PumpAxis{1,1}(pump_index(1,:))],[0;ProbeAxis(probe_index)]]';[handles.t2delays(2:end),kindata(2:end,:)]];
-    data        = [[[0;PumpAxis{1,1}(pump_index(1,:))],[0;ProbeAxis(probe_index)]]';[handles.t2delays,[diagFW xpeakFW diagBW xpeakBW]]];
-    dlmwrite(filename,data);
+% %     wavenumbers=transpose(handles.cmprobe(k));
+%     filename    = char(strcat(handles.CurrDir.String,filesep,handles.datafilename,'_traces.dat'));
+% %     data        = [[[0;PumpAxis{1,1}(pump_index(1,:))],[0;ProbeAxis(probe_index)]]';[handles.t2delays(2:end),kindata(2:end,:)]];
+%     data        = [[[0;PumpAxis{1,1}(pump_index(1,:))],[0;ProbeAxis(probe_index)]]';[handles.t2delays,[diagFW xpeakFW diagBW xpeakBW]]];
+%     dlmwrite(filename,data);
 % end
 guidata(hObject,handles)
 
@@ -1023,7 +1111,7 @@ switch slice_options{slice_typeindx}
         % Plot the data
         cmap=colormap(othercolor('Mrainbow',Ndelays));
         for m=1:Ndelays
-           plot(handles.axes2,ProbeAxis,data(:,m),'-','LineWidth',2,'MarkerSize',2,'color',cmap(m,:),'DisplayName',['t_{2} = ' num2str(t2delays(m),'%.3g') ' ps']);
+           plot(handles.axes2,ProbeAxis,data(:,m),'-','LineWidth',2,'MarkerSize',2,'color',cmap(m,:),'DisplayName',[num2str(t2delays(m),'%.3g') ' ps']);
            hold on
         end
 
@@ -1581,17 +1669,19 @@ end
 function Population_delay_Callback(hObject, eventdata, handles)
 handles = UpdateEdits_2DIR(handles,0);
 plot_2DIR(handles,handles.MainAxes);
-td = handles.ShowTimeDomain.Value;
-ph = handles.ShowPhasing.Value;
-pc = handles.ShowProbeCalibration.Value;
-if td == 1
-    what = 'td';
-elseif ph == 1
-    what = 'ph';
-elseif pc == 1
-    what = 'pc';
+if handles.DataTypeMenu.Value ~= 4
+    td = handles.ShowTimeDomain.Value;
+    ph = handles.ShowPhasing.Value;
+    pc = handles.ShowProbeCalibration.Value;
+    if td == 1
+        what = 'td';
+    elseif ph == 1
+        what = 'ph';
+    elseif pc == 1
+        what = 'pc';
+    end
+    SecondaryPlot(handles,handles.SecondaryAxes,what);
 end
-SecondaryPlot(handles,handles.SecondaryAxes,what);
 
 
 % --- Executes during object creation, after setting all properties.

@@ -1,6 +1,6 @@
 function IR_SPEC()
 % CURRENT VERSION v1.2
-% 04.01.2018 / Ricardo Fernández-Terán
+% 04.01.2018 / Ricardo FernÃ¡ndez-TerÃ¡n
 % Changelog:
 % - Updated readParam reference
 
@@ -28,7 +28,11 @@ if SPECDir ~= 0
         for i=1:length(files)
             currfile = char(files(i));
             IRfile = [SPECDir,filesep,currfile];
-            [y,x,~] = ImportOpus(IRfile,'RatioAbsorption');
+            try
+                [y,x,~] = ImportOpus(IRfile,'RatioAbsorption');
+            catch err
+                [y,x,~] = ImportOpus(IRfile,'RatioAbsorptionChanged');
+            end
             x=transpose(x); x=double(x); y=double(y);
             newname = [currfile,'.dat'];
             ymatrix = [ymatrix,y];
@@ -44,7 +48,11 @@ if SPECDir ~= 0
         [ZeroPotFile,ZeroPath,~] = uigetfile({'*.?*','Bruker OPUS files (*.#)'},'Select the baseline spectrum to load...');
         % Use this as the "zero potential" baseline
         ZeroFile = [ZeroPath ZeroPotFile];
-        [y,x,~] = ImportOpus(ZeroFile,'RatioAbsorption');
+        try
+            [y,x,~] = ImportOpus(ZeroFile,'RatioAbsorption');
+        catch err
+            [y,x,~] = ImportOpus(ZeroFile,'RatioAbsorptionChanged');
+        end
         x=transpose(x); x=double(x); y=double(y)*1000; %Baseline also in mOD
         baseline = vertcat(0,y);
         deltaymatrix = [];
@@ -74,7 +82,7 @@ if SPECDir ~= 0
         end
         hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
         set(gca,'FontSize',14)
-        xlabel('Wavenumbers (cm^{–1})','FontSize',14,'FontWeight','bold')
+        xlabel('Wavenumbers (cm^{ï¿½1})','FontSize',14,'FontWeight','bold')
         ylabel('\DeltaAbs (mOD)','FontSize',14,'FontWeight','bold')
         xlim([xvector(2),xvector(end)]); legend(legendtext); legend('boxoff');
         hold off; set(gcf, 'Units', 'Normalized', 'OuterPosition', [0.25 0.25 0.5 0.5]);
@@ -87,7 +95,7 @@ if SPECDir ~= 0
         end
         hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
         set(gca,'FontSize',14)
-        xlabel('Wavenumbers (cm^{–1})','FontSize',14,'FontWeight','bold')
+        xlabel('Wavenumbers (cm^{ï¿½1})','FontSize',14,'FontWeight','bold')
         ylabel('\DeltaAbs (mOD)','FontSize',14,'FontWeight','bold')
         axis tight; xlim([xvector(minI),xvector(maxI)]); legend(legendtext); legend('boxoff');
         hold off; set(gcf, 'Units', 'Normalized', 'OuterPosition', [0.25 0.25 0.5 0.5]);
@@ -126,7 +134,7 @@ if SPECDir ~= 0
                     end
                     hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
                     set(gca,'FontSize',14)
-                    xlabel('Wavenumbers (cm^{–1})','FontSize',14,'FontWeight','bold')
+                    xlabel('Wavenumbers (cm^{ï¿½1})','FontSize',14,'FontWeight','bold')
                     ylabel('\DeltaAbs (mOD)','FontSize',14,'FontWeight','bold')
                     axis tight; xlim([xvector(minI),xvector(maxI)]); legend(legendtext); legend('boxoff');
                     hold off; set(gcf, 'Units', 'Normalized', 'OuterPosition', [0.25 0.25 0.5 0.5]);
@@ -153,7 +161,7 @@ if SPECDir ~= 0
                     s.EdgeColor = 'interp'; s.FaceAlpha=0.6; s.MeshStyle='column';
                     set(gca,'FontSize',14)
                     xlabel(['Potential (mV)'],'FontSize',14,'FontWeight','bold')
-                    ylabel('Wavenumbers (cm^{–1})','FontSize',14,'FontWeight','bold')
+                    ylabel('Wavenumbers (cm^{ï¿½1})','FontSize',14,'FontWeight','bold')
                     zlabel('\DeltaAbs (mOD)','FontSize',14,'FontWeight','bold')
                     axis tight
                 end
