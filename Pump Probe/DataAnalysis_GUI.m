@@ -2060,8 +2060,10 @@ switch plot_options{plot_typeindx}
         end
         fh = figure();
         Avg = transpose(Avg);
+        [SelPowers,Idx] = sort(SelPowers);
+        Avg             = Avg(Idx);
         plot(SelPowers,Avg,'Marker','o')
-        nicetitle = {['POWER DEPENDENCE PLOT - SIGNAL AT ',num2str(handles.cmprobe(WLindex)),' cm^-^1'];['from ',num2str(tmin),' to ',num2str(tmax),' ',handles.timescale]}; 
+        nicetitle       = {['POWER DEPENDENCE PLOT - SIGNAL AT ',num2str(handles.cmprobe(WLindex)),' cm^-^1'];['from ',num2str(tmin),' to ',num2str(tmax),' ',handles.timescale]}; 
         title(nicetitle,'FontSize',10)
         set(gca,'fontsize',12);
         xlabel(['Energy (' '\mu' 'J)'],'FontSize',13)
