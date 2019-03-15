@@ -112,25 +112,12 @@ axis(handles.dataAxes,'tight');
 handles.ZL_xlim = [min(handles.Data_x) max(handles.Data_x)];
 
 % Zero lines, new style -(Faster?)
-hold(handles.dataAxes,'on')
-hold(handles.resAxes,'on')
-
-xl = handles.ZL_xlim;
-plot(handles.dataAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
-plot(handles.resAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
-
-hold(handles.dataAxes,'off')
-hold(handles.resAxes,'off')
+yline(handles.dataAxes,0,'Color',[0.5 0.5 0.5],'HandleVisibility','off');
+yline(handles.resAxes,0,'Color',[0.5 0.5 0.5],'HandleVisibility','off');
 
 % Make nice legend @ dataAxes, removing entry for last point (=zeroline)
 legend(handles.dataAxes,handles.TraceLabels);
 legend(handles.dataAxes,'boxoff'); legend(handles.dataAxes,'Location','northeast')
-
-% Hide legend entries of the reflines
-set_leg_off = findobj('DisplayName','NoLegend');
-for k = 1:numel(set_leg_off)
-    set_leg_off(k).Annotation.LegendInformation.IconDisplayStyle = 'off';
-end
 
 % Update handles structure
 guidata(hObject, handles);
@@ -706,21 +693,8 @@ set(handles.resAxes,'XScale','lin');
 handles.ZL_xlim = [min(handles.Data_x) max(handles.Data_x)];
 
 % Zero lines, new style -(Faster?)
-hold(handles.dataAxes,'on')
-hold(handles.resAxes,'on')
-
-xl = handles.ZL_xlim;
-plot(handles.dataAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
-plot(handles.resAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
-
-hold(handles.dataAxes,'off')
-hold(handles.resAxes,'off')
-
-% Hide legend of the lines
-set_leg_off = findobj('DisplayName','NoLegend');
-for k = 1:numel(set_leg_off)
-    set_leg_off(k).Annotation.LegendInformation.IconDisplayStyle = 'off';
-end
+yline(handles.dataAxes,0,'Color',[0.5 0.5 0.5],'HandleVisibility','off');
+yline(handles.resAxes,0,'Color',[0.5 0.5 0.5],'HandleVisibility','off');
 
 % Update handles
 guidata(hObject,handles);
@@ -740,21 +714,8 @@ switch handles.LinLog
 end
 
 % Zero lines, new style -(Faster?)
-hold(handles.dataAxes,'on')
-hold(handles.resAxes,'on')
-
-xl = handles.ZL_xlim;
-plot(handles.dataAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
-plot(handles.resAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
-
-hold(handles.dataAxes,'off')
-hold(handles.resAxes,'off')
-
-% Hide legend of the lines
-set_leg_off = findobj('DisplayName','NoLegend');
-for k = 1:numel(set_leg_off)
-    set_leg_off(k).Annotation.LegendInformation.IconDisplayStyle = 'off';
-end
+yline(handles.dataAxes,0,'Color',[0.5 0.5 0.5],'HandleVisibility','off');
+yline(handles.resAxes,0,'Color',[0.5 0.5 0.5],'HandleVisibility','off');
 
 % Update handles
 guidata(hObject,handles);
@@ -822,15 +783,8 @@ switch handles.LinLog
 end
 
 % Zero lines, new style -(Faster?)
-hold(handles.dataAxes,'on')
-hold(handles.resAxes,'on')
-
-xl = handles.ZL_xlim;
-plot(handles.dataAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
-plot(handles.resAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
-
-hold(handles.dataAxes,'off')
-hold(handles.resAxes,'off')
+yline(handles.dataAxes,0,'Color',[0.5 0.5 0.5],'HandleVisibility','off');
+yline(handles.resAxes,0,'Color',[0.5 0.5 0.5],'HandleVisibility','off');
 
 %%% INTERNAL FUNCTIONS
 function Output = ReadInput(handles)
@@ -1045,15 +999,8 @@ switch handles.LinLog
 end
 
 % Zero lines, new style -(Faster?)
-hold(handles.dataAxes,'on')
-hold(handles.resAxes,'on')
-
-xl = handles.ZL_xlim;
-plot(handles.dataAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
-plot(handles.resAxes,xl,[0,0],'-','Color',[0.5 0.5 0.5],'DisplayName','NoLegend');
-
-hold(handles.dataAxes,'off')
-hold(handles.resAxes,'off')
+yline(handles.dataAxes,0,'Color',[0.5 0.5 0.5],'HandleVisibility','off');
+yline(handles.resAxes,0,'Color',[0.5 0.5 0.5],'HandleVisibility','off');
 
 
 if handles.fittype == 2
@@ -1062,11 +1009,6 @@ if handles.fittype == 2
     legend(fp(1:nFits))
 else
     legend(handles.dataAxes,'off');
-end
-
-set_leg_off = findobj('DisplayName','NoLegend');
-for k = 1:numel(set_leg_off)
-    set_leg_off(k).Annotation.LegendInformation.IconDisplayStyle = 'off';
 end
 
 % --- Executes on selection change in SelectTraces.
