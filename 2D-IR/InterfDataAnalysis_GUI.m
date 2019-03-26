@@ -24,7 +24,7 @@ function varargout = InterfDataAnalysis_GUI(varargin)
 
 % Last Modified by GUIDE v2.5 18-Jul-2018 19:45:33
 
-% Ricardo Fern√°ndez-Ter√°n, v4.5a - 17.12.2018
+% Ricardo Fern·ndez-Ter·n, v4.7b - 24.03.2019
 
 % ----CHANGELOG:
 % * Fixed bug when loading raw Transient 2D data. Now it should be a bit more general.
@@ -84,7 +84,7 @@ else
 end
 
 % Update version text string
-handles.VersionText.String = "v4.5a - 17.12.2018";
+handles.VersionText.String = "v4.7b - 24.03.2019";
 
 % Disable annoying warnings
 warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
@@ -1294,6 +1294,8 @@ function PowerDependence_Callback(hObject, eventdata, handles)
 
 % --- Executes on button press in Fit.
 function Fit_Callback(hObject, eventdata, handles)
+handles = Gaussian2D_analysis(handles);
+guidata(hObject, handles);
 
 % --- Executes on button press in ShiftT2.
 function ShiftT2_Callback(hObject, eventdata, handles)

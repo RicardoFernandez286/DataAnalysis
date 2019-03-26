@@ -164,7 +164,8 @@ case 'Vertical' % Old way
         Z = proc2Ddata;
         % Interpolate the data
         if interpolate == 1
-            Z  = interp2(X,Y,Z,xi,yi,'bicubic');
+            %X  = linspace() etcetera NOT DONE PENDING
+            Z  = interp2(X,Y,Z,Xi,Yi,'bicubic');
         end
         % Save axes labels
         omegaX = '\omega_{3} (cm^{-1})';
@@ -180,7 +181,8 @@ case 'Horizontal' % New way
         Z = transpose(proc2Ddata);
         % Interpolate the data
         if interpolate == 1
-            Z  = interp2(x,y,z,xi,yi,'bicubic');
+            %X  = linspace() etcetera NOT DONE PENDING
+            Z  = interp2(X,Y,Z,Xi,Yi,'bicubic');
         end
       % Save axes labels
         omegaX = '\omega_{1} (cm^{-1})';
@@ -199,6 +201,8 @@ switch plot_contourfill
     case 0
         [~,hContour]=contour(plotaxis,X,Y,Z,plot_contours,'LineColor','flat','LineStyle',LineStyle,'LineWidth',LineWidth);
 end
+
+% dlmwrite('SolC_250fs.dat',[[0,X'];[Y,Z]])
 
 %% Make the plot format nice
 
