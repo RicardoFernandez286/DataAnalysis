@@ -816,16 +816,16 @@ else
     axes2.Units     = 'normalized';
 end
 
-SaveTraces=1;
+
 
 % Decide whether to save the plotted traces or not
-if SaveTraces==1
-%     wavenumbers=transpose(handles.cmprobe(k));
-    filename    = char(strcat(handles.CurrDir.String,filesep,handles.datafilename,'_traces.dat'));
-%     data        = [[[0;PumpAxis{1,1}(pump_index(1,:))],[0;ProbeAxis(probe_index)]]';[handles.t2delays(2:end),kindata(2:end,:)]];
-    data        = [[[0;PumpAxis{1,1}(pump_index(1,:))],[0;ProbeAxis(probe_index)]]';[handles.t2delays,[diagFW xpeakFW diagBW xpeakBW]]];
-    dlmwrite(filename,data);
-end
+% if handles.DoSaveTraces==1
+% %     wavenumbers=transpose(handles.cmprobe(k));
+%     filename    = char(strcat(handles.CurrDir.String,filesep,handles.datafilename,'_traces.dat'));
+% %     data        = [[[0;PumpAxis{1,1}(pump_index(1,:))],[0;ProbeAxis(probe_index)]]';[handles.t2delays(2:end),kindata(2:end,:)]];
+%     data        = [[[0;PumpAxis{1,1}(pump_index(1,:))],[0;ProbeAxis(probe_index)]]';[handles.t2delays,[diagFW xpeakFW diagBW xpeakBW]]];
+%     dlmwrite(filename,data);
+% end
 guidata(hObject,handles)
 
 
