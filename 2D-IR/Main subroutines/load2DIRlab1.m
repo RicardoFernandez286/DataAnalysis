@@ -22,7 +22,7 @@ function  handles = load2DIRlab1(handles)
 %     interferogram     (Cell array)
 %     signal			(Cell array)
 %
-% Ricardo Fernández-Terán / 22.08.2018 / v3.0a
+% Ricardo Fernandez-Teran / 22.08.2018 / v3.0a
 
 %% DEBUG
 % datafilename = 'R3_mTiO2_Re1213_MeOH_4PM_2D_154022';
@@ -510,6 +510,12 @@ handles.signal		  =	signal;
 handles.datatype      = datatype;
 handles.t1delays      = t1delays; % in fs!
 handles.Nscans        = Nscans;
+
+% Clear 2DGC fit results
+handles.FitResults    = [];
+handles.t2_startFit   = [];
+handles.FitInput      = [];
+
 
 if strcmp(datatype,'Raw')
     handles.count     =	count;

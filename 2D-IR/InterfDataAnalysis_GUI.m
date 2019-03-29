@@ -24,7 +24,7 @@ function varargout = InterfDataAnalysis_GUI(varargin)
 
 % Last Modified by GUIDE v2.5 18-Jul-2018 19:45:33
 
-% Ricardo Fernández-Terán, v4.7b - 24.03.2019
+% Ricardo Fernández-Terán, v4.8c - 29.03.2019
 
 % ----CHANGELOG:
 % * Fixed bug when loading raw Transient 2D data. Now it should be a bit more general.
@@ -84,7 +84,7 @@ else
 end
 
 % Update version text string
-handles.VersionText.String = "v4.7b - 24.03.2019";
+handles.VersionText.String = "v4.8c - 29.03.2019";
 
 % Disable annoying warnings
 warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');

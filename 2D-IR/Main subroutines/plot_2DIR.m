@@ -8,7 +8,7 @@ function plot_2DIR(handles,plotaxis)
 % Outputs:
 %     plot
 % 
-% Ricardo Fern√°ndez-Ter√°n / 17.07.2018 / v2.9a
+% Ricardo Fern·ndez-Ter·n / 29.03.2019 / v3.0a
 
 debug=0;
 %% DEBUG/MANUAL:
@@ -36,6 +36,8 @@ end
     plot_limittype      = 'Local'; % 'Global' will take min/max of the whole 2D set, while 'Local' will take only the selected region
     interpolate         = 0;
     textcolor           = 'none';
+    plotFitResults      = 1;
+    plotResidualsFit    = 0;
 % Read data
     ProbeAxis           = handles.ProbeAxis;
     PumpAxis            = handles.PumpAxis;
@@ -59,7 +61,11 @@ if debug==0
     plot_skiplevels     = str2double(handles.plot_skiplevels.String);
     popdelay            = handles.Population_delay.Value;
     symcolrange         = handles.SymColRange_tick.Value;
-    EditProbeAxis       = handles.EditProbeAxis_tick.Value;
+    t2delays            = handles.t2delays;
+    Ndelays             = length(t2delays);
+    if isfield(handles,'t2_startFit') ~=0
+        t2_startFit     = handles.t2_startFit;
+    end
     
     % Read the selection
     m = popdelay;
@@ -81,15 +87,13 @@ if debug==0
     % Determine whether the data is transient 2D or not, then read the delays
     if handles.DataTypeMenu.Value == 3
         Transient2D         = 1;
-        delays              = str2num(char(handles.Population_delay.String(popdelay,:)));
+        delays              = str2num(char(handles.Population_delay.String(popdelay,:))); %#ok<ST2NM>
         t2_delay_ps         = delays(1);
         UV_delay_ps         = delays(2);
     else
         Transient2D         = 0;
         t2_delay_ps         = str2double(handles.Population_delay.String(popdelay,:));
     end
-    
-    LineColor           = [1 1 1]*0;
     axes(plotaxis);
 end
 
@@ -197,12 +201,12 @@ end
 
 switch plot_contourfill
     case 1
-        [~,hContour]=contourf(plotaxis,X,Y,Z,plot_contours,'LineColor','flat','LineStyle',LineStyle,'LineWidth',LineWidth);
+        contourf(plotaxis,X,Y,Z,plot_contours,'LineColor','flat','LineStyle',LineStyle,'LineWidth',LineWidth);
     case 0
-        [~,hContour]=contour(plotaxis,X,Y,Z,plot_contours,'LineColor','flat','LineStyle',LineStyle,'LineWidth',LineWidth);
+        contour(plotaxis,X,Y,Z,plot_contours,'LineColor','flat','LineStyle',LineStyle,'LineWidth',LineWidth);
 end
 
-% dlmwrite('SolC_250fs.dat',[[0,X'];[Y,Z]])
+% dlmwrite([handles.datafilename '_traces.dat'],[[0,X'];[Y,Z]])
 
 %% Make the plot format nice
 
@@ -332,59 +336,20 @@ else
         'Units','normalized','FontSize',12,'FontWeight','bold','BackgroundColor',textcolor);
 end
 
-% % Make the figure square
-% pbaspect([1 1 1])
-% daspect([1 1 1])
-
 %% Show the level lines every nth level, starting from zero
 if plot_showcontours == 1
     % Define the contours to plot
-    step = ((max_cut - min_cut)./Ncontours).*plot_skiplevels;
+    step = ((max_cut - min_cut)/Ncontours)*plot_skiplevels;
 	neg_zero = (plot_Nwhites/Ncontours)*min_cut;
     pos_zero = (plot_Nwhites/Ncontours)*max_cut;
 
-    plot_contours = [min_cut:step:neg_zero pos_zero:step:max_cut];
+    contourlines = [min_cut:step:neg_zero pos_zero:step:max_cut];
 
     LineColor       = 'k';
-    hold on
-    contour(plotaxis,X,Y,Z,plot_contours,'LineColor',LineColor,'LineStyle',LineStyle,'LineWidth',0.1);
-    hold off
+    hold(plotaxis,'on')
+    contour(plotaxis,X,Y,Z,contourlines,'LineColor',LineColor,'LineStyle',LineStyle,'LineWidth',0.1);
+    hold(plotaxis,'off')
 end
-
-% %% Show the level lines every nth level starting from zero (in + and - direction) - OLD WAY
-% if plot_showcontours == 1
-%     % First, find level zero
-%     lvl0 = findClosestId2Val(hContour.LevelList,0);
-%     drawnow
-%     % Then, hide everything
-%     set(hContour.EdgePrims,'Visible','Off');
-%     % Next, show only the level lines that we want to plot
-%     switch plot_colourscheme
-%         case 'Red/blue'
-%             set(hContour.EdgePrims(1:plot_skiplevels:end),'Visible','On');
-%         otherwise 
-%             set(hContour.EdgePrims(1:plot_skiplevels:lvl0),'Visible','On');
-%             set(hContour.EdgePrims(lvl0:plot_skiplevels:end),'Visible','On');
-%           % Hide explicitly the closest level to level zero
-%             set(hContour.EdgePrims(lvl0),'Visible','Off');
-%             % set(hContour.FacePrims(findClosestId2Val(hContour.LevelList,0)),'Visible','Off');
-%     end
-% end
-
-%% Clip the limits
-% % Get the new plotting limits
-%     [minclip,maxclip] = caxis;
-% % First make sure that everything is shown
-% set(hContour.FacePrims,'Visible','On');
-% set(hContour.FacePrims,'Visible','On');
-% % Then, hide the faces and lines that we don't want to see
-% if plot_contourfill ~= 0 && plot_colorrange < 100
-%     set(hContour.FacePrims(1),'Visible','Off');
-%     set(hContour.FacePrims(end),'Visible','Off');
-% end
-% drawnow
-% set(hContour.EdgePrims(1:end),'Visible','Off');
-% set(hContour.EdgePrims(1:end),'Visible','Off');
 
 %% Show the spectral diffusion lines
 if Plot_SpecDiff
@@ -402,6 +367,52 @@ if Plot_SpecDiff
         plot(plotaxis,NLS_Xdata{m},NLS_Ydata{m},'LineWidth',2,'Color','m')
     end
     hold(plotaxis,'off')
+end
+
+%% Show the Gaussian fit results
+if isfield(handles,'FitResults') ~= 0  && ~isempty(handles.FitResults) && plotFitResults
+    OrigDelays      = t2delays;
+    t2delays        = t2delays(t2delays>t2_startFit);
+    newDelayNumber  = popdelay-(Ndelays-length(t2delays));
+    inputstruct     = handles.FitInput;
+    
+    switch plot_pumpdirection    
+    case 'Vertical'
+        Xfit            = inputstruct.Omega{2};
+        Yfit            = inputstruct.Omega{1};
+        Zfit            = handles.FitResults(:,:,newDelayNumber);
+    case 'Horizontal'
+        Xfit            = inputstruct.Omega{1};
+        Yfit            = inputstruct.Omega{2};
+        Zfit            = handles.FitResults(:,:,newDelayNumber)';
+    end
+    
+    hold(plotaxis,'on')
+    contour(Xfit,Yfit,Zfit,plot_contours,'LineColor',0.7*[1 1 1],'LineWidth',0.1)
+    hold(plotaxis,'off')
+    
+    if plotResidualsFit == 1
+    PROC_2D_DATA    = handles.PROC_2D_DATA;
+    ProbeAxis       = handles.ProbeAxis;
+    PumpAxis        = handles.PumpAxis{1,1};
+    % Get the indices
+    probe_range = [min(ProbeAxis) max(ProbeAxis)];
+    pump_range  = probe_range;
+    pump_idxrange   = sort(findClosestId2Val(PumpAxis,pump_range));
+    probe_idxrange  = sort(findClosestId2Val(ProbeAxis,probe_range));
+    Ndelays         = length(t2delays);
+    ZData           = zeros(pump_idxrange(2)-pump_idxrange(1)+1,probe_idxrange(2)-probe_idxrange(1)+1,Ndelays);       
+    % Cut the data
+    NOrigDelays     = length(OrigDelays);
+    for m=1:Ndelays
+        data                = PROC_2D_DATA{m+(NOrigDelays-Ndelays),1};
+        ZData(:,:,m)        = data(pump_idxrange(1):pump_idxrange(2),probe_idxrange(1):probe_idxrange(2));
+    end
+    hold(plotaxis,'on')
+    contourf(plotaxis,Xfit,Yfit,(ZData(:,:,newDelayNumber)-Zfit')',plot_contours,'LineColor','flat')
+    diagline = refline(1,0);
+    diagline.Color = 'k';
+    end
 end
 
 %% Show the plot

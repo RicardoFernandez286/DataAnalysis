@@ -12,7 +12,7 @@ function handles = Gaussian2D_analysis(handles)
 % Outputs:
 %     fitPar and firErr: two data structures containing the fit results and their standard errors.
 %
-% Ricardo Fernández-Terán / 26.03.2019 / v1.8a
+% Ricardo Fernández-Terán / 29.03.2019 / v2.0a
 
 %% READ from handles
 % Get information from the GUI
@@ -23,7 +23,7 @@ PROC_2D_DATA        = handles.PROC_2D_DATA;
 
 % Hardcoded settings
 % Minimum t2 time to start the fit (will remove all t2 delays before)
-t2_start            = 0.1; % in ps
+t2_startFit         = 0.1; % in ps
 
 % Initialize variables (ensures only the current analysis is saved)
 
@@ -76,8 +76,8 @@ pump_idxrange   = sort(findClosestId2Val(PumpAxis,pump_range));
 probe_idxrange  = sort(findClosestId2Val(ProbeAxis,probe_range));
 
 % Consider only delays after a given t2 delay
-PROC_2D_DATA    = PROC_2D_DATA(t2delays>t2_start,:);
-t2delays        = t2delays(t2delays>t2_start);
+PROC_2D_DATA    = PROC_2D_DATA(t2delays>t2_startFit,:);
+t2delays        = t2delays(t2delays>t2_startFit);
 Ndelays         = length(t2delays);
 Znormfactor     = zeros(Ndelays,1);
 ZData           = zeros(pump_idxrange(2)-pump_idxrange(1)+1,probe_idxrange(2)-probe_idxrange(1)+1,Ndelays);
@@ -138,15 +138,19 @@ input.ParamPos      = ParamPos;
 input.PkFunction    = PeaksFunction;
 
 % Perform the actual fit
-tic
+t_start = tic;
 % [fitted_param,resnorm,residuals,exitflag,output_st,lambda,jacobian_fit] = lsqcurvefit(@FitFunction,Start_param,input,ZData,[],[],options);
-[fitted_param,resnorm,residuals,exitflag,output_st,lambda,jacobian_fit] = lsqcurvefit(@FitFunction,Start_param,input,ZData,LB,UB,options);
-toc
+[fitted_param,SSR,residuals,exitflag,output_st,~,jacobian_fit] = lsqcurvefit(@FitFunction,Start_param,input,ZData,LB,UB,options);
+t_fit   = toc(t_start);
 
-output_st
+if exitflag >= 0
+    msgbox({['Fit completed in ' num2str(t_fit,'%.4g') ' seconds.'];[];['SSR = ' num2str(SSR,'%.5g')];['Iterations = ' num2str(output_st.iterations)];['Func. evals. = ' num2str(output_st.funcCount)];['Step size = ' num2str(output_st.stepsize)]},'Fit completed!','help');
+else
+    msgbox('Error in the fit! Please check all parameters','Error during fit','error');
+end
 
 %% Evaluate the solution
-FitResults = FitFunction(fitted_param,input);
+FitResults = bsxfun(@times,FitFunction(fitted_param,input),reshape(Znormfactor,1,1,[]));
 
 % Get the solution parameters
 fitPar.X0           = fitted_param(ParamPos.x0_pos);
@@ -202,22 +206,29 @@ NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:);
 % %% Plot the results :)
 % 
 % Plot the fit results at a given delay
-N=15;
-figure(3)
-contourf(Omega{1},Omega{2},FitResults(:,:,N)',40,'LineColor','flat');
-hold on
-contour(Omega{1},Omega{2},ZData(:,:,N)',40,'LineColor',0.8*[1 1 1]);
-hold off
-% contourf(Omega{1},Omega{2},(ZData(:,:,N)-FitResults(:,:,N))',30,'LineColor','flat'); 
-colorbar; 
-colormap(darkb2r(-1,1,80,2)); 
-diagline = refline(1,0); diagline.Color  = [0 0 0];
+% N=19;
+% figure(3)
+% contourf(Omega{1},Omega{2},FitResults(:,:,N)',40,'LineColor','flat');
+% hold on
+% contour(Omega{1},Omega{2},ZData(:,:,N)',40,'LineColor',0.8*[1 1 1]);
+% hold off
+% % contourf(Omega{1},Omega{2},(ZData(:,:,N)-FitResults(:,:,N))',30,'LineColor','flat'); 
+% colorbar; 
+% colormap(darkb2r(-1,1,80,2)); 
+% diagline = refline(1,0); diagline.Color  = [0 0 0];
+% 
+% pepita=1;
+% 
+% figure; plot(t2delays,-fitPar.Amps(:,[1 3],1))
 
+%% Save the fit results to a file
+filename    = char([handles.rootdir filesep char(handles.datafilename) '_FIT_RESULTS.mat']);
+save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input','FitResults','NormAmps','NormErr');
 
-
-
-
-
+%% Save the fit to handles
+handles.FitResults  = FitResults;
+handles.t2_startFit = t2_startFit;
+handles.FitInput    = input;
 
 %% FUNCTION DEFINITIONS
 
