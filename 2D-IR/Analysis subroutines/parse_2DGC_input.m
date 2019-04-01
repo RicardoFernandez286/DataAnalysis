@@ -1,9 +1,17 @@
-function [PeaksFunction,Start_param,UB,LB,ParamPos] = parse_2DGC_input(fitparameters,Ndelays,Omega,ZData)
+function [PeaksFunction,Start_param,UB,LB,ParamPos] = parse_2DGC_input(fitparameters,Ndelays,varargin)
 % Description: This function parses the fitparameters structure into a
 % vector of starting parameters, upper bounds and lower bounds, together
 % with the function to be used in the fit
 
 %% Process the input structure
+if isempty(varargin)
+    Omega   = {linspace(1900,2200,100);linspace(1900,2200,32)};
+    ZData   = ones(length(Omega{1}),length(Omega{2}),Ndelays);
+else
+    Omega   = varargin{2};
+    ZData   = varargin{3};
+end
+
 % Get the number of peaks (number of columns of the table) and sort them
 % into Diagonal and Cross-peaks
 Npeaks      = size(fitparameters,2);
@@ -147,7 +155,7 @@ for m=1:Npeaks
             peakfnc{m} = ['G2Dc(X,Y,P(' x0str '),P(' x0str '),P(' sxstr '),P(' systr '),C{' peakID '},A{' peakGSB '}) + G2Dc(X,Y,P(' x0str '),P(' x0str ')-P(' y0str '),P(' sxstr '),P(' systr '),C{' peakID '},A{' peakESA '})'];
         case 0
             % Check if the correlation coefficient of the cross peaks is a fit parameter or if it's set to zero
-            if sum(C_pos(m,:),1) == 0
+            if sum(C_pos(:,m),1) == 0
                 Cstring = '0';
             else
                 Cstring = ['C{' peakID '}'];
