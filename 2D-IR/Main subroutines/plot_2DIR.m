@@ -370,10 +370,13 @@ if Plot_SpecDiff
 end
 
 %% Show the Gaussian fit results
-OrigDelays      = t2delays;
-t2delays        = t2delays(t2delays>t2_startFit);
-newDelayNumber  = popdelay-(Ndelays-length(t2delays));
-inputstruct     = handles.FitInput;
+if ~isempty(t2_startFit)
+    OrigDelays      = t2delays;
+    t2delays        = t2delays(t2delays>t2_startFit);
+    newDelayNumber  = popdelay-(Ndelays-length(t2delays));
+    inputstruct     = handles.FitInput;
+end
+
 if isfield(handles,'FitResults') ~= 0  && ~isempty(handles.FitResults) && plotFitResults && newDelayNumber > 0 
     switch plot_pumpdirection    
     case 'Vertical'

@@ -4,12 +4,16 @@ function [PeaksFunction,Start_param,UB,LB,ParamPos] = parse_2DGC_input(fitparame
 % with the function to be used in the fit
 
 %% Process the input structure
+
+% Hardcoded settings
+equal_SxSy  = 1;
+
 if isempty(varargin)
     Omega   = {linspace(1900,2200,100);linspace(1900,2200,32)};
     ZData   = ones(length(Omega{1}),length(Omega{2}),Ndelays);
 else
-    Omega   = varargin{2};
-    ZData   = varargin{3};
+    Omega   = varargin{1};
+    ZData   = varargin{2};
 end
 
 % Get the number of peaks (number of columns of the table) and sort them
@@ -61,7 +65,11 @@ for m=1:Npeaks
         x0_pos(m)   = tot_idx+1; tot_idx = tot_idx+1;
         y0_pos(m)   = tot_idx+1; tot_idx = tot_idx+1;
         Sx_pos(m)   = tot_idx+1; tot_idx = tot_idx+1;
-        Sy_pos(m)   = tot_idx+1; tot_idx = tot_idx+1;
+        if equal_SxSy == 1
+            Sy_pos(m)   = Sx_pos(m);
+        else
+            Sy_pos(m)   = tot_idx+1; tot_idx = tot_idx+1;
+        end
         % Get the starting peak positions (in cm-1) to find later the starting amplitudes
         pump_pos(m)     = X0_start(m);              % W1 position
         probe_pos(m,1)  = X0_start(m);              % W3 position (GSB)

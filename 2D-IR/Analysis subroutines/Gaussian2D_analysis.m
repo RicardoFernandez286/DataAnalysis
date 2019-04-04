@@ -12,7 +12,7 @@ function handles = Gaussian2D_analysis(handles)
 % Outputs:
 %     fitPar and firErr: two data structures containing the fit results and their standard errors.
 %
-% Ricardo Fernández-Terán / 29.03.2019 / v2.0a
+% Ricardo Fernández-Terán / 04.04.2019 / v2.2a
 
 %% READ from handles
 % Get information from the GUI
@@ -112,9 +112,9 @@ options = optimoptions('lsqcurvefit',...
             'MaxFunctionEvaluations',6000,...
             'MaxIterations',50,...
             'Algorithm','trust-region-reflective',...  %'levenberg-marquardt' 'trust-region-reflective'
-            'OptimalityTolerance',1e-4,...
-            'FunctionTolerance',1e-4,...
-            'StepTolerance',1e-4,...
+            'OptimalityTolerance',5e-5,...
+            'FunctionTolerance',5e-5,...
+            'StepTolerance',5e-5,...
             'UseParallel',true,...
             'TypicalX',Start_param,...
             'SubproblemAlgorithm','factorization',...
@@ -180,23 +180,23 @@ corrterm                        = zeros(Ndelays,ParamPos.Npeaks);
 corrterm(:,ParamPos.isDiagonal) = fitted_param(ParamPos.C_pos(:,ParamPos.isDiagonal));
 corrterm                        = sqrt(1-corrterm.^2);
 
-fitPar.Amps(:,:,1)  = fitPar.Amps(:,:,1).*corrterm;
-fitPar.Amps(:,:,2)  = fitPar.Amps(:,:,2).*corrterm;
-fitErr.Amps(:,:,1)  = fitErr.Amps(:,:,1).*corrterm;
-fitErr.Amps(:,:,2)  = fitErr.Amps(:,:,2).*corrterm;
+fitPar.Vols(:,:,1)  = fitPar.Amps(:,:,1).*corrterm;
+fitPar.Vols(:,:,2)  = fitPar.Amps(:,:,2).*corrterm;
+fitErr.Vols(:,:,1)  = fitErr.Amps(:,:,1).*corrterm;
+fitErr.Vols(:,:,2)  = fitErr.Amps(:,:,2).*corrterm;
 
 % Normalize the data in the "usual" way
-NormAmps(:,[1 3],1) = -fitPar.Amps(:,[1 3],1)./max(abs(fitPar.Amps(:,1,1)));
-NormAmps(:,[1 3],2) = fitPar.Amps(:,[1 3],2)./max(abs(fitPar.Amps(:,1,2)));
-NormAmps(:,[2 4],1) = -fitPar.Amps(:,[2 4],1)./max(abs(fitPar.Amps(:,2,1)));
-NormAmps(:,[2 4],2) = fitPar.Amps(:,[2 4],2)./max(abs(fitPar.Amps(:,2,2)));
+NormVols(:,[1 3],1) = -fitPar.Vols(:,[1 3],1)./max(abs(fitPar.Vols(:,1,1)));
+NormVols(:,[1 3],2) = fitPar.Vols(:,[1 3],2)./max(abs(fitPar.Vols(:,1,2)));
+NormVols(:,[2 4],1) = -fitPar.Vols(:,[2 4],1)./max(abs(fitPar.Vols(:,2,1)));
+NormVols(:,[2 4],2) = fitPar.Vols(:,[2 4],2)./max(abs(fitPar.Vols(:,2,2)));
 
-NormErr(:,[1 3],1)  = fitErr.Amps(:,[1 3],1)./max(abs(fitPar.Amps(:,1,1)));
-NormErr(:,[1 3],2)  = fitErr.Amps(:,[1 3],2)./max(abs(fitPar.Amps(:,1,2)));
-NormErr(:,[2 4],1)  = fitErr.Amps(:,[2 4],1)./max(abs(fitPar.Amps(:,2,1)));
-NormErr(:,[2 4],2)  = fitErr.Amps(:,[2 4],2)./max(abs(fitPar.Amps(:,2,2)));
+NormErr(:,[1 3],1)  = fitErr.Vols(:,[1 3],1)./max(abs(fitPar.Vols(:,1,1)));
+NormErr(:,[1 3],2)  = fitErr.Vols(:,[1 3],2)./max(abs(fitPar.Vols(:,1,2)));
+NormErr(:,[2 4],1)  = fitErr.Vols(:,[2 4],1)./max(abs(fitPar.Vols(:,2,1)));
+NormErr(:,[2 4],2)  = fitErr.Vols(:,[2 4],2)./max(abs(fitPar.Vols(:,2,2)));
 
-NormAmps(:,[3 4],:) = 10*NormAmps(:,[3 4],:);
+NormVols(:,[3 4],:) = 10*NormVols(:,[3 4],:);
 NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:);
 
 % % dlmwrite('SolC_fittedC.dat',[t2delays fitPar.C fitErr.C]);
@@ -223,7 +223,7 @@ NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:);
 
 %% Save the fit results to a file
 filename    = char([handles.rootdir filesep char(handles.datafilename) '_FIT_RESULTS.mat']);
-save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input','FitResults','NormAmps','NormErr');
+save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input','FitResults','NormVols','NormErr');
 
 %% Save the fit to handles
 handles.FitResults  = FitResults;
