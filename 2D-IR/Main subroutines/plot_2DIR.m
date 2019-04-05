@@ -398,8 +398,8 @@ if isfield(handles,'FitResults') ~= 0  && ~isempty(handles.FitResults) && plotFi
     ProbeAxis       = handles.ProbeAxis;
     PumpAxis        = handles.PumpAxis{1,1};
     % Get the indices
-    probe_range = [min(ProbeAxis) max(ProbeAxis)];
-    pump_range  = probe_range;
+    pump_range      = [min(inputstruct.Omega{1}) max(inputstruct.Omega{1})];
+    probe_range     = [min(inputstruct.Omega{2}) max(inputstruct.Omega{2})];
     pump_idxrange   = sort(findClosestId2Val(PumpAxis,pump_range));
     probe_idxrange  = sort(findClosestId2Val(ProbeAxis,probe_range));
     Ndelays         = length(t2delays);

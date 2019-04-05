@@ -20,7 +20,7 @@ ProbeAxis           = handles.ProbeAxis;
 PumpAxis            = handles.PumpAxis{1,1};
 t2delays            = handles.t2delays;
 PROC_2D_DATA        = handles.PROC_2D_DATA;
-
+plot_pumpdirection  = char(handles.plot_pumpdirection.String{handles.plot_pumpdirection.Value});
 % Hardcoded settings
 % Minimum t2 time to start the fit (will remove all t2 delays before)
 t2_startFit         = 0.1; % in ps
@@ -36,7 +36,7 @@ switch cut_data
         switch handles.InteractiveModeTick.Value
             case 1
                 % Select points interactively, to finish hit RETURN
-                [RegionPositions,~] = SelectRegions(Axes);
+                [RegionPositions,~] = SelectRegions(handles.MainAxes);
                 % Separate the values into pump and probe, according to how the data is plotted
                 % i.e. convert from [x_min x_max y_min y_max] to [pump_min pump_max probe_min probe_max]
                 % Get only ONE region
@@ -53,8 +53,8 @@ switch cut_data
                 pump_range              = str2num(RegionPositions_cell{1});
                 probe_range             = str2num(RegionPositions_cell{2});
                 % Get only 1 region    
-                pump_range              = pump_range(1);
-                probe_range             = probe_range(1);
+                pump_range              = pump_range(1,:);
+                probe_range             = probe_range(1,:);
                 % Check that everything is in order
                 L = size(pump_range,1);
                 M = size(probe_range,1);
@@ -163,7 +163,8 @@ fitPar.Amps(:,:,1)  = fitted_param(ParamPos.GSBamp_pos).*Znormfactor;
 fitPar.Amps(:,:,2)  = fitted_param(ParamPos.ESAamp_pos).*Znormfactor;
 
 % Calculate the errors of the fitted parameters
-fitPar_CI = nlparci(fitted_param,residuals,'jacobian',jacobian_fit);
+% fitPar_CI = nlparci(fitted_param,residuals,'jacobian',jacobian_fit);
+fitPar_CI = zeros(length(fitted_param),2);
 fitted_err= (fitPar_CI(:,2)-fitPar_CI(:,1))./2;
 
 fitErr.X0           = fitted_err(ParamPos.x0_pos);
