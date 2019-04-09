@@ -190,7 +190,7 @@ switch specdif_options{specdif_typeindx}
             peak_val            = peak_val/max(abs(peak_val));
             above_threshold     = abs(peak_val) >= max(abs(peak_val)).*intensity_threshold;
             probe_cut{m}        = probe_indexes(above_threshold);
-            mdl                 = fit(min_values(above_threshold,m),Interp_ProbeAxis(probe_cut)','poly1','Robust','Bisquare');
+            mdl                 = fit(min_values(above_threshold,m),Interp_ProbeAxis(probe_cut{m})','poly1','Robust','Bisquare');
             IvCLS_coeff         = coeffvalues(mdl);
             SpecDif_ind(m)      = 1./IvCLS_coeff(1);
             % Save the spectral diffusion data
@@ -228,7 +228,7 @@ switch specdif_options{specdif_typeindx}
             peak_val            = peak_val/max(abs(peak_val));
             above_threshold     = abs(peak_val) >= max(abs(peak_val)).*intensity_threshold;
             probe_cut{m}        = probe_indexes(above_threshold);
-            mdl                 = fit(min_values(above_threshold,m),Interp_ProbeAxis(probe_cut)','poly1','Robust','Bisquare');
+            mdl                 = fit(min_values(above_threshold,m),Interp_ProbeAxis(probe_cut{m})','poly1','Robust','Bisquare');
             IvCLS_coeff         = coeffvalues(mdl);
             IvCLS_value(m)      = 1./IvCLS_coeff(1);
             % Save the spectral diffusion data
