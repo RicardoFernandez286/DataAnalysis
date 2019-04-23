@@ -1,0 +1,11 @@
+defaultdir	D:\Ricardo Data\switchdrive\Ph.D. UZH\RESULTS\Transient absorption
+defaultIRdir	D:\Ricardo Data\switchdrive\Ph.D. UZH\RESULTS\FTIR
+default2DIRdir	D:\Ricardo Data\switchdrive\Ph.D. UZH\RESULTS\2D-IR
+defaultSPECdir	D:\Ricardo Data\switchdrive\Ph.D. UZH\RESULTS\Spectroelectrochemistry
+defaultPPcolormap	RdOr/Wh/Bl
+default2Dcolormap	DkRd/Wh/DkBl
+2DIRContourPlotVersion	1
+SelectKnownDataTypes	false
+AxisBreak	[-2 20]
+BreakRatio	0.5
+LinLogScale	lin

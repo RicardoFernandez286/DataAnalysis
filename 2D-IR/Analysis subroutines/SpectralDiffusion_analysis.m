@@ -1,9 +1,9 @@
-function  handles = SpectralDiffusion_analysis(handles)
+function  dataStruct = SpectralDiffusion_analysis(app,dataStruct,varargin)
 
-% Description: This function handles the spectral diffusion analysis of a
+% Description: This function dataStruct the spectral diffusion analysis of a
 % series of 2D-IR data as a function of the waiting time
 % 
-% Usage: handles = SpectralDiffusion_analysis(handles)
+% Usage: dataStruct = SpectralDiffusion_analysis(dataStruct)
 % Inputs:
 %     datatype ('Raw' or 'Signal', as in the MESS program)
 %     datafilename
@@ -24,28 +24,34 @@ function  handles = SpectralDiffusion_analysis(handles)
 %     interferogram     (Cell array)
 %     signal			(Cell array)
 %
-% Ricardo Fern√°ndez-Ter√°n / 17.07.2018 / v1.0a
+% Ricardo Fern·ndez-Ter·n / 15.04.2019 / v2.0a
 
-%% READ from handles
+%% READ from dataStruct
 % Get information from the GUI
-plot_pumpdirection  = char(handles.plot_pumpdirection.String{handles.plot_pumpdirection.Value});
-ProbeAxis           = handles.ProbeAxis;
-PumpAxis            = handles.PumpAxis;
-Ndelays             = handles.Ndelays;
-t2delays            = handles.t2delays;
+plot_pumpdirection  = app.I2D_PumpAxisOrientation.Value;
+saveTraces          = app.I2D_SavetracesSwitch.Value;
+interactivemode     = app.I2D_InteractivemodeSwitch.Value;
+
+if ~isempty(varargin)
+    Axes        = varargin{1};
+else
+    Axes        = app.TwoDAxes;
+end
+
+% Get the data
+ProbeAxis           = dataStruct.ProbeAxis;
+PumpAxis            = dataStruct.PumpAxis;
+t2delays            = dataStruct.t2delays;
 
 % Count how many delays < 0
 N_negdelays         = length(t2delays(t2delays < 0));
 % Take only positive delays
 t2delays            = t2delays(t2delays>=0);
+% t2delays            = t2delays(1:end-1);
 Ndelays             = length(t2delays);
 
-
-PROC_2D_DATA        = handles.PROC_2D_DATA;
+PROC_2D_DATA        = dataStruct.PROC_2D_DATA;
 Npixels             = length(ProbeAxis);
-Nbins               = length(PumpAxis{1,1});
-Axes                = handles.MainAxes;
-popdelay            = handles.Population_delay.Value;
 
 % Hardcoded settings
 Interp_method       = 'InterpFT'; % 2D FFT, InterpFT, Mesh 
@@ -76,6 +82,7 @@ if doAnalysis == 0
 end
 
 %% Interpolate the data along the probe axis (interpolation along w1 can be performed by apodisation)
+Interp_Data = cell(Ndelays+N_negdelays,1);
 switch Interp_method
     case '2D FFT'
         for m=1:Ndelays+N_negdelays
@@ -95,8 +102,8 @@ pixels              = 1:1:Npixels;
 Newpixels           = linspace(1,32,Npixels.*Interp_order);
 Interp_ProbeAxis    = interp1(pixels,ProbeAxis,Newpixels);
 
-switch handles.InteractiveModeTick.Value
-    case 1
+switch interactivemode
+    case 'On'
         % Select points interactively, to finish hit RETURN
         [RegionPositions,~] = SelectRegions(Axes);
         % Separate the values into pump and probe, according to how the data is plotted
@@ -109,9 +116,9 @@ switch handles.InteractiveModeTick.Value
                 pump_ranges     = RegionPositions(:,3:4); 
                 probe_ranges    = RegionPositions(:,1:2);
         end
-    case 0
+    case 'Off'
         RegionPositions_cell    = inputdlg({'Enter the pump regions (Format: min1 max1; min2 max2; ...): ','Enter the probe regions (Format: min1 max1; min2 max2; ...):'},'Define regions to integrate', [1 80]);
-        pump_ranges             = str2num(RegionPositions_cell{1});
+        pump_ranges             = str2num(RegionPositions_cell{1}); %#ok<*ST2NM>
         probe_ranges            = str2num(RegionPositions_cell{2});
         L = size(pump_ranges,1);
         M = size(probe_ranges,1);
@@ -162,7 +169,9 @@ switch specdif_options{specdif_typeindx}
         end
         SpecDif_name = 'CLS';
         % Save CLS to file
-        csvwrite([char(handles.rootdir) filesep char(handles.datafilename) '_CLS.csv'],[handles.t2delays,SpecDif_ind])
+        if strcmp(saveTraces,'On')
+            csvwrite([char(dataStruct.rootdir) filesep char(dataStruct.datafilename) '_CLS.csv'],[dataStruct.t2delays,SpecDif_ind])
+        end
         
     case 'IvCLS'
         % Minima in w1 for each value of w3
@@ -198,6 +207,11 @@ switch specdif_options{specdif_typeindx}
             IvCLS_Ydata{m}      = Interp_ProbeAxis(probe_cut{m});
         end
         SpecDif_name    = 'IvCLS';
+        % Save IvCLS to file
+        if strcmp(saveTraces,'On')
+            csvwrite([char(dataStruct.rootdir) filesep char(dataStruct.datafilename) '_IvCLS.csv'],[dataStruct.t2delays,SpecDif_ind])
+        end
+        
     case 'NLS'
         %%% Not yet implemented.
         
@@ -235,7 +249,6 @@ switch specdif_options{specdif_typeindx}
             IvCLS_Xdata{m}      = min_values(above_threshold,:);
             IvCLS_Ydata{m}      = Interp_ProbeAxis(probe_cut{m});
         end
-        SpecDif_name    = 'IvCLS';
         
         % CLS
         % Minima in w3 for each value of w1
@@ -271,6 +284,12 @@ switch specdif_options{specdif_typeindx}
             CLS_Ydata{m}        = min_values(above_threshold,:);
         end
         SpecDif_name = 'CLS';
+        
+        % Save CLS and IvCLS to file
+        if strcmp(saveTraces,'On')
+            csvwrite([char(dataStruct.rootdir) filesep char(dataStruct.datafilename) '_IvCLS.csv'],[dataStruct.t2delays,IvCLS_value])
+            csvwrite([char(dataStruct.rootdir) filesep char(dataStruct.datafilename) '_CLS.csv'],[dataStruct.t2delays,CLS_value])
+        end
 end
 
 %% Fit and plot the spectral diffusion kinetics
@@ -293,7 +312,7 @@ end
 
 %% Make the plots and fit the data
 % Reload the t2 delays for plotting and fitting
-t2delays = handles.t2delays;
+t2delays = dataStruct.t2delays;
 t2limit  = max(t2delays);
 t2delays = t2delays(t2delays<=t2limit);
 
@@ -491,19 +510,20 @@ switch specdif_options{specdif_typeindx}
         ax.Units        = 'normalized';
 end
 
-%% WRITE to handles
+%% WRITE to dataStruct
 % CLS
-    handles.CLS_Xdata     = CLS_Xdata;
-    handles.CLS_Ydata     = CLS_Ydata;
+    dataStruct.CLS_Xdata     = CLS_Xdata;
+    dataStruct.CLS_Ydata     = CLS_Ydata;
 % IvCLS
-    handles.IvCLS_Xdata   = IvCLS_Xdata;
-    handles.IvCLS_Ydata   = IvCLS_Ydata;
+    dataStruct.IvCLS_Xdata   = IvCLS_Xdata;
+    dataStruct.IvCLS_Ydata   = IvCLS_Ydata;
 % NLS
-    handles.NLS_Xdata     = NLS_Xdata;
-    handles.NLS_Ydata     = NLS_Ydata;
+    dataStruct.NLS_Xdata     = NLS_Xdata;
+    dataStruct.NLS_Ydata     = NLS_Ydata;
 
 % Show Spectral diffusion control
-    handles.ShowSpecDiff.Visible = 'on';
-    handles.SpecDiff      = 1;
+    app.I2D_ShowSpecDiff.Enable = 'on';
+    app.I2D_ShowSpecDiff.Value  = 1;
+    dataStruct.SpecDiff         = 1;
     
 end

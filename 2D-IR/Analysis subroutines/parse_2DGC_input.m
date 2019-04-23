@@ -199,8 +199,8 @@ Start_param(Sy_pos(isDiagonal)) = SY_start(isDiagonal);
 
 UB(x0_pos(isDiagonal)) = X0_start(isDiagonal)+10;
 UB(y0_pos(isDiagonal)) = 50;
-UB(Sx_pos(isDiagonal)) = 30;
-UB(Sy_pos(isDiagonal)) = 30;
+UB(Sx_pos(isDiagonal)) = 50;
+UB(Sy_pos(isDiagonal)) = 50;
 
 LB(x0_pos(isDiagonal)) = X0_start(isDiagonal)-10;
 LB(y0_pos(isDiagonal)) = 5;

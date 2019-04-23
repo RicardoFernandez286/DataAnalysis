@@ -1,9 +1,9 @@
-function handles = Gaussian2D_analysis(handles)
+function [dataStruct,exitcode] = Gaussian2D_analysis(app,dataStruct)
 % Description: This function performs a 2D Gaussian fitting analysis of a
 % series of 2D-IR data as a function of the waiting time
 % 
-% Usage: handles = Gaussian2D_analysis(handles)
-% Inputs: handles structure with the following fields:
+% Usage: dataStruct = Gaussian2D_analysis(dataStruct)
+% Inputs: dataStruct structure with the following fields:
 %     ProbeAxis
 %     PumpAxis
 %     t2delays
@@ -14,29 +14,40 @@ function handles = Gaussian2D_analysis(handles)
 %
 % Ricardo Fernández-Terán / 04.04.2019 / v2.2a
 
-%% READ from handles
+%% READ from dataStruct
 % Get information from the GUI
-ProbeAxis           = handles.ProbeAxis;
-PumpAxis            = handles.PumpAxis{1,1};
-t2delays            = handles.t2delays;
-PROC_2D_DATA        = handles.PROC_2D_DATA;
-plot_pumpdirection  = char(handles.plot_pumpdirection.String{handles.plot_pumpdirection.Value});
+plot_pumpdirection  = app.I2D_PumpAxisOrientation.Value;
+interactivemode     = app.I2D_InteractivemodeSwitch.Value;
+
+% Get the data
+ProbeAxis           = dataStruct.ProbeAxis;
+PumpAxis            = dataStruct.PumpAxis{1,1};
+t2delays            = dataStruct.t2delays;
+PROC_2D_DATA        = dataStruct.PROC_2D_DATA;
+
 % Hardcoded settings
-% Minimum t2 time to start the fit (will remove all t2 delays before)
-t2_startFit         = 0.1; % in ps
 
 % Initialize variables (ensures only the current analysis is saved)
 
 
 %% Cut the data
-cut_data = questdlg('Cut the 2D dataset?','Cut 2D dataset','Yes, define region','Use probe axis','No','Use probe axis');
+fh = uifigure;
+fh.Position(3:4)   = [455 165];
+msg = 'Cut the 2D dataset for fitting?';
+title = 'Cut 2D dataset';
+cut_data = uiconfirm(fh,msg,title,...
+           'Options',{'Yes, define region','Use probe axis','Re1213 VET','No'},...
+           'DefaultOption',2,'CancelOption',4);
+
+delete(fh)
+% cut_data = questdlg('Cut the 2D dataset?','Cut 2D dataset','Yes, define region','Use probe axis','No','Use probe axis');
 
 switch cut_data
     case 'Yes, define region'
-        switch handles.InteractiveModeTick.Value
-            case 1
+        switch interactivemode
+            case 'On'
                 % Select points interactively, to finish hit RETURN
-                [RegionPositions,~] = SelectRegions(handles.MainAxes);
+                [RegionPositions,~] = SelectRegions(gca);
                 % Separate the values into pump and probe, according to how the data is plotted
                 % i.e. convert from [x_min x_max y_min y_max] to [pump_min pump_max probe_min probe_max]
                 % Get only ONE region
@@ -48,7 +59,7 @@ switch cut_data
                         pump_range      = RegionPositions(1,3:4); 
                         probe_range     = RegionPositions(1,1:2);
                 end
-            case 0
+            case 'Off'
                 RegionPositions_cell    = inputdlg({'Enter the pump region (Format: minWL maxWL): ','Enter the probe regions (Format: minWL maxWL):'},'Define regions to integrate', [1 80]);
                 pump_range              = str2num(RegionPositions_cell{1});
                 probe_range             = str2num(RegionPositions_cell{2});
@@ -69,11 +80,24 @@ switch cut_data
     case 'No'
         probe_range = [min(ProbeAxis) max(ProbeAxis)];
         pump_range  = [min(PumpAxis) max(PumpAxis)];
+    case 'Re1213 VET'
+        probe_range = [1950 2050];
+        pump_range  = [1955 2050];
 end
 
 % Get the indices
 pump_idxrange   = sort(findClosestId2Val(PumpAxis,pump_range));
 probe_idxrange  = sort(findClosestId2Val(ProbeAxis,probe_range));
+
+%% Get the user's starting parameters - v1.0, without preview
+% Get the parameters
+[fitparameters,t2_startFit] = Gaussian2D_fitparam(string(cut_data));
+Npeaks                      = size(fitparameters,2);
+% If the user cancelled, return
+if isempty(fitparameters)
+    exitcode = 1;
+    return
+end
 
 % Consider only delays after a given t2 delay
 PROC_2D_DATA    = PROC_2D_DATA(t2delays>t2_startFit,:);
@@ -95,15 +119,8 @@ PumpAxis            = PumpAxis(pump_idxrange(1):pump_idxrange(2));
 ProbeAxis           = ProbeAxis(probe_idxrange(1):probe_idxrange(2));
 Omega               = {PumpAxis;ProbeAxis};
 
-%% Get the user's starting parameters - v1.0, without preview
-% Get the parameters
-fitparameters = Gaussian2D_fitparam;
 
-% If the user cancelled, return
-if isempty(fitparameters)
-    return
-end
-
+try
 % Parse the input into a fit function, calculate starting parameters and limits for the fit
 [PeaksFunction,Start_param,UB,LB,ParamPos] = parse_2DGC_input(fitparameters,Ndelays,Omega,ZData);
 
@@ -140,7 +157,7 @@ input.PkFunction    = PeaksFunction;
 % Perform the actual fit
 t_start = tic;
 % [fitted_param,resnorm,residuals,exitflag,output_st,lambda,jacobian_fit] = lsqcurvefit(@FitFunction,Start_param,input,ZData,[],[],options);
-[fitted_param,SSR,residuals,exitflag,output_st,~,jacobian_fit] = lsqcurvefit(@FitFunction,Start_param,input,ZData,LB,UB,options);
+[fitted_param,SSR,~,exitflag,output_st,~,jacobian_fit] = lsqcurvefit(@FitFunction,Start_param,input,ZData,LB,UB,options);
 t_fit   = toc(t_start);
 
 if exitflag >= 0
@@ -186,51 +203,39 @@ fitPar.Vols(:,:,2)  = fitPar.Amps(:,:,2).*corrterm;
 fitErr.Vols(:,:,1)  = fitErr.Amps(:,:,1).*corrterm;
 fitErr.Vols(:,:,2)  = fitErr.Amps(:,:,2).*corrterm;
 
-% Normalize the data in the "usual" way
-NormVols(:,[1 3],1) = -fitPar.Vols(:,[1 3],1)./max(abs(fitPar.Vols(:,1,1)));
-NormVols(:,[1 3],2) = fitPar.Vols(:,[1 3],2)./max(abs(fitPar.Vols(:,1,2)));
-NormVols(:,[2 4],1) = -fitPar.Vols(:,[2 4],1)./max(abs(fitPar.Vols(:,2,1)));
-NormVols(:,[2 4],2) = fitPar.Vols(:,[2 4],2)./max(abs(fitPar.Vols(:,2,2)));
+if Npeaks == 4
+    % Normalize the data in the "usual" way
+    NormVols(:,[1 3],1) = -fitPar.Vols(:,[1 3],1)./max(abs(fitPar.Vols(:,1,1)));
+    NormVols(:,[1 3],2) = fitPar.Vols(:,[1 3],2)./max(abs(fitPar.Vols(:,1,2)));
+    NormVols(:,[2 4],1) = -fitPar.Vols(:,[2 4],1)./max(abs(fitPar.Vols(:,2,1)));
+    NormVols(:,[2 4],2) = fitPar.Vols(:,[2 4],2)./max(abs(fitPar.Vols(:,2,2)));
 
-NormErr(:,[1 3],1)  = fitErr.Vols(:,[1 3],1)./max(abs(fitPar.Vols(:,1,1)));
-NormErr(:,[1 3],2)  = fitErr.Vols(:,[1 3],2)./max(abs(fitPar.Vols(:,1,2)));
-NormErr(:,[2 4],1)  = fitErr.Vols(:,[2 4],1)./max(abs(fitPar.Vols(:,2,1)));
-NormErr(:,[2 4],2)  = fitErr.Vols(:,[2 4],2)./max(abs(fitPar.Vols(:,2,2)));
+    NormErr(:,[1 3],1)  = fitErr.Vols(:,[1 3],1)./max(abs(fitPar.Vols(:,1,1)));
+    NormErr(:,[1 3],2)  = fitErr.Vols(:,[1 3],2)./max(abs(fitPar.Vols(:,1,2)));
+    NormErr(:,[2 4],1)  = fitErr.Vols(:,[2 4],1)./max(abs(fitPar.Vols(:,2,1)));
+    NormErr(:,[2 4],2)  = fitErr.Vols(:,[2 4],2)./max(abs(fitPar.Vols(:,2,2)));
 
-NormVols(:,[3 4],:) = 10*NormVols(:,[3 4],:);
-NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:);
-
-% % dlmwrite('SolC_fittedC.dat',[t2delays fitPar.C fitErr.C]);
-% dlmwrite('SolC_fittedAmps_GSB.dat',[t2delays NormAmps(:,:,1) NormErr(:,:,1)]);
-% dlmwrite('SolC_fittedAmps_ESA.dat',[t2delays NormAmps(:,:,2) NormErr(:,:,2)]);
-% 
-% %% Plot the results :)
-% 
-% Plot the fit results at a given delay
-% N=19;
-% figure(3)
-% contourf(Omega{1},Omega{2},FitResults(:,:,N)',40,'LineColor','flat');
-% hold on
-% contour(Omega{1},Omega{2},ZData(:,:,N)',40,'LineColor',0.8*[1 1 1]);
-% hold off
-% % contourf(Omega{1},Omega{2},(ZData(:,:,N)-FitResults(:,:,N))',30,'LineColor','flat'); 
-% colorbar; 
-% colormap(darkb2r(-1,1,80,2)); 
-% diagline = refline(1,0); diagline.Color  = [0 0 0];
-% 
-% pepita=1;
-% 
-% figure; plot(t2delays,-fitPar.Amps(:,[1 3],1))
+    NormVols(:,[3 4],:) = 10*NormVols(:,[3 4],:);
+    NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:);
+else
+    NormVols = [];
+    NormErr  = [];
+end
 
 %% Save the fit results to a file
-filename    = char([handles.rootdir filesep char(handles.datafilename) '_FIT_RESULTS.mat']);
+filename    = [dataStruct.rootdir filesep dataStruct.datafilename '_FIT_RESULTS.mat'];
 save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input','FitResults','NormVols','NormErr');
 
-%% Save the fit to handles
-handles.FitResults  = FitResults;
-handles.t2_startFit = t2_startFit;
-handles.FitInput    = input;
+%% Save the fit to dataStruct
+dataStruct.FitResults  = FitResults;
+dataStruct.t2_startFit = t2_startFit;
+dataStruct.FitInput    = input;
 
+    exitcode = 0;
+
+catch err
+    exitcode = 1;
+end
 %% FUNCTION DEFINITIONS
 
 % Build the fit function
