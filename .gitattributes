@@ -8,6 +8,7 @@
 *.p -crlf -diff -merge
 *.slx -crlf -diff -merge
 *.mdl -crlf -diff -merge
+*.mlapp -crlf -diff -merge
 
 # Register other files
 *.mdlp -crlf -diff -merge
