@@ -1,15 +1,15 @@
 %% Get a list of MAT files
 scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\8) 2D IR distance - n.a\Data';
-% subdir      = 'Dilution with Re18';
-subdir      = 'Dilution with CNBzCOOH';
+subdir      = 'Dilution with Re18';
+% subdir      = 'Dilution with CNBzCOOH';
 
 plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
 plotFormat  = 'Horizontal'; % 'Horizontal' or 'Vertical'
 concType    = '100-%'; % '100-%' or '%'
-diluent     = 'CNBz'; % 'Re(^{13}C^{18}O)'
+% diluent     = 'CNBz'; % 'Re(^{13}C^{18}O)'
 
-% diluent     = 'Re(^{13}C^{18}O)';
-% xpos        = 1; % 1.02 for CNBz
+diluent     = 'Re(^{13}C^{18}O)';
+xpos        = 1; % 1.02 for CNBz
 
 filelist    = dir([scriptdir filesep subdir]);
 filelist    = filelist(3:end);
@@ -58,6 +58,9 @@ hold(ax_BW,'on');
 cmFW = colormap(ax_FW,othercolor('Mrainbow',Nconc));
 cmBW = colormap(ax_BW,othercolor('Mrainbow',Nconc));
 
+% cmFW = colormap(ax_FW,flip(othercolor('Blues3',Nconc)));
+% cmBW = colormap(ax_BW,flip(othercolor('Reds3',Nconc)));
+
 switch plotFormat
     case 'Vertical'
         text(ax_BW,xpos,0.94,['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized')
@@ -89,17 +92,17 @@ for i=1:Nconc
     StepSize(i)      = output_st.stepsize;
     switch plotWhat
         case 'Diagonal GSB'
-            plot(ax_FW,t2delays,NormVols(:,1,1),'^-','MarkerSize',5,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,NormVols(:,2,1),'v-','MarkerSize',5,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+            plot(ax_FW,t2delays,NormVols(:,1,1),'^-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
+            plot(ax_BW,t2delays,NormVols(:,2,1),'v-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
         case 'Xpeak GSB'
-            plot(ax_FW,t2delays,NormVols(:,3,1),'^-','MarkerSize',5,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,NormVols(:,4,1),'v-','MarkerSize',5,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+            plot(ax_FW,t2delays,NormVols(:,3,1),'^-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
+            plot(ax_BW,t2delays,NormVols(:,4,1),'v-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
         case 'Diagonal ESA'
-            plot(ax_FW,t2delays,NormVols(:,1,2),'^-','MarkerSize',5,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,NormVols(:,2,2),'v-','MarkerSize',5,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+            plot(ax_FW,t2delays,NormVols(:,1,2),'^-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
+            plot(ax_BW,t2delays,NormVols(:,2,2),'v-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
         case 'Xpeak ESA'
-            plot(ax_FW,t2delays,NormVols(:,3,2),'^-','MarkerSize',5,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,NormVols(:,4,2),'v-','MarkerSize',5,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+            plot(ax_FW,t2delays,NormVols(:,3,2),'^-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
+            plot(ax_BW,t2delays,NormVols(:,4,2),'v-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
     end
     switch concType
         case '100-%'
