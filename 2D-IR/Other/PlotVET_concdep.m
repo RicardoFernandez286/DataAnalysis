@@ -1,7 +1,8 @@
 %% Get a list of MAT files
-scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\8) 2D IR distance - n.a\Data';
+scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\8) 2D IR distance - na\Data';
 subdir      = 'Dilution with Re18';
 % subdir      = 'Dilution with CNBzCOOH';
+% subdir = 'New';
 
 plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
 plotFormat  = 'Horizontal'; % 'Horizontal' or 'Vertical'
@@ -141,8 +142,8 @@ xlabel(ax_FW,'t_2 delay (ps)','FontWeight','bold','FontSize',16);
 xlabel(ax_BW,'t_2 delay (ps)','FontWeight','bold','FontSize',16);
 
 if contains(plotWhat,'Xpeak')
-    ylim(ax_FW,[-0.05 0.8]);
-    ylim(ax_BW,[-0.05 0.5]);
+    ylim(ax_FW,[-0.05 1.2]);
+    ylim(ax_BW,[-0.05 0.6]);
     ylabel(ax_FW,'Normalised peak volume (\times10)','FontWeight','bold','FontSize',16);
     switch plotFormat
         case 'Vertical'
@@ -160,8 +161,8 @@ end
 
 
 % Axis limits
-xlim(ax_FW,[0 t2delays(end)]);
-xlim(ax_BW,[0 t2delays(end)]);
+xlim(ax_FW,[5 t2delays(end)]);
+xlim(ax_BW,[5 t2delays(end)]);
 
 
 
