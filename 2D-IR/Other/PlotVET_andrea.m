@@ -1,16 +1,18 @@
 %% Get a list of MAT files
-scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\8) 2D IR distance - na\Data';
-subdir      = 'Dilution with Re18 - New';
-% subdir      = 'Dilution with CNBzCOOH - New';
+scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\PROJECTS\Ionic Liquids\Results Lab 1 Andrea';
+subdir      = 'LAST BATCH MAY 19';
+% subdir      = 'Dilution with CNBzCOOH';
 % subdir = 'New';
 
-plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
-plotFormat  = 'Vertical'; % 'Horizontal' or 'Vertical'
-concType    = '100-%'; % '100-%' or '%'
-% diluent     = 'CNBz'; % 'Re(^{13}C^{18}O)'
+plotWhat    = 'Xpeak GSB + C(t)'; 
+% plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
+plotFormat  = 'Horizontal'; % 'Horizontal' or 'Vertical'
+concType    = '%'; % '100-%' or '%'
+diluent     = 'D_{2}O'; % 'Re(^{13}C^{18}O)'
 
-diluent     = 'Re(^{13}C^{18}O)';
-xpos        = 1.02; % 1.02 for CNBz
+% diluent     = 'Re(^{13}C^{18}O)';
+xpos        = 0; % 1.02 for CNBz, 0.95 for Re18, 0.85 for D2O
+                % 0.25 for horizontal
 
 filelist    = dir([scriptdir filesep subdir]);
 filelist    = filelist(3:end);
@@ -69,13 +71,13 @@ switch plotFormat
         text(ax_FW,xpos,0.94,['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized')
         plot(ax_FW,NaN,NaN,'.','Color','w','DisplayName','')
     case 'Horizontal'
-        text(ax_FW,0.25,1.2,['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized')
+        text(ax_FW,xpos,1.19,['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized')
 end
 %% Read the MAT files one by one and store the results in a cell array
 % Read the concentrations and sort them in ascending order
 for i=1:Nconc
     nameparts       = split(names{i},'_');
-    ConcPercent(i)  = str2double(nameparts{3});
+    ConcPercent(i)  = str2double(erase(nameparts{3},'w'));
 end
 
 [ConcPercent,idx]   = sort(ConcPercent,'descend');
@@ -104,7 +106,10 @@ for i=1:Nconc
         case 'Xpeak ESA'
             plot(ax_FW,t2delays,NormVols(:,3,2),'^-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
             plot(ax_BW,t2delays,NormVols(:,4,2),'v-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
-            pepita(i) = NormVols(15,3,2)+NormVols(14,3,2);
+        case 'Xpeak GSB + C(t)'
+            plot(ax_BW,t2delays,fitPar.C(:,1),'^-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
+            plot(ax_FW,t2delays,NormVols(:,4,1),'v-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+            pepita(i) = fitPar.C(4,1);
     end
     switch concType
         case '100-%'
@@ -143,8 +148,8 @@ xlabel(ax_FW,'t_2 delay (ps)','FontWeight','bold','FontSize',16);
 xlabel(ax_BW,'t_2 delay (ps)','FontWeight','bold','FontSize',16);
 
 if contains(plotWhat,'Xpeak')
-    ylim(ax_FW,[-0.05 0.8]);
-    ylim(ax_BW,[-0.05 0.4]);
+    ylim(ax_FW,[-0.05 0.3]);
+    ylim(ax_BW,[-0.05 0.8]);
     ylabel(ax_FW,'Normalised peak volume (\times10)','FontWeight','bold','FontSize',16);
     switch plotFormat
         case 'Vertical'
@@ -159,7 +164,6 @@ else
             ylabel(ax_BW,'Normalised peak volume','FontWeight','bold','FontSize',16);
     end
 end
-
 
 % Axis limits
 xlim(ax_FW,[0 t2delays(end)]);
@@ -204,3 +208,11 @@ switch plotFormat
 end
 hold(ax_FW,'off');
 hold(ax_BW,'off');
+
+if contains(plotWhat,'C(t)')
+    ylim(ax_BW,[-0.05 0.8]);
+    ylabel(ax_BW,'C(t_2)','FontWeight','bold','FontSize',16);
+    ax_BW.Position(1) = ax_BW.Position(1)+0.025;
+    title(ax_BW,'Spectral diffusion');
+    title(ax_FW,'Energy transfer cross peak')
+end   
