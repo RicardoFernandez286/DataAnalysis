@@ -1,16 +1,16 @@
 %% Get a list of MAT files
 scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\8) 2D IR distance - na\Data';
-subdir      = 'Dilution with Re18 - New';
-% subdir      = 'Dilution with CNBzCOOH - New';
+% subdir      = 'Dilution with Re18 - New';
+subdir      = 'Dilution with CNBzCOOH - New';
 % subdir = 'New';
 
 plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
-plotFormat  = 'Vertical'; % 'Horizontal' or 'Vertical'
+plotFormat  = 'Horizontal'; % 'Horizontal' or 'Vertical'
 concType    = '100-%'; % '100-%' or '%'
-% diluent     = 'CNBz'; % 'Re(^{13}C^{18}O)'
+diluent     = 'CNBz'; % 'Re(^{13}C^{18}O)'
 
-diluent     = 'Re(^{13}C^{18}O)';
-xpos        = 1.02; % 1.02 for CNBz
+% diluent     = 'Re(^{13}C^{18}O)';
+xpos        = 0.1; % 1.02 for CNBz, 0.1 horizontal
 
 filelist    = dir([scriptdir filesep subdir]);
 filelist    = filelist(3:end);
@@ -69,7 +69,7 @@ switch plotFormat
         text(ax_FW,xpos,0.94,['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized')
         plot(ax_FW,NaN,NaN,'.','Color','w','DisplayName','')
     case 'Horizontal'
-        text(ax_FW,0.25,1.2,['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized')
+        text(ax_FW,xpos,1.2,['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized')
 end
 %% Read the MAT files one by one and store the results in a cell array
 % Read the concentrations and sort them in ascending order
@@ -104,7 +104,7 @@ for i=1:Nconc
         case 'Xpeak ESA'
             plot(ax_FW,t2delays,NormVols(:,3,2),'^-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
             plot(ax_BW,t2delays,NormVols(:,4,2),'v-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
-            pepita(i) = NormVols(15,3,2)+NormVols(14,3,2);
+            pepita(i) = NormVols(15,3,2)+NormVols(14,3,2); % WAS 3 AND 4
     end
     switch concType
         case '100-%'
