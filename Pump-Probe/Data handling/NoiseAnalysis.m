@@ -1,7 +1,7 @@
 %% Read the data and calculate basic parameters
 % Settings
 Ncontours = 20;
-plot      = 0;
+DoPlot    = 1;
 
 % Read the data
 folder      = '\\idnetapp-chem.uzh.ch\g_chem_hamm$\Group\Data from instruments\Lab 2 - TRUVIS\2018\Probe tests';
@@ -22,7 +22,7 @@ dIprobe     = probe_shots - mean(probe_shots,1);
 dIref       = ref_shots - mean(ref_shots,1);
 
 %% Calculate the correlation matrices (for δI)
-if plot==1
+if DoPlot==1
     dPP_Corr = corr(dIprobe,dIprobe);
     dPR_Corr = corr(dIprobe,dIref);
 
@@ -84,13 +84,13 @@ xl = xlim;
 xlim([-max(abs(xl)),max(abs(xl))])
 
 %% Show autocorrelation for that pixel
-Nlags = Nshots-1;
-[acf_dIprobe,lags]    = autocorr(dIprobe(:,pix),Nlags);
-acf_dIref             = autocorr(dIref(:,pix),Nlags);
-lags=lags./reprate;
-plot(lags,acf_dIprobe)
-NoiseSpec_Probe = abs(fft(acf_dIprobe));
-loglog(NoiseSpec_Probe(1:round(Nshots/2)))
+% Nlags = Nshots-1;
+% [acf_dIprobe,lags]    = autocorr(dIprobe(:,pix),Nlags);
+% acf_dIref             = autocorr(dIref(:,pix),Nlags);
+% lags=lags./reprate;
+% plot(lags,acf_dIprobe)
+% NoiseSpec_Probe = abs(fft(acf_dIprobe));
+% loglog(NoiseSpec_Probe(1:round(Nshots/2)))
 
 %% Show correlation coefficient between probe and reference arrays
 Nlags           = Nshots/2-1;
@@ -108,7 +108,7 @@ xlim([-max(abs(xl)),max(abs(xl))])
 DeltaPP_Corr = corr(DeltaIprobe,DeltaIprobe);
 DeltaPR_Corr = corr(DeltaIprobe,DeltaIref);
 % 
-% contourf(PR_Corr); colorbar
+% contourf(dPR_Corr); colorbar
 % dline = refline(1,0);
 % dline.Color = 'w';
 

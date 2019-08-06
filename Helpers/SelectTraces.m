@@ -1,4 +1,4 @@
-function dataStruct = SelectTraces(dataStruct,doSort)
+function [dataStruct,aborted] = SelectTraces(dataStruct,doSort,varargin)
 % Output is a sorted (or not) vector, dataStruct.SelTraces, of the selected (X,Y) points via interactive input through the mouse.
 %
 % USAGE:
@@ -15,11 +15,12 @@ function dataStruct = SelectTraces(dataStruct,doSort)
 % Clear the output variable (in case it already existed)
 dataStruct.SelTraces = [];
 
+warning('off','MATLAB:ginput:FigureDeletionPause');
+warning('off','MATLAB:ginput:Interrupted');
+
 if nargin < 2
     doSort = 1;
 end
-
-
 
 i=0;
 hold on
@@ -44,6 +45,7 @@ while 1 % Repeat the loop until Return is pressed
 end
 
 dataStruct.SelTraces = dataStruct.SelTraces(1:i,:);
+
 if doSort == 1
     dataStruct.SelTraces = sort(dataStruct.SelTraces,1);
 end
