@@ -74,8 +74,9 @@ if debug==0
     
     t2delays            = dataStruct.t2delays;
     Ndelays             = length(t2delays);
-    if isfield(dataStruct,'t2_startFit') ~=0
-        t2_startFit     = dataStruct.t2_startFit;
+    if isfield(dataStruct,'t2_fitrange') ~=0
+        t2_fitrange     = dataStruct.t2_fitrange;
+        t2_fitdelays    = dataStruct.t2_fitdelays;
     end
     
     % Read the selection
@@ -115,8 +116,13 @@ end
 % Hide the axes for now, until everything is ready
 hold(plotaxis,'off');
 
-% Cut the datasets in half (only half the frequencies are real)
-L                   = round(length(PumpAxis{m,k})/2);
+% Cut the datasets in half (if raw data, only half the frequencies are real)
+if dataStruct.isSimulation == 0
+    L                   = round(length(PumpAxis{m,k})/2);
+else
+    L                   = length(PumpAxis{m,k});
+end
+
 PROC_2D_DATA{m,k}   = PROC_2D_DATA{m,k}(1:L,:);
 PumpAxis{m,k}       = PumpAxis{m,k}(1:L,:);
 PumpSpectrum        = PumpSpectrum{m,k}(1:L,:);
@@ -136,6 +142,11 @@ switch cut_method
     case 'Axis'
         minindex        = findClosestId2Val(PumpAxis{m,k},min(ProbeAxis))-1;
         maxindex        = findClosestId2Val(PumpAxis{m,k},max(ProbeAxis))+1;
+end
+
+if dataStruct.isSimulation == 1
+    minindex = 1;
+    maxindex = length(PumpAxis{m,k});
 end
 
 switch plot_limittype
@@ -410,23 +421,23 @@ if Plot_SpecDiff
 end
 
 %% Show the Gaussian fit results
-if ~isempty(t2_startFit)
+if isfield(dataStruct,'t2_fitrange') ~=0
     OrigDelays      = t2delays;
-    t2delays        = t2delays(t2delays>t2_startFit);
-    newDelayNumber  = popdelay-(Ndelays-length(t2delays));
+    [fittedDelays,newDelayNumber] = ismember(OrigDelays,t2_fitdelays);
+    t2delays        = t2delays(fittedDelays);
     inputstruct     = dataStruct.FitInput;
 end
 
-if isfield(dataStruct,'FitResults') ~= 0  && ~isempty(dataStruct.FitResults) && plotFitResults && newDelayNumber > 0 
+if isfield(dataStruct,'FitResults') ~= 0  && ~isempty(dataStruct.FitResults) && plotFitResults && fittedDelays(popdelay) == 1
     switch plot_pumpdirection    
     case 'Vertical'
         Xfit            = inputstruct.Omega{2};
         Yfit            = inputstruct.Omega{1};
-        Zfit            = dataStruct.FitResults(:,:,newDelayNumber);
+        Zfit            = dataStruct.FitResults(:,:,newDelayNumber(popdelay));
     case 'Horizontal'
         Xfit            = inputstruct.Omega{1};
         Yfit            = inputstruct.Omega{2};
-        Zfit            = dataStruct.FitResults(:,:,newDelayNumber)';
+        Zfit            = dataStruct.FitResults(:,:,newDelayNumber(popdelay))';
     end
     
     hold(plotaxis,'on')
@@ -451,7 +462,7 @@ if isfield(dataStruct,'FitResults') ~= 0  && ~isempty(dataStruct.FitResults) && 
         ZData(:,:,m)        = data(pump_idxrange(1):pump_idxrange(2),probe_idxrange(1):probe_idxrange(2));
     end
     hold(plotaxis,'on')
-    contourf(plotaxis,Xfit,Yfit,(ZData(:,:,newDelayNumber)-Zfit')',plot_contours,'LineColor','flat')
+    contourf(plotaxis,Xfit,Yfit,(ZData(:,:,newDelayNumber(popdelay))-Zfit')',plot_contours,'LineColor','flat')
     diagline = refline(plotaxis,1,0);
     diagline.Color = 'k';
     end

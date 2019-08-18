@@ -1,8 +1,11 @@
 %% Get a list of MAT files
-scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\8) 2D IR distance - na\Data';
+% scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\8) 2D IR distance - na\Data';
 % subdir      = 'Dilution with Re18 - New';
-subdir      = 'Dilution with CNBzCOOH - New';
+% subdir      = 'Dilution with CNBzCOOH - New';
 % subdir = 'New';
+
+scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Simulations\Data - small mol\NEW TESTS';
+subdir    = 'Dilution with Re18';
 
 plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
 plotFormat  = 'Horizontal'; % 'Horizontal' or 'Vertical'
@@ -13,10 +16,10 @@ diluent     = 'CNBz'; % 'Re(^{13}C^{18}O)'
 xpos        = 0.1; % 1.02 for CNBz, 0.1 horizontal
 
 filelist    = dir([scriptdir filesep subdir]);
-filelist    = filelist(3:end);
 
 %% Parse the names into concentrations and make a list
 names       = {filelist.name}';
+names       = names(contains(names,'.mat'));
 Nconc       = length(names);
 
 % Initialise variables
@@ -89,22 +92,33 @@ for i=1:Nconc
     load([scriptdir filesep subdir filesep names{i}])
     VoumeData_GSB{i} = NormVols(:,:,1);
     VoumeData_ESA{i} = NormVols(:,:,2);
+    
+    if isnan(ConcPercent(i))
+        decay = 2.1*(0.8*exp(-t2delays./5) + 0.7*exp(-t2delays./20));
+        line_up = ':';
+        line_dw = ':';
+    else
+        decay = ones(length(t2delays),1);
+        line_up = '^-';
+        line_dw = 'v-';
+    end
+    
     SSR_fit(i)       = SSR;
     StepSize(i)      = output_st.stepsize;
     switch plotWhat
         case 'Diagonal GSB'
-            plot(ax_FW,t2delays,NormVols(:,1,1),'^-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,NormVols(:,2,1),'v-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+            plot(ax_FW,t2delays,NormVols(:,1,1).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
+            plot(ax_BW,t2delays,NormVols(:,2,1).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
         case 'Xpeak GSB'
-            plot(ax_FW,t2delays,NormVols(:,3,1),'^-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,NormVols(:,4,1),'v-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+            plot(ax_FW,t2delays,NormVols(:,3,1).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
+            plot(ax_BW,t2delays,NormVols(:,4,1).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
         case 'Diagonal ESA'
-            plot(ax_FW,t2delays,NormVols(:,1,2),'^-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,NormVols(:,2,2),'v-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+            plot(ax_FW,t2delays,NormVols(:,1,2).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
+            plot(ax_BW,t2delays,NormVols(:,2,2).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
         case 'Xpeak ESA'
-            plot(ax_FW,t2delays,NormVols(:,3,2),'^-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,NormVols(:,4,2),'v-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
-            pepita(i) = NormVols(15,3,2)+NormVols(14,3,2); % WAS 3 AND 4
+            plot(ax_FW,t2delays,NormVols(:,3,2).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
+            plot(ax_BW,t2delays,NormVols(:,4,2).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+%             pepita(i) = NormVols(15,3,2)+NormVols(14,3,2); % WAS 3 AND 4
     end
     switch concType
         case '100-%'
@@ -162,10 +176,14 @@ end
 
 
 % Axis limits
-xlim(ax_FW,[0 t2delays(end)]);
-xlim(ax_BW,[0 t2delays(end)]);
+% xlim(ax_FW,[0 t2delays(end)]);
+% xlim(ax_BW,[0 t2delays(end)]);
 
+xlim(ax_FW,[0 60]);
+xlim(ax_BW,[0 60]);
 
+ylim(ax_FW,[-0.05 1]);
+ylim(ax_BW,[-0.05 1]);
 
 % Add zero line
 hline_FW = yline(ax_FW,0,'HandleVisibility','off'); hline_FW.Color = [0.5 0.5 0.5];

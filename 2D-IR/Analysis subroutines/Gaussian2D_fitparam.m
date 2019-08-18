@@ -22,7 +22,7 @@ function varargout = Gaussian2D_fitparam(varargin)
 
 % Edit the above text to modify the response to help Gaussian2D_fitparam
 
-% Last Modified by GUIDE v2.5 16-Apr-2019 10:54:08
+% Last Modified by GUIDE v2.5 18-Aug-2019 19:12:28
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -55,6 +55,8 @@ function Gaussian2D_fitparam_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for Gaussian2D_fitparam
 handles.output = hObject;
 
+handles.t2_startfit_text.String = num2str(0.1);
+
 if isempty(varargin)
     handles.FitParam_table.Data =    ...
        [{'1980'}    {'2060'}    {'1980' }    {'2060'  }
@@ -63,6 +65,7 @@ if isempty(varargin)
         {'10'  }    {'10'  }    {'-1'   }    {'-1'    }
         {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
         {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
+    handles.t2_endfit_text.String = num2str(60);
 elseif strcmp(varargin{1},'Re1213 VET')
     handles.FitParam_table.Data =    ...
        [{'1979'}    {'2028'}    {'1979' }    {'2028'  }
@@ -71,6 +74,8 @@ elseif strcmp(varargin{1},'Re1213 VET')
         {'10'  }    {'10'  }    {'-1'   }    {'-1'    }
         {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
         {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
+    handles.t2_startfit_text.String = num2str(0);
+    handles.t2_endfit_text.String = num2str(60);
 else
     handles.FitParam_table.Data =    ...
    [{'1980'}    {'2060'}    {'1980' }    {'2060'  }
@@ -79,9 +84,11 @@ else
     {'10'  }    {'10'  }    {'-1'   }    {'-1'    }
     {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
     {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
+    handles.t2_endfit_text.String = num2str(max(varargin{2}));
 end
 
 handles.FitParam_table.ColumnEditable = true(1,size(handles.FitParam_table.Data,2));
+
 % Update handles structure
 guidata(hObject, handles);
 
@@ -101,9 +108,9 @@ if isempty([handles.FitParam_table.Data{:}])
     varargout{1} = {};
 else
     Data = handles.FitParam_table.Data;
-    t2startfit = str2double(handles.t2_startfit_text.String);
+    t2range = [str2double(handles.t2_startfit_text.String), str2double(handles.t2_endfit_text.String)];
     varargout{1} = Data;
-    varargout{2} = t2startfit;
+    varargout{2} = t2range;
 end
 close Gaussian2D_fitparam
 
@@ -159,6 +166,18 @@ function t2_startfit_text_Callback(hObject, eventdata, handles)
 
 
 function t2_startfit_text_CreateFcn(hObject, eventdata, handles)
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function t2_endfit_text_Callback(hObject, eventdata, handles)
+
+
+function t2_endfit_text_CreateFcn(hObject, eventdata, handles)
 
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.

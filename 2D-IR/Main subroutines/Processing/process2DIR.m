@@ -26,7 +26,7 @@ function dataStruct = process2DIR(app,dataStruct,ReProcess)
 %     The calculation routines were updated accordingly in MESS and now the chopper signal and all
 %     datastates should be calculated properly.
 %
-% Ricardo Fern√°ndez-Ter√°n / 22.08.2018 / v3.5a
+% Ricardo Fern·ndez-Ter·n / 22.08.2018 / v3.5a
 
 %% Choose between debug/manual mode and normal mode
 debug=0;

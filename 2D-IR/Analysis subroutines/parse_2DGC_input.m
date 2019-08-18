@@ -6,7 +6,8 @@ function [PeaksFunction,Start_param,UB,LB,ParamPos] = parse_2DGC_input(fitparame
 %% Process the input structure
 
 % Hardcoded settings
-equal_SxSy  = 1;
+equal_SxSy  = 0;
+diffSyfor12 = 1;
 
 if isempty(varargin)
     Omega   = {linspace(1900,2200,100);linspace(1900,2200,32)};
@@ -159,8 +160,12 @@ for m=1:Npeaks
     peakGSB = num2str(2.*m-1);
     peakESA = num2str(2.*m);
     switch isDiagonal(m)
-        case 1            
-            peakfnc{m} = ['G2Dc(X,Y,P(' x0str '),P(' x0str '),P(' sxstr '),P(' systr '),C{' peakID '},A{' peakGSB '}) + G2Dc(X,Y,P(' x0str '),P(' x0str ')-P(' y0str '),P(' sxstr '),P(' systr '),C{' peakID '},A{' peakESA '})'];
+        case 1
+            if diffSyfor12 == 1
+                peakfnc{m} = ['G2Dc(X,Y,P(' x0str '),P(' x0str '),P(' sxstr '),P(' sxstr '),C{' peakID '},A{' peakGSB '}) + G2Dc(X,Y,P(' x0str '),P(' x0str ')-P(' y0str '),P(' sxstr '),P(' systr '),C{' peakID '},A{' peakESA '})'];
+            else
+                peakfnc{m} = ['G2Dc(X,Y,P(' x0str '),P(' x0str '),P(' sxstr '),P(' systr '),C{' peakID '},A{' peakGSB '}) + G2Dc(X,Y,P(' x0str '),P(' x0str ')-P(' y0str '),P(' sxstr '),P(' systr '),C{' peakID '},A{' peakESA '})'];
+            end
         case 0
             % Check if the correlation coefficient of the cross peaks is a fit parameter or if it's set to zero
             if sum(C_pos(:,m),1) == 0
@@ -176,7 +181,11 @@ for m=1:Npeaks
             XpeakESA_w3_str = [XpeakGSB_w3_str '-P(' num2str(y0_pos(DiagPkYID(m))) ')'];
             
             % Write the function string
-            peakfnc{m} = ['G2Dc(X,Y,' XpeakGSB_w1 ','  XpeakGSB_w3_str ',P(' sxstr '),P(' systr '),' Cstring ',A{' peakGSB '}) + G2Dc(X,Y,' XpeakGSB_w1 ',' XpeakESA_w3_str ',P(' sxstr '),P(' systr '),' Cstring ',A{' peakESA '})'];
+            if diffSyfor12 == 1
+                peakfnc{m} = ['G2Dc(X,Y,' XpeakGSB_w1 ','  XpeakGSB_w3_str ',P(' sxstr '),P(' sxstr '),' Cstring ',A{' peakGSB '}) + G2Dc(X,Y,' XpeakGSB_w1 ',' XpeakESA_w3_str ',P(' sxstr '),P(' systr '),' Cstring ',A{' peakESA '})'];
+            else
+                peakfnc{m} = ['G2Dc(X,Y,' XpeakGSB_w1 ','  XpeakGSB_w3_str ',P(' sxstr '),P(' systr '),' Cstring ',A{' peakGSB '}) + G2Dc(X,Y,' XpeakGSB_w1 ',' XpeakESA_w3_str ',P(' sxstr '),P(' systr '),' Cstring ',A{' peakESA '})'];
+            end
     end
 end
 
@@ -199,8 +208,8 @@ Start_param(Sy_pos(isDiagonal)) = SY_start(isDiagonal);
 
 UB(x0_pos(isDiagonal)) = X0_start(isDiagonal)+10;
 UB(y0_pos(isDiagonal)) = 50;
-UB(Sx_pos(isDiagonal)) = 50;
-UB(Sy_pos(isDiagonal)) = 50;
+UB(Sx_pos(isDiagonal)) = 20;
+UB(Sy_pos(isDiagonal)) = 20;
 
 LB(x0_pos(isDiagonal)) = X0_start(isDiagonal)-10;
 LB(y0_pos(isDiagonal)) = 5;
@@ -213,8 +222,8 @@ LB(Sy_pos(isDiagonal)) = 5;
 %%% Time-dependent parameters
 % Spectral diffusion
 Start_param(C_pos(C_pos~=0)) = 0.4;     % Starting C value of 0.5 for all points. Needs improvement.
-UB(C_pos(C_pos~=0))     = 0.99;         % C can only be in the range [-1 1]. Considering 0 to 1 only
-LB(C_pos(C_pos~=0))     = 0;            % C can only be in the range [-1 1]. Considering 0 to 1 only
+UB(C_pos(C_pos~=0))     = 0.99;         % C can only be in the range (-1 1). Considering 0 to 1 only
+LB(C_pos(C_pos~=0))     = 0;            % C can only be in the range (-1 1). Considering 0 to 1 only
 
 
 % Amplitudes
@@ -229,6 +238,18 @@ LB(C_pos(C_pos~=0))     = 0;            % C can only be in the range [-1 1]. Con
     for m=1:Npeaks
         Start_param(GSBamp_pos(:,m))  = squeeze(ZData(pump_idx(m),probe_idx(m,1),:)); % GSB
         Start_param(ESAamp_pos(:,m))  = squeeze(ZData(pump_idx(m),probe_idx(m,2),:))'; % ESA
+    end
+    
+    % Make sure no zeros are present
+    zero_GSB = GSBamp_pos(Start_param(GSBamp_pos(:))==0);
+    zero_ESA = ESAamp_pos(Start_param(ESAamp_pos(:))==0);
+    
+    if ~isempty(zero_GSB)
+        Start_param(zero_GSB) = Start_param(zero_GSB) - 5/100;
+    end
+    
+    if ~isempty(zero_ESA)
+        Start_param(zero_ESA) = Start_param(zero_ESA) + 5/100;
     end
 
 UB(GSBamp_pos(:))       = 0;            % Bleaches can only be negative

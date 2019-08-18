@@ -81,8 +81,13 @@ switch cut_data
         probe_range = [min(ProbeAxis) max(ProbeAxis)];
         pump_range  = [min(PumpAxis) max(PumpAxis)];
     case 'Re1213 VET'
-        probe_range = [1950 2050];
-        pump_range  = [1955 2050];
+        if dataStruct.isSimulation == 1
+            probe_range = [1940 2070];
+            pump_range  = probe_range;
+        else
+            probe_range = [1950 2050];
+            pump_range  = [1955 2050];
+        end
 end
 
 % Get the indices
@@ -91,7 +96,7 @@ probe_idxrange  = sort(findClosestId2Val(ProbeAxis,probe_range));
 
 %% Get the user's starting parameters - v1.0, without preview
 % Get the parameters
-[fitparameters,t2_startFit] = Gaussian2D_fitparam(string(cut_data));
+[fitparameters,t2_fitrange] = Gaussian2D_fitparam(string(cut_data),t2delays);
 Npeaks                      = size(fitparameters,2);
 % If the user cancelled, return
 if isempty(fitparameters)
@@ -100,9 +105,18 @@ if isempty(fitparameters)
 end
 
 % Consider only delays after a given t2 delay
-PROC_2D_DATA    = PROC_2D_DATA(t2delays>t2_startFit,:);
-t2delays        = t2delays(t2delays>t2_startFit);
+PROC_2D_DATA    = PROC_2D_DATA(t2delays>=t2_fitrange(1),:);
+t2delays        = t2delays(t2delays>=t2_fitrange(1) & t2delays<=t2_fitrange(2));
 Ndelays         = length(t2delays);
+
+Nskip = 2;
+if dataStruct.isSimulation == 1
+    indices         = 1:Nskip:Ndelays;
+    PROC_2D_DATA    = PROC_2D_DATA(indices,:);
+    t2delays        = t2delays(indices);
+    Ndelays         = length(t2delays);
+end
+
 Znormfactor     = zeros(Ndelays,1);
 ZData           = zeros(pump_idxrange(2)-pump_idxrange(1)+1,probe_idxrange(2)-probe_idxrange(1)+1,Ndelays);
 
@@ -125,6 +139,9 @@ try
 [PeaksFunction,Start_param,UB,LB,ParamPos] = parse_2DGC_input(fitparameters,Ndelays,Omega,ZData);
 
 %% DO the fit
+% Ensure there are no zeros in the Start_param
+% Start_param(Start_param==0) = Start_param(Start_param==0) + 0.1;
+
 options = optimoptions('lsqcurvefit',...
             'MaxFunctionEvaluations',6000,...
             'MaxIterations',50,...
@@ -193,7 +210,7 @@ fitErr.C            = fitted_err(ParamPos.C_pos(:,ParamPos.isDiagonal));
 fitErr.Amps(:,:,1)  = fitted_err(ParamPos.GSBamp_pos).*Znormfactor;
 fitErr.Amps(:,:,2)  = fitted_err(ParamPos.ESAamp_pos).*Znormfactor;
 
-% Calculate the amplitude to volume conversion factor (including C)
+% Calculate the amplitude-to-volume conversion factor (including C)
 corrterm                        = zeros(Ndelays,ParamPos.Npeaks);
 corrterm(:,ParamPos.isDiagonal) = fitted_param(ParamPos.C_pos(:,ParamPos.isDiagonal));
 corrterm                        = sqrt(1-corrterm.^2);
@@ -228,12 +245,14 @@ save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input','FitResults
 
 %% Save the fit to dataStruct
 dataStruct.FitResults  = FitResults;
-dataStruct.t2_startFit = t2_startFit;
+dataStruct.t2_fitrange = t2_fitrange;
+dataStruct.t2_fitdelays= t2delays;
 dataStruct.FitInput    = input;
 
     exitcode = 0;
 
 catch err
+    errordlg(err.message);
     exitcode = 1;
 end
 %% FUNCTION DEFINITIONS

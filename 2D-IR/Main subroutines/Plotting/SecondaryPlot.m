@@ -1,5 +1,9 @@
 function SecondaryPlot(dataStruct,where,what,varargin)
 
+if dataStruct.isSimulation == 1
+    return
+end
+
 %% Clear the axes
 cla(where,'reset')
 hold(where,'off')
@@ -129,7 +133,7 @@ switch what
         xlabel(where,'Pump wavenumber (cm^{-1})','FontWeight','bold');
         if plot_all == 1
             % Show legend
-            legend(where,[p1 p2 p3],{"$\mid\hat{\mathcal{F}}$(Int)$\mid$" "Re[$\hat{\mathcal{F}}$(Int)]" "Im[$\hat{\mathcal{F}}$(Int)]"},'Interpreter','latex','FontSize',14);
+            legend(where,[p1 p2 p3],["$\mid\hat{\mathcal{F}}$(Int)$\mid$" "Re[$\hat{\mathcal{F}}$(Int)]" "Im[$\hat{\mathcal{F}}$(Int)]"],'Interpreter','latex','FontSize',14);
             legend(where,'boxoff')
             legend(where,'Location','best')
         end
