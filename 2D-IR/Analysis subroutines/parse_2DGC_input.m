@@ -1,13 +1,13 @@
-function [PeaksFunction,Start_param,UB,LB,ParamPos] = parse_2DGC_input(fitparameters,Ndelays,varargin)
+function [PeaksFunction,Start_param,UB,LB,ParamPos] = parse_2DGC_input(fitparameters,equal_SxSy,diffSyfor12,Ndelays,varargin)
 % Description: This function parses the fitparameters structure into a
 % vector of starting parameters, upper bounds and lower bounds, together
 % with the function to be used in the fit
 
 %% Process the input structure
 
-% Hardcoded settings
-equal_SxSy  = 1;
-diffSyfor12 = 1;
+% % % Hardcoded settings
+% % % equal_SxSy  = 1;
+% % % diffSyfor12 = 1;
 
 if isempty(varargin)
     Omega   = {linspace(1900,2200,100);linspace(1900,2200,32)};
@@ -49,6 +49,7 @@ x0_pos      = zeros(Npeaks,1);
 y0_pos      = zeros(Npeaks,1);
 Sx_pos      = zeros(Npeaks,1);
 Sy_pos      = zeros(Npeaks,1);
+S12_pos     = zeros(Npeaks,1);
 GSBamp_pos  = zeros(Ndelays,Npeaks);
 ESAamp_pos  = zeros(Ndelays,Npeaks);
 C_pos       = zeros(Ndelays,Npeaks);
@@ -71,6 +72,13 @@ for m=1:Npeaks
         else
             Sy_pos(m)   = tot_idx+1; tot_idx = tot_idx+1;
         end
+       
+        if diffSyfor12 == 1
+            S12_pos(m)  = tot_idx+1; tot_idx = tot_idx+1;
+        else
+            S12_pos(m)  = Sy_pos(m);
+        end
+        
         % Get the starting peak positions (in cm-1) to find later the starting amplitudes
         pump_pos(m)     = X0_start(m);              % W1 position
         probe_pos(m,1)  = X0_start(m);              % W3 position (GSB)
@@ -99,13 +107,13 @@ for m=1:Npeaks
         end
         Sx_pos(m)           = Sx_pos(DiagPkXID(m));
         Sy_pos(m)           = Sy_pos(DiagPkYID(m));
-
+        S12_pos(m)          = S12_pos(DiagPkYID(m));
     end
     
 end
 
 %% Define the fit parameter positions (indexes) of the amplitudes and correlation coefficients
-tot_idx     = max([x0_pos;y0_pos;Sx_pos;Sy_pos]);
+tot_idx     = max([x0_pos;y0_pos;Sx_pos;Sy_pos;S12_pos]);
 peakfnc     = cell(Npeaks,1);
 
 for m=1:Npeaks
@@ -122,13 +130,13 @@ for m=1:Npeaks
         DiagX               = X0_start;
         DiagX(~isDiagonal)  = NaN;
         DiagPkXID(m)        = findClosestId2Val(DiagX,X0_start(m));
-        DiagPkYID(m)        = findClosestId2Val(DiagX,abs(Y0_start(m)));
+        DiagPkYID(m)        = findClosestId2Val(DiagX,abs(Y0_start(m))); % in this case, Y0_start is a position, not a shift
         
         % The positions along W1, Sx and Sy are given by the diagonal peaks
         x0_pos(m) = x0_pos(DiagPkXID(m));
         Sx_pos(m) = Sx_pos(DiagPkXID(m));
         Sy_pos(m) = Sy_pos(DiagPkYID(m));
-        
+        S12_pos(m)= S12_pos(DiagPkYID(m));
         % If the starting anharmonicity is <0, then link to that of the diagonal peak,
         % otherwise it's a fit parameter
         if Y0_start(m) < 0
@@ -156,16 +164,22 @@ for m=1:Npeaks
     y0str   = num2str(y0_pos(m));
     sxstr   = num2str(Sx_pos(m));
     systr   = num2str(Sy_pos(m));
+    s12str  = num2str(S12_pos(m));
     peakID  = num2str(m);
     peakGSB = num2str(2.*m-1);
     peakESA = num2str(2.*m);
+    
+    if equal_SxSy == 1
+        systr   = sxstr;
+    end
+            
+    if diffSyfor12 == 0
+        s12str  = systr;
+    end
+    
     switch isDiagonal(m)
         case 1
-            if diffSyfor12 == 1
-                peakfnc{m} = ['G2Dc(X,Y,P(' x0str '),P(' x0str '),P(' sxstr '),P(' sxstr '),C{' peakID '},A{' peakGSB '}) + G2Dc(X,Y,P(' x0str '),P(' x0str ')-P(' y0str '),P(' sxstr '),P(' systr '),C{' peakID '},A{' peakESA '})'];
-            else
-                peakfnc{m} = ['G2Dc(X,Y,P(' x0str '),P(' x0str '),P(' sxstr '),P(' systr '),C{' peakID '},A{' peakGSB '}) + G2Dc(X,Y,P(' x0str '),P(' x0str ')-P(' y0str '),P(' sxstr '),P(' systr '),C{' peakID '},A{' peakESA '})'];
-            end
+            peakfnc{m} = ['G2Dc(X,Y,P(' x0str '),P(' x0str '),P(' sxstr '),P(' systr '),C{' peakID '},A{' peakGSB '}) + G2Dc(X,Y,P(' x0str '),P(' x0str ')-P(' y0str '),P(' sxstr '),P(' s12str '),C{' peakID '},A{' peakESA '})'];
         case 0
             % Check if the correlation coefficient of the cross peaks is a fit parameter or if it's set to zero
             if sum(C_pos(:,m),1) == 0
@@ -181,11 +195,7 @@ for m=1:Npeaks
             XpeakESA_w3_str = [XpeakGSB_w3_str '-P(' num2str(y0_pos(DiagPkYID(m))) ')'];
             
             % Write the function string
-            if diffSyfor12 == 1
-                peakfnc{m} = ['G2Dc(X,Y,' XpeakGSB_w1 ','  XpeakGSB_w3_str ',P(' sxstr '),P(' sxstr '),' Cstring ',A{' peakGSB '}) + G2Dc(X,Y,' XpeakGSB_w1 ',' XpeakESA_w3_str ',P(' sxstr '),P(' systr '),' Cstring ',A{' peakESA '})'];
-            else
-                peakfnc{m} = ['G2Dc(X,Y,' XpeakGSB_w1 ','  XpeakGSB_w3_str ',P(' sxstr '),P(' systr '),' Cstring ',A{' peakGSB '}) + G2Dc(X,Y,' XpeakGSB_w1 ',' XpeakESA_w3_str ',P(' sxstr '),P(' systr '),' Cstring ',A{' peakESA '})'];
-            end
+            peakfnc{m} = ['G2Dc(X,Y,' XpeakGSB_w1 ','  XpeakGSB_w3_str ',P(' sxstr '),P(' systr '),' Cstring ',A{' peakGSB '}) + G2Dc(X,Y,' XpeakGSB_w1 ',' XpeakESA_w3_str ',P(' sxstr '),P(' s12str '),' Cstring ',A{' peakESA '})'];
     end
 end
 
@@ -205,16 +215,19 @@ Start_param(x0_pos(isDiagonal)) = X0_start(isDiagonal);
 Start_param(y0_pos(isDiagonal)) = Y0_start(isDiagonal);
 Start_param(Sx_pos(isDiagonal)) = SX_start(isDiagonal);
 Start_param(Sy_pos(isDiagonal)) = SY_start(isDiagonal);
+Start_param(S12_pos(isDiagonal))= SY_start(isDiagonal);
 
-UB(x0_pos(isDiagonal)) = X0_start(isDiagonal)+10;
+UB(x0_pos(isDiagonal)) = X0_start(isDiagonal)+15;
 UB(y0_pos(isDiagonal)) = 50;
-UB(Sx_pos(isDiagonal)) = 20;
-UB(Sy_pos(isDiagonal)) = 20;
+UB(Sx_pos(isDiagonal)) = 30;
+UB(Sy_pos(isDiagonal)) = 30;
+UB(S12_pos(isDiagonal))= 30;
 
-LB(x0_pos(isDiagonal)) = X0_start(isDiagonal)-10;
-LB(y0_pos(isDiagonal)) = 5;
-LB(Sx_pos(isDiagonal)) = 5;
-LB(Sy_pos(isDiagonal)) = 5;
+LB(x0_pos(isDiagonal)) = X0_start(isDiagonal)-15;
+LB(y0_pos(isDiagonal)) = 2;
+LB(Sx_pos(isDiagonal)) = 1;
+LB(Sy_pos(isDiagonal)) = 1;
+LB(S12_pos(isDiagonal))= 1;
 
 %%% Cross peaks
 %%%%% PENDING: Explicit definition for intramolecular cross peaks
@@ -222,8 +235,8 @@ LB(Sy_pos(isDiagonal)) = 5;
 %%% Time-dependent parameters
 % Spectral diffusion
 Start_param(C_pos(C_pos~=0)) = 0.4;     % Starting C value of 0.5 for all points. Needs improvement.
-UB(C_pos(C_pos~=0))     = 0.99;         % C can only be in the range (-1 1). Considering 0 to 1 only
-LB(C_pos(C_pos~=0))     = 0;            % C can only be in the range (-1 1). Considering 0 to 1 only
+UB(C_pos(C_pos~=0))     = 0.99;         % C can only be in the range (-1 1). Considering positive only
+LB(C_pos(C_pos~=0))     = 0;            % C can only be in the range (-1 1). Considering positive only
 
 
 % Amplitudes
@@ -266,6 +279,7 @@ ParamPos.x0_pos     = x0_pos;
 ParamPos.y0_pos     = y0_pos;
 ParamPos.Sx_pos     = Sx_pos;
 ParamPos.Sy_pos     = Sy_pos;
+ParamPos.S12_pos    = S12_pos;
 ParamPos.GSBamp_pos = GSBamp_pos;
 ParamPos.ESAamp_pos = ESAamp_pos;
 ParamPos.isDiagonal = isDiagonal;

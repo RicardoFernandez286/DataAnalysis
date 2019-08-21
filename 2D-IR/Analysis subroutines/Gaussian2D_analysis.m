@@ -96,9 +96,10 @@ probe_idxrange  = sort(findClosestId2Val(ProbeAxis,probe_range));
 
 %% Get the user's starting parameters - v1.0, without preview
 % Get the parameters
-[fitparameters,t2_fitrange,Return] = Gaussian2D_fitparam(string(cut_data),t2delays);
-if Return == 1
-    exitcode = 1;
+[fitparameters,t2_fitrange,equal_SxSy,diffSyfor12,exitcode] = Gaussian2D_fitparam(string(cut_data),t2delays);
+
+% If the user cancelled, return
+if exitcode == 1
     return
 end
 
@@ -138,10 +139,9 @@ PumpAxis            = PumpAxis(pump_idxrange(1):pump_idxrange(2));
 ProbeAxis           = ProbeAxis(probe_idxrange(1):probe_idxrange(2));
 Omega               = {PumpAxis;ProbeAxis};
 
-
 try
 % Parse the input into a fit function, calculate starting parameters and limits for the fit
-[PeaksFunction,Start_param,UB,LB,ParamPos] = parse_2DGC_input(fitparameters,Ndelays,Omega,ZData);
+[PeaksFunction,Start_param,UB,LB,ParamPos] = parse_2DGC_input(fitparameters,equal_SxSy,diffSyfor12,Ndelays,Omega,ZData);
 
 %% DO the fit
 % Ensure there are no zeros in the Start_param
@@ -179,7 +179,7 @@ input.PkFunction    = PeaksFunction;
 % Perform the actual fit
 t_start = tic;
 % [fitted_param,resnorm,residuals,exitflag,output_st,lambda,jacobian_fit] = lsqcurvefit(@FitFunction,Start_param,input,ZData,[],[],options);
-[fitted_param,SSR,~,exitflag,output_st,~,jacobian_fit] = lsqcurvefit(@FitFunction,Start_param,input,ZData,LB,UB,options);
+[fitted_param,SSR,residuals,exitflag,output_st,~,jacobian_fit] = lsqcurvefit(@FitFunction,Start_param,input,ZData,LB,UB,options);
 t_fit   = toc(t_start);
 
 if exitflag >= 0
@@ -197,6 +197,7 @@ fitPar.Anharm       = fitted_param(ParamPos.y0_pos);
 fitPar.Y0           = fitted_param(ParamPos.x0_pos)-fitted_param(ParamPos.y0_pos);
 fitPar.Sx           = fitted_param(ParamPos.Sx_pos);
 fitPar.Sy           = fitted_param(ParamPos.Sy_pos);
+fitPar.S12          = fitted_param(ParamPos.S12_pos);
 fitPar.C            = fitted_param(ParamPos.C_pos(:,ParamPos.isDiagonal));
 fitPar.Amps(:,:,1)  = fitted_param(ParamPos.GSBamp_pos).*Znormfactor;
 fitPar.Amps(:,:,2)  = fitted_param(ParamPos.ESAamp_pos).*Znormfactor;
@@ -211,6 +212,7 @@ fitErr.Anharm       = fitted_err(ParamPos.y0_pos);
 fitErr.Y0           = fitted_err(ParamPos.x0_pos)+fitted_err(ParamPos.y0_pos);
 fitErr.Sx           = fitted_err(ParamPos.Sx_pos);
 fitErr.Sy           = fitted_err(ParamPos.Sy_pos);
+fitErr.S12          = fitted_err(ParamPos.S12_pos);
 fitErr.C            = fitted_err(ParamPos.C_pos(:,ParamPos.isDiagonal));
 fitErr.Amps(:,:,1)  = fitted_err(ParamPos.GSBamp_pos).*Znormfactor;
 fitErr.Amps(:,:,2)  = fitted_err(ParamPos.ESAamp_pos).*Znormfactor;

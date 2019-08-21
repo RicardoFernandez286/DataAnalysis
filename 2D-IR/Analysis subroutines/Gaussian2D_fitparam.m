@@ -22,7 +22,7 @@ function varargout = Gaussian2D_fitparam(varargin)
 
 % Edit the above text to modify the response to help Gaussian2D_fitparam
 
-% Last Modified by GUIDE v2.5 18-Aug-2019 19:12:28
+% Last Modified by GUIDE v2.5 21-Aug-2019 20:03:34
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -54,6 +54,8 @@ function Gaussian2D_fitparam_OpeningFcn(hObject, eventdata, handles, varargin)
 
 % Choose default command line output for Gaussian2D_fitparam
 handles.output = hObject;
+
+% Initialise variables
 handles.Return = 1;
 handles.t2_startfit_text.String = num2str(0.1);
 
@@ -66,6 +68,8 @@ if isempty(varargin)
         {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
         {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
     handles.t2_endfit_text.String = num2str(60);
+    handles.equal_SxSy.Value        = 1;
+    handles.diffSyfor12.Value       = 0;
 elseif strcmp(varargin{1},'Re1213 VET')
     handles.FitParam_table.Data =    ...
        [{'1979'}    {'2028'}    {'1979' }    {'2028'  }
@@ -76,6 +80,8 @@ elseif strcmp(varargin{1},'Re1213 VET')
         {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
     handles.t2_startfit_text.String = num2str(0);
     handles.t2_endfit_text.String   = num2str(60);
+    handles.equal_SxSy.Value        = 0;
+    handles.diffSyfor12.Value       = 1;
 else
     handles.FitParam_table.Data =    ...
    [{'1980'}    {'2060'}    {'1980' }    {'2060'  }
@@ -87,6 +93,8 @@ else
     t2delays = varargin{2};
     handles.t2_startfit_text.String = num2str(min(t2delays(t2delays>0)));
     handles.t2_endfit_text.String   = num2str(max(t2delays));
+    handles.equal_SxSy.Value        = 1;
+    handles.diffSyfor12.Value       = 0;
 end
 
 handles.FitParam_table.ColumnEditable = true(1,size(handles.FitParam_table.Data,2));
@@ -117,7 +125,11 @@ else
     varargout{1} = {};
     varargout{2} = [];
 end
-varargout{3} = handles.Return;
+% Give default output values
+varargout{3} = handles.equal_SxSy.Value;    % equal_SxSy
+varargout{4} = handles.diffSyfor12.Value;   % different Sy for the 1-2 transitions
+
+varargout{5} = handles.Return;
 close Gaussian2D_fitparam
 
 function AddPeak_Callback(hObject, eventdata, handles)
@@ -194,3 +206,9 @@ function t2_endfit_text_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+function equal_SxSy_Callback(hObject, eventdata, handles)
+
+
+function diffSyfor12_Callback(hObject, eventdata, handles)
