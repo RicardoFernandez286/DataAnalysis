@@ -54,7 +54,7 @@ function Gaussian2D_fitparam_OpeningFcn(hObject, eventdata, handles, varargin)
 
 % Choose default command line output for Gaussian2D_fitparam
 handles.output = hObject;
-
+handles.Return = 1;
 handles.t2_startfit_text.String = num2str(0.1);
 
 if isempty(varargin)
@@ -75,7 +75,7 @@ elseif strcmp(varargin{1},'Re1213 VET')
         {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
         {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
     handles.t2_startfit_text.String = num2str(0);
-    handles.t2_endfit_text.String = num2str(60);
+    handles.t2_endfit_text.String   = num2str(60);
 else
     handles.FitParam_table.Data =    ...
    [{'1980'}    {'2060'}    {'1980' }    {'2060'  }
@@ -84,7 +84,9 @@ else
     {'10'  }    {'10'  }    {'-1'   }    {'-1'    }
     {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
     {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
-    handles.t2_endfit_text.String = num2str(max(varargin{2}));
+    t2delays = varargin{2};
+    handles.t2_startfit_text.String = num2str(min(t2delays(t2delays>0)));
+    handles.t2_endfit_text.String   = num2str(max(t2delays));
 end
 
 handles.FitParam_table.ColumnEditable = true(1,size(handles.FitParam_table.Data,2));
@@ -106,12 +108,16 @@ function varargout = Gaussian2D_fitparam_OutputFcn(hObject, eventdata, handles)
 % Get default command line output from handles structure
 if isempty([handles.FitParam_table.Data{:}])
     varargout{1} = {};
-else
-    Data = handles.FitParam_table.Data;
+elseif handles.Return == 0
+    Data    = handles.FitParam_table.Data;
     t2range = [str2double(handles.t2_startfit_text.String), str2double(handles.t2_endfit_text.String)];
     varargout{1} = Data;
     varargout{2} = t2range;
+else
+    varargout{1} = {};
+    varargout{2} = [];
 end
+varargout{3} = handles.Return;
 close Gaussian2D_fitparam
 
 function AddPeak_Callback(hObject, eventdata, handles)
@@ -131,10 +137,14 @@ end
 guidata(hObject, handles);
 
 function DoneButton_Callback(hObject, eventdata, handles)
+handles.Return = 0;
+guidata(hObject, handles);
 uiresume
 
 function CancelButton_Callback(hObject, eventdata, handles)
 handles.FitParam_table.Data = {};
+handles.Return = 1;
+guidata(hObject, handles);
 uiresume
 
 

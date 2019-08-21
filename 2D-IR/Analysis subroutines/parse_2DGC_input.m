@@ -6,7 +6,7 @@ function [PeaksFunction,Start_param,UB,LB,ParamPos] = parse_2DGC_input(fitparame
 %% Process the input structure
 
 % Hardcoded settings
-equal_SxSy  = 0;
+equal_SxSy  = 1;
 diffSyfor12 = 1;
 
 if isempty(varargin)

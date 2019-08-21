@@ -96,7 +96,12 @@ probe_idxrange  = sort(findClosestId2Val(ProbeAxis,probe_range));
 
 %% Get the user's starting parameters - v1.0, without preview
 % Get the parameters
-[fitparameters,t2_fitrange] = Gaussian2D_fitparam(string(cut_data),t2delays);
+[fitparameters,t2_fitrange,Return] = Gaussian2D_fitparam(string(cut_data),t2delays);
+if Return == 1
+    exitcode = 1;
+    return
+end
+
 Npeaks                      = size(fitparameters,2);
 % If the user cancelled, return
 if isempty(fitparameters)
@@ -255,6 +260,8 @@ catch err
     errordlg(err.message);
     exitcode = 1;
 end
+
+
 %% FUNCTION DEFINITIONS
 
 % Build the fit function

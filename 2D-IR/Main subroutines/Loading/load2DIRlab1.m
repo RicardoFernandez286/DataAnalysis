@@ -512,6 +512,7 @@ end
 
 
 %% WRITE to dataStruct
+dataStruct.isSimulation  = 0;
 dataStruct.cmprobe       = cmprobe;
 dataStruct.bins          = bins;
 dataStruct.t2delays      = t2delays./1000; % in ps!
