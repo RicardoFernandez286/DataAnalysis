@@ -68,7 +68,7 @@ dataStruct.ErrorText.String         = "";
     end
     
 % Continue loading other stuff
-Nspectra        = csvread([filename '_NSpectra.csv']);
+Nspectra        = csvread([filename '_Nspectra.csv']);
 Ndatastates     = csvread([filename '_Ndatastates.csv']);
 Nbins           = length(bins);
 Ndelays         = length(t2delays);
