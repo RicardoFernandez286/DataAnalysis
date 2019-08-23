@@ -247,8 +247,13 @@ else
 end
 
 %% Save the fit results to a file
-filename    = [dataStruct.rootdir filesep dataStruct.datafilename '_FIT_RESULTS.mat'];
-save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input','FitResults','NormVols','NormErr');
+try
+    filename    = [dataStruct.rootdir filesep dataStruct.datafilename '_FIT_RESULTS.mat'];
+    save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input','FitResults','NormVols','NormErr');
+catch
+    filename    = ['/home/apasti/FitResults' filesep dataStruct.datafilename '_FIT_RESULTS.mat'];
+    save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input','FitResults','NormVols','NormErr');
+end
 
 %% Save the fit to dataStruct
 dataStruct.FitResults  = FitResults;
