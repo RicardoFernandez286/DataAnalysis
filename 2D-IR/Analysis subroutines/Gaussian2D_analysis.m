@@ -104,12 +104,14 @@ probe_idxrange  = sort(findClosestId2Val(ProbeAxis,probe_range));
 % Get the parameters
 if ShowFigures
     [fitparameters,t2_fitrange,equal_SxSy,diffSyfor12,exitcode] = Gaussian2D_fitparam(string(cut_data),t2delays);
+    writepath = dataStruct.rootdir;
 else
     % fitparameters, t2_fitrange, equal_SxSy and diffSyfor12 are provided in varargin
     fitparameters   = varargin{2};
     t2_fitrange     = varargin{3};
     equal_SxSy      = varargin{4};
     diffSyfor12     = varargin{5};
+    writepath       = varargin{6};
     exitcode=0;
 end
 
@@ -289,7 +291,7 @@ try
     filename    = [dataStruct.rootdir filesep dataStruct.datafilename '_FIT_RESULTS.mat'];
     save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input','FitResults','NormVols','NormErr');
 catch
-    filename    = ['/home/apasti/FitResults' filesep dataStruct.datafilename '_FIT_RESULTS.mat'];
+    filename    = [writepath filesep dataStruct.datafilename '_FIT_RESULTS.mat'];
     save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input','FitResults','NormVols','NormErr');
 end
 

@@ -1,6 +1,6 @@
 %% Define startup variables
 rootfolder  = '/home/group/Ricardo/Dimer - distance 1';
-fitType     = 'Ricardo'; % 'Ricardo' or 'Andrea'
+fitType     = 'Test'; % 'Ricardo' or 'Andrea'
 
 %% Build list of (sub)folders, which contain the data
 folderlist  = dir(rootfolder);
@@ -66,10 +66,10 @@ for i=1:Ndatafiles
             {'10'  }    {'10'  }    {'-1'   }    {'-1'    }
             {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
             {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
-            t2_fitrange = [9, 11];
-%            t2_fitrange = [0.1 max(dataStruct.t2delays)];
+            t2_fitrange = [0.1 max(dataStruct.t2delays)];
             equal_SxSy  = 0;
             diffSyfor12 = 1;
+            writepath   = '/home/ricfer/FitResults';
         case 'Andrea'
             cut_data = 'Use probe axis';
             fitparameters = ...
@@ -82,6 +82,7 @@ for i=1:Ndatafiles
             t2_fitrange = [0.5 max(dataStruct.t2delays)];
             equal_SxSy  = 1;
             diffSyfor12 = 0;
+            writepath   = '/home/apasti/FitResults';
         otherwise
             cut_data    = 'Use probe axis';
             fitparameters =    ...
@@ -94,12 +95,13 @@ for i=1:Ndatafiles
             t2_fitrange = [9, 11];
             equal_SxSy  = 1;
             diffSyfor12 = 0;
+            writepath   = '/home/ricfer/FitResults';
     end
     
     %%% Do the fit
     try
         disp([datestr(now,-1) ': ' 'Starting fit of ' foldernames{i} ' ...']);
-        [dataStruct,exitcode] = Gaussian2D_analysis(app,dataStruct,cut_data,fitparameters,t2_fitrange,equal_SxSy,diffSyfor12);
+        [dataStruct,exitcode] = Gaussian2D_analysis(app,dataStruct,cut_data,fitparameters,t2_fitrange,equal_SxSy,diffSyfor12,writepath);
     catch err
         disp([datestr(now,-1) ': ' 'Error fitting ' foldernames{i} ' ...']);
         continue
