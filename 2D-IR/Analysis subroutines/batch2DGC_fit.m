@@ -15,7 +15,7 @@ for i=1:Ndatafiles
     %%% Determine the data type
     if exist([rootfolder filesep foldernames{i} filesep 'spec_2D.dat'],'file') ~= 0
         dataType                = 'Simulation';
-    elseif exist([rootfolder filesep foldernames{i} filesep foldernames{i} '_delays.csv'],'file') ~= 0
+    elseif exist([rootfolder filesep foldernames{i} filesep foldernames{i} '_bins.csv'],'file') ~= 0
         dataType                = 'Experiment';
     else
         disp([datestr(now,-1) ': ' 'Folder ' foldernames{i} ' does not contain a valid 2D-IR dataset']);
@@ -109,8 +109,8 @@ for i=1:Ndatafiles
     %%% Do the fit
     try
         disp([datestr(now,-1) ': ' 'Starting fit of ' foldernames{i} ' ...']);
-        [dataStruct,exitcode] = Gaussian2D_analysis(app,dataStruct,cut_data,fitparameters,t2_fitrange,equal_SxSy,diffSyfor12,writepath);
-    catch err
+        [dataStruct,~] = Gaussian2D_analysis(app,dataStruct,cut_data,fitparameters,t2_fitrange,equal_SxSy,diffSyfor12,writepath);
+    catch
         disp([datestr(now,-1) ': ' 'Error fitting ' foldernames{i} ' ...']);
         continue
     end

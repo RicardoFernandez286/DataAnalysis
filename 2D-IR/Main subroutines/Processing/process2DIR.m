@@ -86,10 +86,15 @@ else
 end
 
 % If there is a calibrated WL file in the current ROOTDIR, use it
-if probe_calib == 0 && exist([rootdir filesep 'CalibratedProbe.csv'],'file') == 2
-    probe_calib = 2;
+if probe_calib == 0 
     wavenumberfile='CalibratedProbe.csv';
-    saved_probe=csvread([rootdir filesep wavenumberfile]);
+    if exist([rootdir filesep datafilename filesep wavenumberfile],'file') == 2
+        probe_calib = 2;
+        saved_probe=csvread([rootdir filesep datafilename filesep wavenumberfile]);
+    elseif exist([rootdir filesep wavenumberfile],'file') == 2
+        probe_calib = 2;
+        saved_probe=csvread([rootdir filesep wavenumberfile]);
+    end
 end    
 
 % Hardcoded settings
