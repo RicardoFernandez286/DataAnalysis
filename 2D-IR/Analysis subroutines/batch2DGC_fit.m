@@ -1,6 +1,7 @@
+function batch2DGC_fit(rootfolder,fitType)
 %% Define startup variables
-rootfolder  = '/home/group/Ricardo/Dimer - distance 1';
-fitType     = 'Test'; % 'Ricardo' or 'Andrea'
+% rootfolder  = '/home/group/Ricardo/Dimer - distance 1';
+% fitType     = 'Test'; % 'Ricardo' or 'Andrea'
 
 %% Build list of (sub)folders, which contain the data
 folderlist  = dir(rootfolder);
