@@ -103,9 +103,6 @@ for i=1:Ndatafiles
             dataStruct = process2DIR(app,dataStruct,0,'NoWaitBar');
     end
 
-
-    
-    
     %%% Do the fit
     try
         disp([datestr(now,-1) ': ' 'Starting fit of ' foldernames{i} ' ...']);
