@@ -21,35 +21,6 @@ for i=1:Ndatafiles
         continue % Not a valid dataset, try with the the next one
     end
 
-    %%% Check we haven't fitted it before
-    if exist([rootfolder filesep foldernames{i} '_FIT_RESULTS.mat'],'file') ~= 0
-        disp([datestr(now,-1) ': ' 'Dataset ' foldernames{i} ' has been fitted before! Delete/rename the old fit file before trying to fit again.']);
-        continue
-    end
-
-    %%% Load the data
-    dataStruct.rootdir      = rootfolder;
-    dataStruct.datafilename = foldernames{i};
-    load([fileparts(mfilename('fullpath')) filesep 'defaultGUI.mat']);
-    
-    switch dataType
-        case 'Simulation'
-            disp([datestr(now,-1) ': ' 'Loading dataset ' foldernames{i} ' [Simulation]']);
-            dataStruct = load2DIRsimu(dataStruct,'NoWaitBar');
-        case 'Experiment'
-            disp([datestr(now,-1) ': ' 'Loading dataset ' foldernames{i} ' [Experiment]']);
-            dataStruct.Transient2D = 0;
-            dataStruct = load2DIRlab1(dataStruct,'NoWaitBar');
-    end
-
-    %%% Process the data (experiment only)
-    switch dataType
-        case 'Experiment'
-            disp([datestr(now,-1) ': ' 'Processing ' foldernames{i} ' ...']);
-            dataStruct = process2DIR(app,dataStruct,0,'NoWaitBar');
-    end
-
-
     %%% Get the (default) fit parameters
     switch fitType
         case 'Ricardo'
@@ -97,6 +68,42 @@ for i=1:Ndatafiles
             diffSyfor12 = 0;
             writepath   = '/home/ricfer/FitResults';
     end
+    
+    %%% Check we haven't fitted it before (tiple-check twice...)
+    if exist([rootfolder filesep foldernames{i} '_FIT_RESULTS.mat'],'file') ~= 0
+        disp([datestr(now,-1) ': ' 'Dataset ' foldernames{i} ' has been fitted before! Delete/rename the old fit file before trying to fit again.']);
+        continue
+    end
+    
+    if exist([writepath filesep foldernames{i} '_FIT_RESULTS.mat'],'file') ~= 0
+        disp([datestr(now,-1) ': ' 'Dataset ' foldernames{i} ' has been fitted before! Delete/rename the old fit file before trying to fit again.']);
+        continue
+    end
+
+    %%% Load the data
+    dataStruct.rootdir      = rootfolder;
+    dataStruct.datafilename = foldernames{i};
+    load([fileparts(mfilename('fullpath')) filesep 'defaultGUI.mat']);
+    
+    switch dataType
+        case 'Simulation'
+            disp([datestr(now,-1) ': ' 'Loading dataset ' foldernames{i} ' [Simulation]']);
+            dataStruct = load2DIRsimu(dataStruct,'NoWaitBar');
+        case 'Experiment'
+            disp([datestr(now,-1) ': ' 'Loading dataset ' foldernames{i} ' [Experiment]']);
+            dataStruct.Transient2D = 0;
+            dataStruct = load2DIRlab1(dataStruct,'NoWaitBar');
+    end
+
+    %%% Process the data (experiment only)
+    switch dataType
+        case 'Experiment'
+            disp([datestr(now,-1) ': ' 'Processing ' foldernames{i} ' ...']);
+            dataStruct = process2DIR(app,dataStruct,0,'NoWaitBar');
+    end
+
+
+    
     
     %%% Do the fit
     try
