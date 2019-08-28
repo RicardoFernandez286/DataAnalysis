@@ -204,9 +204,10 @@ else
     axes2 = axes('Parent',fh);
     axes(axes2);
     cmap=colormap(axes2,othercolor('Mrainbow',L));
+    decay = 3*(0.5*exp(-dataStruct.t2delays./5) + 0.7*exp(-dataStruct.t2delays./20));
     % Plot the data
     for n=1:L
-       plot(axes2,dataStruct.t2delays,kindata(:,n),'LineWidth',2,'Marker','o','MarkerSize',2,'color',cmap(n,:));
+       plot(axes2,dataStruct.t2delays,kindata(:,n).*decay,'LineWidth',2,'Marker','o','MarkerSize',2,'color',cmap(n,:));
        hold on
     end
     %%% Nice formatting

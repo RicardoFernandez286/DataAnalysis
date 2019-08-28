@@ -1,4 +1,4 @@
-function dataStruct = process2DIR(app,dataStruct,ReProcess)
+function dataStruct = process2DIR(app,dataStruct,ReProcess,varargin)
 % Description: This function apodizes, zeropads and phases 2D IR data
 %
 % Usage: dataStruct = process2DIR(dataStruct)
@@ -26,17 +26,23 @@ function dataStruct = process2DIR(app,dataStruct,ReProcess)
 %     The calculation routines were updated accordingly in MESS and now the chopper signal and all
 %     datastates should be calculated properly.
 %
-% Ricardo Fernández-Terán / 22.08.2018 / v3.5a
+% Ricardo Fernández-Terán / 28.08.2018 / v4.0a
 
 %% Choose between debug/manual mode and normal mode
 debug=0;
-autoplot=0*debug; show_int=1*debug;
+autoplot=0*debug;
+show_int=1*debug;
 
 dummy = 1; % Can be the dummy number of 'diff' (will plot 2 - 1) - more options coming soon
 
 %% READ from dataStruct
+if isempty(varargin)
+    ShowWaitBar = true;
+else
+    ShowWaitBar = false;
+end
 
-% Read data
+%%% Read data
 cmprobe         = dataStruct.cmprobe;
 t1delays        = dataStruct.t1delays;
 datatype        = dataStruct.datatype;
@@ -53,7 +59,7 @@ interferogram	= dataStruct.interferogram;
 signal		    = dataStruct.signal;
 rootdir         = dataStruct.rootdir;
 
-% Read GUI options
+%%% Read GUI options
 bkg_sub         = app.I2D_SubtractScatteringCheckBox.Value;
 zeropad_enable  = app.I2D_DoZeropaddingCheckBox.Value;
 if zeropad_enable == 1
@@ -61,22 +67,24 @@ if zeropad_enable == 1
 else
     zeropad_factor  = 0;
 end
-% Determine whether the data is transient 2D or not, then read the mode
-if dataStruct.Transient2D == 1
-    Transient2D         = 1;
-    Transient2D_mode    = dataStruct.Transient2D_mode;
-else
-    Transient2D         = 0;
-    Transient2D_mode    = 0;
-end
-
 zeropad_next2k  = app.I2D_ZeropadToNext2K.Value;
 apodise_method  = app.I2D_ApodisationFunction.Value;
 phase_method    = app.I2D_PhaseFitFunction.Value;
 phase_points    = app.I2D_PhaseFitRangeEdit.Value;
 probe_calib     = app.I2D_AutocalibrateprobeaxisCheckBox.Value;
-binzero         = num2cell(-1*ones(Ndelays,Ndatastates*Nspectra*Ndummies));
 pumpcorrection  = app.I2D_PumpcorrectionCheckBox.Value;
+
+binzero         = num2cell(-1*ones(Ndelays,Ndatastates*Nspectra*Ndummies));
+
+%%% Determine whether the data is transient 2D or not, then read the mode
+if dataStruct.Transient2D == 1
+    Transient2D         = 1;
+    Transient2D_mode    = dataStruct.Transient2D_mode;
+else
+    Transient2D         = 0;
+    Transient2D_mode    = 'None';
+end
+
 % If there is a calibrated WL file in the current ROOTDIR, use it
 if probe_calib == 0 && exist([rootdir filesep 'CalibratedProbe.csv'],'file') == 2
     probe_calib = 2;
@@ -105,7 +113,7 @@ end
     progress = 0;
     
     % Create wait bar if it doesn't exist (when reprocessing data / applying changes)
-    if ReProcess == 1
+    if ReProcess == 1 && ShowWaitBar
 %         dataStruct.WaitBar = waitbar(0,'Loading data...');
         dataStruct.WBfigure            = uifigure;
         dataStruct.WBfigure.Position(3:4) = [405 175];
@@ -115,14 +123,16 @@ end
 %% Process the data
 for k=1:Nspectra*Ndummies
 for m=1:Ndelays
-    % Update the Wait Bar
-    progress = progress + 1;
-%     waitbar((progress/(Ndelays*Nspectra*Ndummies*2)+0.5),dataStruct.WaitBar,['Processing data... (' num2str(progress) ' of ' num2str(Ndelays*Nspectra*Ndummies) ')']);
-    dataStruct.WaitBar.Value    = (progress/(Ndelays*Nspectra*Ndummies*2)+0.5);
-    dataStruct.WaitBar.Message  = ['Processing data... (' num2str(progress) ' of ' num2str(Ndelays*Nspectra*Ndummies) ')'];
-    if dataStruct.WaitBar.CancelRequested
-        delete(dataStruct.WBfigure);
-        error('User aborted loading the data!');
+    if ShowWaitBar
+        % Update the Wait Bar
+        progress = progress + 1;
+    %     waitbar((progress/(Ndelays*Nspectra*Ndummies*2)+0.5),dataStruct.WaitBar,['Processing data... (' num2str(progress) ' of ' num2str(Ndelays*Nspectra*Ndummies) ')']);
+        dataStruct.WaitBar.Value    = (progress/(Ndelays*Nspectra*Ndummies*2)+0.5);
+        dataStruct.WaitBar.Message  = ['Processing data... (' num2str(progress) ' of ' num2str(Ndelays*Nspectra*Ndummies) ')'];
+        if dataStruct.WaitBar.CancelRequested
+            delete(dataStruct.WBfigure);
+            error('User aborted loading the data!');
+        end
     end
     % Remove background (and slow fluctuations in the data, if selected)
     if ReProcess == 0

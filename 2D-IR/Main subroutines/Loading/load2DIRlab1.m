@@ -1,4 +1,4 @@
-function  dataStruct = load2DIRlab1(dataStruct)
+function  dataStruct = load2DIRlab1(dataStruct,varargin)
 
 % Description: This function loads all 2DIR data in the file format from the Lab 1 & Lab 4 MESS program.
 % Usage: dataStruct = load2DIRlab1(dataStruct)
@@ -22,7 +22,7 @@ function  dataStruct = load2DIRlab1(dataStruct)
 %     interferogram     (Cell array)
 %     signal			(Cell array)
 %
-% Ricardo Fernandez-Teran / 14.04.2019 / v4.0a
+% Ricardo Fernandez-Teran / 28.08.2019 / v5.0a
 
 %% DEBUG
 % datafilename = 'R3_mTiO2_Re1213_MeOH_4PM_2D_154022';
@@ -34,19 +34,28 @@ autodetect_datatype = 1;
 datatype = 'Raw'; % 'Raw' or 'Signal'
 
 %% READ from dataStruct
+if isempty(varargin)
+    ShowWaitBar = true;
+else
+    ShowWaitBar = false;
+end
+
 datafilename    = dataStruct.datafilename;
 rootdir         = dataStruct.rootdir;
+Transient2D     = dataStruct.Transient2D;
 
 %% Load all the necessary files after checking that they exist
 filename        = [rootdir filesep datafilename filesep datafilename];
 
 if exist([filename '_bins.csv'],'file') ~= 0
 % Create progress bar and clear error string
-% dataStruct.WaitBar             = waitbar(0,'Loading data...');
-dataStruct.WBfigure                 = uifigure;
-dataStruct.WBfigure.Position(3:4)   = [405 175];
-dataStruct.WaitBar                  = uiprogressdlg(dataStruct.WBfigure,'Title','2D-IR data processing...','Message','Loading data...','Icon','info','ShowPercentage','on','Cancelable','on');
-dataStruct.ErrorText.String         = "";
+if ShowWaitBar
+    % dataStruct.WaitBar             = waitbar(0,'Loading data...');
+    dataStruct.WBfigure                 = uifigure;
+    dataStruct.WBfigure.Position(3:4)   = [405 175];
+    dataStruct.WaitBar                  = uiprogressdlg(dataStruct.WBfigure,'Title','2D-IR data processing...','Message','Loading data...','Icon','info','ShowPercentage','on','Cancelable','on');
+    dataStruct.ErrorText.String         = "";
+end
 
 % Load basic files
     cmprobe         = csvread([filename '_wavenumbers.csv']);
@@ -54,7 +63,7 @@ dataStruct.ErrorText.String         = "";
     t2delays        = csvread([filename '_delays.csv']);
     
     % Determine whether the data is transient 2D or not, then read the transient delays
-    if dataStruct.Transient2D == 1
+    if Transient2D == 1
         transient_delays    = csvread([filename '_transientDelays.csv']);
         t2delays            = [t2delays, transient_delays];
     end
@@ -155,8 +164,10 @@ if exist(tempdir,'dir') ~= 0
     end
     % If no delays have finished, warn the user
     if Ndelays == 0
-        warndlg('No delays completed yet!','No data');
-        delete(dataStruct.WBfigure)
+        if ShowWaitBar
+            warndlg('No delays completed yet!','No data');
+            delete(dataStruct.WBfigure)
+        end
         return
     end
 else % Can't determine whether it's a preview or not - TEMP folder absent
@@ -285,14 +296,16 @@ case 'Raw'
     for k=1:Ndatastates*Nslowmod*Ninterleave*Nspectra
         for m=1:Ndelays
           % Update the Wait Bar
-            progress = progress+1;
-            if dataStruct.WaitBar.CancelRequested
-                delete(dataStruct.WBfigure);
-                error('User aborted loading the data!');
+            if ShowWaitBar
+                progress = progress+1;
+                if dataStruct.WaitBar.CancelRequested
+                    delete(dataStruct.WBfigure);
+                    error('User aborted loading the data!');
+                end
+%                waitbar(progress/(Ndatastates*Nspectra*Nslowmod*Ndelays*Ninterleave*2),dataStruct.WaitBar,['Loading data (raw) - Reading file ' num2str(progress) ' of ' num2str(Ndatastates*Nslowmod*Ndelays*Ninterleave*Nspectra)]);
+                dataStruct.WaitBar.Value    = progress/(Ndatastates*Nspectra*Nslowmod*Ndelays*Ninterleave*2);
+                dataStruct.WaitBar.Message  = ['Loading data (raw) - Reading file ' num2str(progress) ' of ' num2str(Ndatastates*Nslowmod*Ndelays*Ninterleave*Nspectra)];    
             end
-%             waitbar(progress/(Ndatastates*Nspectra*Nslowmod*Ndelays*Ninterleave*2),dataStruct.WaitBar,['Loading data (raw) - Reading file ' num2str(progress) ' of ' num2str(Ndatastates*Nslowmod*Ndelays*Ninterleave*Nspectra)]);
-            dataStruct.WaitBar.Value    = progress/(Ndatastates*Nspectra*Nslowmod*Ndelays*Ninterleave*2);
-            dataStruct.WaitBar.Message  = ['Loading data (raw) - Reading file ' num2str(progress) ' of ' num2str(Ndatastates*Nslowmod*Ndelays*Ninterleave*Nspectra)];
           % First load the counts
             count{m,k}          = csvread([filename '_count' endings{m,k}]);
             if cumsum(count{m,k}) == 0
@@ -428,15 +441,16 @@ case 'Signal'
     for m=1:Ndelays
         Ndatastates = 1;
         % Update the Wait Bar
-        progress = progress+1;
-        if dataStruct.WaitBar.CancelRequested
-            delete(dataStruct.WBfigure);
-            error('User aborted loading the data!');
+        if ShowWaitBar
+            progress = progress+1;
+            if dataStruct.WaitBar.CancelRequested
+                delete(dataStruct.WBfigure);
+                error('User aborted loading the data!');
+            end
+    %         waitbar(progress/(Nslowmod*Ndelays*Ninterleave*Nspectra*Ndummies*2),dataStruct.WaitBar,['Loading data (signal) - Reading file ' num2str(progress) ' of ' num2str(Nslowmod*Ndelays*Ninterleave*Nspectra*Ndummies)]);
+            dataStruct.WaitBar.Value    = progress/(Nslowmod*Ndelays*Ninterleave*Nspectra*Ndummies*2);
+            dataStruct.WaitBar.Message  = ['Loading data (signal) - Reading file ' num2str(progress) ' of ' num2str(Nslowmod*Ndelays*Ninterleave*Nspectra*Ndummies)];
         end
-%         waitbar(progress/(Nslowmod*Ndelays*Ninterleave*Nspectra*Ndummies*2),dataStruct.WaitBar,['Loading data (signal) - Reading file ' num2str(progress) ' of ' num2str(Nslowmod*Ndelays*Ninterleave*Nspectra*Ndummies)]);
-        dataStruct.WaitBar.Value    = progress/(Nslowmod*Ndelays*Ninterleave*Nspectra*Ndummies*2);
-        dataStruct.WaitBar.Message  = ['Loading data (signal) - Reading file ' num2str(progress) ' of ' num2str(Nslowmod*Ndelays*Ninterleave*Nspectra*Ndummies)];
-            
       % Counts here are all 1's. Load them to ensure consistency...
         count{m,k}          = csvread([filename '_count' ShortEndings{m,k}]);
       % Load the interferogram and signal
@@ -529,9 +543,10 @@ dataStruct.t1delays      = t1delays; % in fs!
 dataStruct.Nscans        = Nscans;
 
 % Clear 2DGC fit results
-dataStruct.FitResults    = [];
-dataStruct.t2_startFit   = [];
-dataStruct.FitInput      = [];
+dataStruct.FitResults  = [];
+dataStruct.t2_fitrange = [];
+dataStruct.t2_fitdelays= [];
+dataStruct.FitInput    = [];
 
 
 if strcmp(datatype,'Raw')

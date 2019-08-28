@@ -55,12 +55,18 @@ Npixels             = length(ProbeAxis);
 
 % Hardcoded settings
 Interp_method       = 'InterpFT'; % 2D FFT, InterpFT, Mesh 
-Interp_order        = 8; % Multiplies Npixels by a factor to interpolate in the probe dimension
 % Fit_type            = 'Quadratic'; % 'Quadratic' 'None' - Sets the type of fit to calculate the minima along the slices
-N_pointsParabola    = 10; % No. of X points to fit a parabola on each side of the peak: [-x (peak) +x]
-intensity_threshold = 80/100; % Intensity threshold for the linear fit to get the CLS or IvCLS
+
+Interp_order        = 4; % Multiplies Npixels by a factor to interpolate in the probe dimension
+Nfitpoints          = 3;
+N_pointsParabola    = round(Interp_order*Nfitpoints); % No. of X points to fit a parabola on each side of the peak: [-x (peak) +x]
+N_points_IvCLS      = 8;
+
+intensity_threshold = 50/100; % Intensity threshold for the linear fit to get the CLS or IvCLS
 textcolor           = 'none'; % 'none' or RGB color
 fit_method          = 'LSQ'; % 'GA' or 'LSQ' for Genetic algorithm or Least-squares
+
+diagnosticPlot      = 1; % Plots the cuts and fits for diagnostic purposes
 
 % Suppress warnings
 warning('off','MATLAB:polyfit:RepeatedPointsOrRescale');
@@ -99,7 +105,7 @@ end
 %% Get the spectral diffusion dynamics
 % Interpolate the probe axis
 pixels              = 1:1:Npixels;
-Newpixels           = linspace(1,32,Npixels.*Interp_order);
+Newpixels           = linspace(1,Npixels,Npixels.*Interp_order);
 Interp_ProbeAxis    = interp1(pixels,ProbeAxis,Newpixels);
 
 switch interactivemode
@@ -132,6 +138,14 @@ end
 pump_idxrange  = findClosestId2Val(PumpAxis{1,1},pump_ranges);
 probe_idxrange = findClosestId2Val(Interp_ProbeAxis,probe_ranges);
 
+% Prepare figure and axes for the diagnostic plots
+if diagnosticPlot == 1
+    diagnosticFig   = figure;
+    diagnosticAx    = axes('parent',diagnosticFig);
+    cla(diagnosticAx,'reset');
+    hold(diagnosticAx,'on')
+end
+    
 % Get the data according to the selected method
 switch specdif_options{specdif_typeindx}
     case 'CLS'
@@ -150,11 +164,19 @@ switch specdif_options{specdif_typeindx}
             peak_pos            = peak_pos + probe_idxrange(1);
             % Fit a quadratic polynomial within N points around the minimum 
             %   and find the analytical vertex of the parabola
+            if diagnosticPlot == 1
+                cla(diagnosticAx,'reset'); hold(diagnosticAx,'on'); 
+            end
             for i=1:Npeaks
                 probe_segment   = Interp_ProbeAxis(peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola);
                 data_segment    = Interp_Data{m,1}(pump_indexes(i),peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola);
                 coeff           = polyfit(probe_segment,data_segment,2);
                 min_values(i,m) = -coeff(2)/(2*coeff(1));
+                if diagnosticPlot == 1
+                    cmap= jet(Npeaks);
+                    plot(diagnosticAx,probe_segment,data_segment./max(abs(data_segment(:))),'o','MarkerSize',3,'Color',cmap(i,:));
+                    plot(diagnosticAx,probe_segment,polyval(coeff,probe_segment)./max(abs(data_segment(:))),'-','LineWidth',2,'Color',cmap(i,:));
+                end
             end
             % Fit a line around the minimum according to the intensity cutoff
             peak_val            = peak_val/max(abs(peak_val));
@@ -189,11 +211,19 @@ switch specdif_options{specdif_typeindx}
             peak_pos            = peak_pos + pump_idxrange(1);
             % Fit a quadratic polynomial within 2 points around the minimum 
             %   and find the analytical vertex of the parabola
+            if diagnosticPlot == 1
+                cla(diagnosticAx,'reset'); hold(diagnosticAx,'on'); 
+            end
             for i=1:Npeaks
-                pump_segment    = PumpAxis{1,1}(peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola);
-                data_segment    = Interp_Data{m,1}(peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola,probe_indexes(i));
+                pump_segment    = PumpAxis{1,1}(peak_pos(i)-N_points_IvCLS:peak_pos(i)+N_points_IvCLS);
+                data_segment    = Interp_Data{m,1}(peak_pos(i)-N_points_IvCLS:peak_pos(i)+N_points_IvCLS,probe_indexes(i));
                 coeff           = polyfit(pump_segment,data_segment,2);
                 min_values(i,m) = -coeff(2)/(2*coeff(1));
+                if diagnosticPlot == 1
+                    cmap= jet(Npeaks);
+                    plot(diagnosticAx,pump_segment,data_segment./max(abs(data_segment(:))),'o','MarkerSize',3,'Color',cmap(i,:));
+                    plot(diagnosticAx,pump_segment,polyval(coeff,pump_segment)./max(abs(data_segment(:))),'-','LineWidth',2,'Color',cmap(i,:));
+                end
             end
             % Fit a line around the minimum according to the intensity cutoff
             peak_val            = peak_val/max(abs(peak_val));
@@ -232,11 +262,19 @@ switch specdif_options{specdif_typeindx}
             peak_pos            = peak_pos + pump_idxrange(1);
             % Fit a quadratic polynomial within 2 points around the minimum 
             %   and find the analytical vertex of the parabola
+            if diagnosticPlot == 1
+                cla(diagnosticAx,'reset'); hold(diagnosticAx,'on'); 
+            end
             for i=1:Npeaks
-                pump_segment    = PumpAxis{1,1}(peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola);
-                data_segment    = Interp_Data{m,1}(peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola,probe_indexes(i));
+                pump_segment    = PumpAxis{1,1}(peak_pos(i)-N_points_IvCLS:peak_pos(i)+N_points_IvCLS);
+                data_segment    = Interp_Data{m,1}(peak_pos(i)-N_points_IvCLS:peak_pos(i)+N_points_IvCLS,probe_indexes(i));
                 coeff           = polyfit(pump_segment,data_segment,2);
                 min_values(i,m) = -coeff(2)/(2*coeff(1));
+                if diagnosticPlot == 1
+                    cmap= jet(Npeaks);
+                    plot(diagnosticAx,pump_segment,data_segment./max(abs(data_segment(:))),'o','MarkerSize',3,'Color',cmap(i,:));
+                    plot(diagnosticAx,pump_segment,polyval(coeff,pump_segment)./max(abs(data_segment(:))),'-','LineWidth',2,'Color',cmap(i,:));
+                end
             end
             % Fit a line around the minimum according to the intensity cutoff
             peak_val            = peak_val/max(abs(peak_val));
@@ -266,11 +304,19 @@ switch specdif_options{specdif_typeindx}
             peak_pos            = peak_pos + probe_idxrange(1);
             % Fit a quadratic polynomial within N points around the minimum 
             %   and find the analytical vertex of the parabola
+            if diagnosticPlot == 1
+                cla(diagnosticAx,'reset'); hold(diagnosticAx,'on'); 
+            end
             for i=1:Npeaks
                 probe_segment   = Interp_ProbeAxis(peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola);
                 data_segment    = Interp_Data{m,1}(pump_indexes(i),peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola);
                 coeff           = polyfit(probe_segment,data_segment,2);
                 min_values(i,m) = -coeff(2)/(2*coeff(1));
+                if diagnosticPlot == 1
+                    cmap= jet(Npeaks);
+                    plot(diagnosticAx,probe_segment,data_segment./max(abs(data_segment(:))),'o','MarkerSize',3,'Color',cmap(i,:));
+                    plot(diagnosticAx,probe_segment,polyval(coeff,probe_segment)./max(abs(data_segment(:))),'-','LineWidth',2,'Color',cmap(i,:));
+                end
             end
             % Fit a line around the minimum according to the intensity cutoff
             peak_val            = peak_val/max(abs(peak_val));
@@ -290,6 +336,10 @@ switch specdif_options{specdif_typeindx}
             csvwrite([char(dataStruct.rootdir) filesep char(dataStruct.datafilename) '_IvCLS.csv'],[dataStruct.t2delays,IvCLS_value])
             csvwrite([char(dataStruct.rootdir) filesep char(dataStruct.datafilename) '_CLS.csv'],[dataStruct.t2delays,CLS_value])
         end
+end
+
+if diagnosticPlot == 1
+    hold(diagnosticAx,'off')
 end
 
 %% Fit and plot the spectral diffusion kinetics

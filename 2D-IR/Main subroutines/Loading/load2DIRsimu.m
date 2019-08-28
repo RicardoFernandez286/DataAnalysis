@@ -1,4 +1,4 @@
-function  dataStruct = load2DIRsimu(dataStruct)
+function  dataStruct = load2DIRsimu(dataStruct,varargin)
 
 % Description: This function loads 2DIR data in the file format from the VET simulations
 % Usage: dataStruct = load2DIRsimu(dataStruct)
@@ -32,6 +32,12 @@ function  dataStruct = load2DIRsimu(dataStruct)
 %% HARDCODED Settings
 
 %% READ from dataStruct
+if isempty(varargin)
+    ShowWaitBar = true;
+else
+    ShowWaitBar = false;
+end
+
 datafilename    = dataStruct.datafilename;
 rootdir         = dataStruct.rootdir;
 
@@ -39,11 +45,13 @@ rootdir         = dataStruct.rootdir;
 filename        = [rootdir filesep datafilename filesep 'spec_2D.dat'];
 
 % Create progress bar and clear error string
-% dataStruct.WaitBar             = waitbar(0,'Loading data...');
-dataStruct.WBfigure                 = uifigure;
-dataStruct.WBfigure.Position(3:4)   = [405 175];
-dataStruct.WaitBar                  = uiprogressdlg(dataStruct.WBfigure,'Title','2D-IR data processing...','Message','Loading data...','Icon','info','ShowPercentage','on','Cancelable','on');
-dataStruct.ErrorText.String         = "";
+if ShowWaitBar
+    % dataStruct.WaitBar             = waitbar(0,'Loading data...');
+    dataStruct.WBfigure                 = uifigure;
+    dataStruct.WBfigure.Position(3:4)   = [405 175];
+    dataStruct.WaitBar                  = uiprogressdlg(dataStruct.WBfigure,'Title','2D-IR data processing...','Message','Loading data...','Icon','info','ShowPercentage','on','Cancelable','on');
+    dataStruct.ErrorText.String         = "";
+end
 
 if exist(filename,'file') ~= 0
 Spec_2DIR_raw   = dlmread(filename);

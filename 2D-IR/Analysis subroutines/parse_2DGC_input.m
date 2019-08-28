@@ -217,13 +217,13 @@ Start_param(Sx_pos(isDiagonal)) = SX_start(isDiagonal);
 Start_param(Sy_pos(isDiagonal)) = SY_start(isDiagonal);
 Start_param(S12_pos(isDiagonal))= SY_start(isDiagonal);
 
-UB(x0_pos(isDiagonal)) = X0_start(isDiagonal)+15;
+UB(x0_pos(isDiagonal)) = X0_start(isDiagonal)+25;
 UB(y0_pos(isDiagonal)) = 50;
 UB(Sx_pos(isDiagonal)) = 30;
 UB(Sy_pos(isDiagonal)) = 30;
 UB(S12_pos(isDiagonal))= 30;
 
-LB(x0_pos(isDiagonal)) = X0_start(isDiagonal)-15;
+LB(x0_pos(isDiagonal)) = X0_start(isDiagonal)-25;
 LB(y0_pos(isDiagonal)) = 2;
 LB(Sx_pos(isDiagonal)) = 1;
 LB(Sy_pos(isDiagonal)) = 1;

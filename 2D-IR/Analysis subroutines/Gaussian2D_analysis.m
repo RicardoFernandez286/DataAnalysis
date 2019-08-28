@@ -1,4 +1,4 @@
-function [dataStruct,exitcode] = Gaussian2D_analysis(app,dataStruct)
+function [dataStruct,exitcode] = Gaussian2D_analysis(app,dataStruct,varargin)
 % Description: This function performs a 2D Gaussian fitting analysis of a
 % series of 2D-IR data as a function of the waiting time
 % 
@@ -28,18 +28,24 @@ PROC_2D_DATA        = dataStruct.PROC_2D_DATA;
 % Hardcoded settings
 
 % Initialize variables (ensures only the current analysis is saved)
-
+if isempty(varargin)
+    ShowFigures = true;
+else
+    ShowFigures = false;
+    cut_data    = varargin{1};
+end
 
 %% Cut the data
-fh = uifigure;
-fh.Position(3:4)   = [455 165];
-msg = 'Cut the 2D dataset for fitting?';
-title = 'Cut 2D dataset';
-cut_data = uiconfirm(fh,msg,title,...
-           'Options',{'Yes, define region','Use probe axis','Re1213 VET','No'},...
-           'DefaultOption',2,'CancelOption',4);
-
-delete(fh)
+if ShowFigures
+    fh = uifigure;
+    fh.Position(3:4)   = [455 165];
+    msg = 'Cut the 2D dataset for fitting?';
+    title = 'Cut 2D dataset';
+    cut_data = uiconfirm(fh,msg,title,...
+               'Options',{'Yes, define region','Use probe axis','Re1213 VET','No'},...
+               'DefaultOption',2,'CancelOption',4);
+    delete(fh)
+end
 % cut_data = questdlg('Cut the 2D dataset?','Cut 2D dataset','Yes, define region','Use probe axis','No','Use probe axis');
 
 switch cut_data
@@ -96,7 +102,16 @@ probe_idxrange  = sort(findClosestId2Val(ProbeAxis,probe_range));
 
 %% Get the user's starting parameters - v1.0, without preview
 % Get the parameters
-[fitparameters,t2_fitrange,equal_SxSy,diffSyfor12,exitcode] = Gaussian2D_fitparam(string(cut_data),t2delays);
+if ShowFigures
+    [fitparameters,t2_fitrange,equal_SxSy,diffSyfor12,exitcode] = Gaussian2D_fitparam(string(cut_data),t2delays);
+else
+    % fitparameters, t2_fitrange, equal_SxSy and diffSyfor12 are provided in varargin
+    fitparameters   = varargin{2};
+    t2_fitrange     = varargin{3};
+    equal_SxSy      = varargin{4};
+    diffSyfor12     = varargin{5};
+    exitcode=0;
+end
 
 % If the user cancelled, return
 if exitcode == 1
@@ -115,8 +130,8 @@ PROC_2D_DATA    = PROC_2D_DATA(t2delays>=t2_fitrange(1),:);
 t2delays        = t2delays(t2delays>=t2_fitrange(1) & t2delays<=t2_fitrange(2));
 Ndelays         = length(t2delays);
 
-Nskip = 2;
-if dataStruct.isSimulation == 1
+Nskip = 0;
+if dataStruct.isSimulation == 1 && Nskip > 0
     indices         = 1:Nskip:Ndelays;
     PROC_2D_DATA    = PROC_2D_DATA(indices,:);
     t2delays        = t2delays(indices);
@@ -145,20 +160,35 @@ try
 
 %% DO the fit
 % Ensure there are no zeros in the Start_param
-% Start_param(Start_param==0) = Start_param(Start_param==0) + 0.1;
+TypicalX                = Start_param;
+TypicalX(TypicalX==0)   = TypicalX(Start_param==0) + eps;
 
-options = optimoptions('lsqcurvefit',...
-            'MaxFunctionEvaluations',6000,...
-            'MaxIterations',50,...
-            'Algorithm','trust-region-reflective',...  %'levenberg-marquardt' 'trust-region-reflective'
-            'OptimalityTolerance',5e-5,...
-            'FunctionTolerance',5e-5,...
-            'StepTolerance',5e-5,...
-            'UseParallel',true,...
-            'TypicalX',Start_param,...
-            'SubproblemAlgorithm','factorization',...
-            'PlotFcn','optimplotresnorm');
-        
+if ShowFigures
+    options = optimoptions('lsqcurvefit',...
+                'MaxFunctionEvaluations',6000,...
+                'MaxIterations',50,...
+                'Algorithm','trust-region-reflective',...  %'levenberg-marquardt' 'trust-region-reflective'
+                'OptimalityTolerance',5e-5,...
+                'FunctionTolerance',5e-5,...
+                'StepTolerance',5e-5,...
+                'UseParallel',true,...
+                'TypicalX',TypicalX,...
+                'SubproblemAlgorithm','factorization',...
+                'PlotFcn','optimplotresnorm');
+else
+    options = optimoptions('lsqcurvefit',...
+                'MaxFunctionEvaluations',6000,...
+                'MaxIterations',50,...
+                'Algorithm','trust-region-reflective',...  %'levenberg-marquardt' 'trust-region-reflective'
+                'OptimalityTolerance',5e-5,...
+                'FunctionTolerance',5e-5,...
+                'StepTolerance',5e-5,...
+                'UseParallel',true,...
+                'TypicalX',Start_param,...
+                'Display','off',...
+                'SubproblemAlgorithm','factorization');
+end
+    
 % options = optimoptions('lsqcurvefit',...
 %             'MaxFunctionEvaluations',5000,...
 %             'MaxIterations',10,...
@@ -183,9 +213,17 @@ t_start = tic;
 t_fit   = toc(t_start);
 
 if exitflag >= 0
-    msgbox({['Fit completed in ' num2str(t_fit,'%.4g') ' seconds.'];[];['SSR = ' num2str(SSR,'%.5g')];['Iterations = ' num2str(output_st.iterations)];['Func. evals. = ' num2str(output_st.funcCount)];['Step size = ' num2str(output_st.stepsize)]},'Fit completed!','help');
+    if ShowFigures
+        msgbox({['Fit completed in ' num2str(t_fit,'%.4g') ' seconds.'];[];['SSR = ' num2str(SSR,'%.5g')];['Iterations = ' num2str(output_st.iterations)];['Func. evals. = ' num2str(output_st.funcCount)];['Step size = ' num2str(output_st.stepsize)]},'Fit completed!','help');
+    else
+        disp({['Fit completed in ' num2str(t_fit,'%.4g') ' seconds.'];['SSR = ' num2str(SSR,'%.5g')];['Iterations = ' num2str(output_st.iterations)];['Func. evals. = ' num2str(output_st.funcCount)];['Step size = ' num2str(output_st.stepsize)]});
+    end
 else
-    msgbox('Error in the fit! Please check all parameters','Error during fit','error');
+    if ShowFigures
+        msgbox('Error in the fit! Please check all parameters','Error during fit','error');
+    else
+        disp('Error in the fit! Please check all parameters');
+    end
 end
 
 %% Evaluate the solution
