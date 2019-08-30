@@ -136,4 +136,5 @@ for i=1:Ndatafiles
     end
 end
 
+disp([datestr(now,-1) ': ' 'Everything done!']);
 exit
