@@ -174,7 +174,7 @@ TypicalX(TypicalX==0)   = TypicalX(Start_param==0) + eps;
 
 if ShowFigures
     options = optimoptions('lsqcurvefit',...
-                'MaxFunctionEvaluations',6000,...
+                'MaxFunctionEvaluations',6500,...
                 'MaxIterations',50,...
                 'Algorithm','trust-region-reflective',...  %'levenberg-marquardt' 'trust-region-reflective'
                 'OptimalityTolerance',5e-5,...
@@ -186,7 +186,7 @@ if ShowFigures
                 'PlotFcn','optimplotresnorm');
 else
     options = optimoptions('lsqcurvefit',...
-                'MaxFunctionEvaluations',6000,...
+                'MaxFunctionEvaluations',7500,...
                 'MaxIterations',50,...
                 'Algorithm','trust-region-reflective',...  %'levenberg-marquardt' 'trust-region-reflective'
                 'OptimalityTolerance',5e-5,...
@@ -211,14 +211,14 @@ end
 % %             'ScaleProblem','jacobian',...
 
 % Build the input structure with the necessary ingredients
-input.Omega         = Omega;
-input.ParamPos      = ParamPos;
-input.PkFunction    = PeaksFunction;
+input_st.Omega         = Omega;
+input_st.ParamPos      = ParamPos;
+input_st.PkFunction    = PeaksFunction;
 
 % Perform the actual fit
 t_start = tic;
 % [fitted_param,resnorm,residuals,exitflag,output_st,lambda,jacobian_fit] = lsqcurvefit(@FitFunction,Start_param,input,ZData,[],[],options);
-[fitted_param,SSR,residuals,exitflag,output_st,~,jacobian_fit] = lsqcurvefit(@FitFunction,Start_param,input,ZData,LB,UB,options);
+[fitted_param,SSR,residuals,exitflag,output_st,~,jacobian_fit] = lsqcurvefit(@FitFunction,Start_param,input_st,ZData,LB,UB,options);
 t_fit   = toc(t_start);
 
 if exitflag >= 0
@@ -236,7 +236,7 @@ else
 end
 
 %% Evaluate the solution
-FitResults = bsxfun(@times,FitFunction(fitted_param,input),reshape(Znormfactor,1,1,[]));
+FitResults = bsxfun(@times,FitFunction(fitted_param,input_st),reshape(Znormfactor,1,1,[]));
 
 % Get the solution parameters
 fitPar.X0           = fitted_param(ParamPos.x0_pos)*1000;
@@ -296,17 +296,17 @@ end
 %% Save the fit results to a file
 try
     filename    = [dataStruct.rootdir filesep dataStruct.datafilename '_FIT_RESULTS.mat'];
-    save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input','FitResults','NormVols','NormErr');
+    save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input_st','FitResults','NormVols','NormErr');
 catch
     filename    = [writepath filesep dataStruct.datafilename '_FIT_RESULTS.mat'];
-    save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input','FitResults','NormVols','NormErr');
+    save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input_st','FitResults','NormVols','NormErr');
 end
 
 %% Save the fit to dataStruct
 dataStruct.FitResults  = FitResults;
 dataStruct.t2_fitrange = t2_fitrange;
 dataStruct.t2_fitdelays= t2delays;
-dataStruct.FitInput    = input;
+dataStruct.FitInput    = input_st;
 
     exitcode = 0;
 
