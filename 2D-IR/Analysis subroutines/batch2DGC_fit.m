@@ -26,6 +26,7 @@ if ~isempty(varargin)
         end
         imp_datapath = imp_datapath';
         Ndatafiles = length(imp_datapath);
+        fclose(fid);
     end
 else
     Nskip   = [];
