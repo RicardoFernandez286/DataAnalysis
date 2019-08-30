@@ -23,8 +23,8 @@ Npeaks      = size(fitparameters,2);
 isDiagonal  = contains(fitparameters(end,:),'Diag');
 
 % Get the W1 and W3 axes
-PumpAxis    = Omega{1}/1000;
-ProbeAxis   = Omega{2}/1000;
+PumpAxis    = Omega{1};
+ProbeAxis   = Omega{2};
 
 % Get the starting parameters (as a cell)
 X0_start    = cellfun(@str2num,fitparameters(1,:),'un',0); % Position along W1
@@ -33,7 +33,7 @@ SX_start    = cellfun(@str2num,fitparameters(3,:),'un',0); % Sigma_x
 SY_start    = cellfun(@str2num,fitparameters(4,:),'un',0); % Sigma_y
 
 % Convert the cells to double arrays
-X0_start    = [X0_start{:}]'/1000;
+X0_start    = [X0_start{:}]';
 Y0_start    = [Y0_start{:}]';
 SX_start    = [SX_start{:}]';
 SY_start    = [SY_start{:}]';
@@ -82,7 +82,7 @@ for m=1:Npeaks
         % Get the starting peak positions (in cm-1) to find later the starting amplitudes
         pump_pos(m)     = X0_start(m);              % W1 position
         probe_pos(m,1)  = X0_start(m);              % W3 position (GSB)
-        probe_pos(m,2)  = X0_start(m)-Y0_start(m)/1000;  % W3 position (ESA)
+        probe_pos(m,2)  = X0_start(m)-Y0_start(m);  % W3 position (ESA)
     else % If it's not a diagonal peak, X0 and Y0 are given by the corresponding diagonal peaks.
         %%% THIS NEEDS TO BE FIXED PROPERLY FOR INTRAMOLECULAR CROSS PEAKS. PENDING
         % Find the diagonal peak with the closest position
@@ -92,18 +92,18 @@ for m=1:Npeaks
         x0_pos(m)           = x0_pos(DiagPkXID(m));
         % The Y position can be either linked to the diagonal peak or another fit parameter
         if Y0_start(m) < 0
-            DiagPkYID(m)        = findClosestId2Val(DiagX,abs(Y0_start(m)/1000));
+            DiagPkYID(m)        = findClosestId2Val(DiagX,abs(Y0_start(m)));
             y0_pos(m)           = y0_pos(DiagPkYID(m));
-            % Get the starting peak positions (in cm-1/1000) to find later the starting amplitudes
+            % Get the starting peak positions (in cm-1) to find later the starting amplitudes
             pump_pos(m)     = X0_start(DiagPkXID(m));                           % W1 position
             probe_pos(m,1)  = X0_start(DiagPkYID(m));                           % W3 position (GSB)
-            probe_pos(m,2)  = X0_start(DiagPkYID(m))-Y0_start(DiagPkYID(m))/1000;    % W3 position (ESA)
+            probe_pos(m,2)  = X0_start(DiagPkYID(m))-Y0_start(DiagPkYID(m));    % W3 position (ESA)
         else 
             y0_pos(m) = tot_idx+1; tot_idx = tot_idx+1;
-            % Get the starting peak positions (in cm-1/1000) to find later the starting amplitudes
+            % Get the starting peak positions (in cm-1) to find later the starting amplitudes
             pump_pos(m)     = X0_start(DiagPkXID(m));                           % W1 position
             probe_pos(m,1)  = X0_start(DiagPkYID(m));                           % W3 position (GSB)
-            probe_pos(m,2)  = X0_start(DiagPkYID(m))-Y0_start(DiagPkYID(m))/1000;    % W3 position (ESA)
+            probe_pos(m,2)  = X0_start(DiagPkYID(m))-Y0_start(DiagPkYID(m));    % W3 position (ESA)
         end
         Sx_pos(m)           = Sx_pos(DiagPkXID(m));
         Sy_pos(m)           = Sy_pos(DiagPkYID(m));
@@ -130,7 +130,7 @@ for m=1:Npeaks
         DiagX               = X0_start;
         DiagX(~isDiagonal)  = NaN;
         DiagPkXID(m)        = findClosestId2Val(DiagX,X0_start(m));
-        DiagPkYID(m)        = findClosestId2Val(DiagX,abs(Y0_start(m)/1000)); % in this case, Y0_start is a position, not a shift
+        DiagPkYID(m)        = findClosestId2Val(DiagX,abs(Y0_start(m))); % in this case, Y0_start is a position, not a shift
         
         % The positions along W1, Sx and Sy are given by the diagonal peaks
         x0_pos(m) = x0_pos(DiagPkXID(m));
@@ -193,7 +193,7 @@ for m=1:Npeaks
             % Check if the anharmonicity is the same as the diagonal peak or if it's a fit parameter
             % (FOR NOW ONLY THE SAME ANHARMONICITY - FREE FIT PARAM TBI)
             XpeakGSB_w3_str = ['P(' num2str(x0_pos(DiagPkYID(m))) ')*1000']; % GSB of the cross peak between A and B is at (x_A,y_B)
-            XpeakESA_w3_str = [XpeakGSB_w3_str '-P(' num2str(y0_pos(DiagPkYID(m))) ')'];
+            XpeakESA_w3_str = [XpeakGSB_w3_str '-P(' num2str(y0_pos(DiagPkYID(m))) ')*1000'];
             
             % Write the function string
             peakfnc{m} = ['G2Dc(X,Y,' XpeakGSB_w1 ','  XpeakGSB_w3_str ',P(' sxstr '),P(' systr '),' Cstring ',A{' peakGSB '}) + G2Dc(X,Y,' XpeakGSB_w1 ',' XpeakESA_w3_str ',P(' sxstr '),P(' s12str '),' Cstring ',A{' peakESA '})'];
@@ -218,13 +218,13 @@ Start_param(Sx_pos(isDiagonal)) = SX_start(isDiagonal);
 Start_param(Sy_pos(isDiagonal)) = SY_start(isDiagonal);
 Start_param(S12_pos(isDiagonal))= SY_start(isDiagonal);
 
-UB(x0_pos(isDiagonal)) = X0_start(isDiagonal)+(25/1000);
-UB(y0_pos(isDiagonal)) = 20;
-UB(Sx_pos(isDiagonal)) = 20;
-UB(Sy_pos(isDiagonal)) = 20;
-UB(S12_pos(isDiagonal))= 20;
+UB(x0_pos(isDiagonal)) = X0_start(isDiagonal)+25;
+UB(y0_pos(isDiagonal)) = 50;
+UB(Sx_pos(isDiagonal)) = 30;
+UB(Sy_pos(isDiagonal)) = 30;
+UB(S12_pos(isDiagonal))= 30;
 
-LB(x0_pos(isDiagonal)) = X0_start(isDiagonal)-(25/1000);
+LB(x0_pos(isDiagonal)) = X0_start(isDiagonal)-25;
 LB(y0_pos(isDiagonal)) = 2;
 LB(Sx_pos(isDiagonal)) = 1;
 LB(Sy_pos(isDiagonal)) = 1;

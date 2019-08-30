@@ -104,7 +104,8 @@ probe_idxrange  = sort(findClosestId2Val(ProbeAxis,probe_range));
 % Get the parameters
 if ShowFigures
     [fitparameters,t2_fitrange,equal_SxSy,diffSyfor12,exitcode] = Gaussian2D_fitparam(string(cut_data),t2delays);
-    writepath = dataStruct.rootdir;
+    writepath   = dataStruct.rootdir;
+    Nskip       = 1;
 else
     % fitparameters, t2_fitrange, equal_SxSy and diffSyfor12 are provided in varargin
     fitparameters   = varargin{2};
@@ -112,6 +113,7 @@ else
     equal_SxSy      = varargin{4};
     diffSyfor12     = varargin{5};
     writepath       = varargin{6};
+    Nskip           = varargin{7};
     exitcode=0;
 end
 
@@ -132,9 +134,9 @@ PROC_2D_DATA    = PROC_2D_DATA(t2delays>=t2_fitrange(1),:);
 t2delays        = t2delays(t2delays>=t2_fitrange(1) & t2delays<=t2_fitrange(2));
 Ndelays         = length(t2delays);
 
-Nskip = 0;
 if dataStruct.isSimulation == 1 && Nskip > 0
-    indices         = 1:Nskip:Ndelays;
+    indices         = [1:Nskip:Ndelays Ndelays];
+    indices         = unique(indices,'sorted');
     PROC_2D_DATA    = PROC_2D_DATA(indices,:);
     t2delays        = t2delays(indices);
     Ndelays         = length(t2delays);
@@ -232,7 +234,7 @@ end
 FitResults = bsxfun(@times,FitFunction(fitted_param,input),reshape(Znormfactor,1,1,[]));
 
 % Get the solution parameters
-fitPar.X0           = fitted_param(ParamPos.x0_pos);
+fitPar.X0           = fitted_param(ParamPos.x0_pos)*1000;
 fitPar.Anharm       = fitted_param(ParamPos.y0_pos);
 fitPar.Y0           = fitted_param(ParamPos.x0_pos)-fitted_param(ParamPos.y0_pos);
 fitPar.Sx           = fitted_param(ParamPos.Sx_pos);
@@ -247,7 +249,7 @@ fitPar.Amps(:,:,2)  = fitted_param(ParamPos.ESAamp_pos).*Znormfactor;
 fitPar_CI = zeros(length(fitted_param),2);
 fitted_err= (fitPar_CI(:,2)-fitPar_CI(:,1))./2;
 
-fitErr.X0           = fitted_err(ParamPos.x0_pos);
+fitErr.X0           = fitted_err(ParamPos.x0_pos)*1000;
 fitErr.Anharm       = fitted_err(ParamPos.y0_pos);
 fitErr.Y0           = fitted_err(ParamPos.x0_pos)+fitted_err(ParamPos.y0_pos);
 fitErr.Sx           = fitted_err(ParamPos.Sx_pos);

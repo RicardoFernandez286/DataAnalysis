@@ -1,4 +1,4 @@
-function batch2DGC_fit(rootfolder,fitType)
+function batch2DGC_fit(rootfolder,fitType,varargin)
 %% Define startup variables
 % rootfolder  = '/home/group/Ricardo/Dimer - distance 1';
 % fitType     = 'Test'; % 'Ricardo' or 'Andrea'
@@ -9,6 +9,12 @@ foldernames = {folderlist.name}';
 foldernames = foldernames([folderlist.isdir]);
 foldernames = foldernames(3:end);
 Ndatafiles  = length(foldernames);
+
+if ~isempty(varargin)
+    Nskip   = varargin{1};
+else
+    Nskip   = [];
+end
 
 %% Loop through the folders: Load, process and fit all the spectra
 for i=1:Ndatafiles
@@ -40,17 +46,12 @@ for i=1:Ndatafiles
     %%% Get the (default) fit parameters
     switch fitType
         case 'Ricardo'
-            switch dataType
-            case 'Simulation'
-                cut_data = 'Use probe axis';
-            case 'Experiment'
-                cut_data = 'Re1213 VET';
-            end
+            cut_data = 'Re1213 VET';
             fitparameters =    ...
            [{'1979'}    {'2028'}    {'1979' }    {'2028'  }
-            {'11'  }    {'11'  }    {'-2028'}    {'-1979' }
-            {'10'  }    {'10'  }    {'-1'   }    {'-1'    }
-            {'10'  }    {'10'  }    {'-1'   }    {'-1'    }
+            {'10'  }    {'10'  }    {'-2028'}    {'-1979' }
+            {'8'   }    {'8'   }    {'-1'   }    {'-1'    }
+            {'8'   }    {'8'   }    {'-1'   }    {'-1'    }
             {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
             {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
             t2_fitrange = [0.1 max(dataStruct.t2delays)];
@@ -106,9 +107,11 @@ for i=1:Ndatafiles
     %%% Do the fit
     try
         disp([datestr(now,-1) ': ' 'Starting fit of ' foldernames{i} ' ...']);
-        [dataStruct,~] = Gaussian2D_analysis(app,dataStruct,cut_data,fitparameters,t2_fitrange,equal_SxSy,diffSyfor12,writepath);
+        [dataStruct,~] = Gaussian2D_analysis(app,dataStruct,cut_data,fitparameters,t2_fitrange,equal_SxSy,diffSyfor12,writepath,Nskip);
     catch
         disp([datestr(now,-1) ': ' 'Error fitting ' foldernames{i} ' ...']);
         continue
     end
 end
+
+exit

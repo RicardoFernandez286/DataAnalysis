@@ -4,10 +4,12 @@
 % subdir      = 'Dilution with CNBzCOOH - New';
 % subdir = 'New';
 
-scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Simulations\Data - small mol\NEW TESTS';
-subdir    = 'Dilution with Re18';
+% scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Simulations\Data - small mol\NEW TESTS';
 
-plotWhat    = 'Xpeak ESA'; % Xpeak or Diag + GSB/ESA
+scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Dimer_distance1';
+subdir    = 'FitResults';
+
+plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
 plotFormat  = 'Horizontal'; % 'Horizontal' or 'Vertical'
 concType    = '100-%'; % '100-%' or '%'
 diluent     = 'Re(^{13}C^{18}O)'; % 'Re(^{13}C^{18}O)'
@@ -94,7 +96,7 @@ for i=1:Nconc
     VoumeData_ESA{i} = NormVols(:,:,2);
     
     if isnan(ConcPercent(i))
-%         decay = 3*(0.5*exp(-t2delays./5) + 0.7*exp(-t2delays./20));
+%         decay = 1*(0.5*exp(-t2delays./5) + 0.7*exp(-t2delays./20))/1.2;
         decay = ones(length(t2delays),1);
         line_up = ':';
         line_dw = ':';
