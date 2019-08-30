@@ -4,25 +4,40 @@ function batch2DGC_fit(rootfolder,fitType,varargin)
 % fitType     = 'Test'; % 'Ricardo' or 'Andrea'
 
 %% Start parallel pool (if none exists)
-if isempty(gcp('nocreate'))
-   parpool;
-end
+% if isempty(gcp('nocreate'))
+%    parpool;
+% end
 
 %% Build list of (sub)folders, which contain the data
-folderlist  = dir(rootfolder);
-foldernames = {folderlist.name}';
-foldernames = foldernames([folderlist.isdir]);
+folderslist  = dir(rootfolder);
+foldernames = {folderslist.name}';
+foldernames = foldernames([folderslist.isdir]);
 foldernames = foldernames(3:end);
 Ndatafiles  = length(foldernames);
 
 if ~isempty(varargin)
     Nskip   = varargin{1};
+    if length(varargin) > 1
+        fid = fopen(varargin{2});
+        j=0;
+        while ~feof(fid)
+            j=j+1;
+            imp_datapath{j} = fgetl(fid);
+        end
+        imp_datapath = imp_datapath';
+        Ndatafiles = length(imp_datapath);
+    end
 else
     Nskip   = [];
 end
 
 %% Loop through the folders: Load, process and fit all the spectra
 for i=1:Ndatafiles
+    if length(varargin) > 1
+        [rootfolder,foldernames{i}] = fileparts(imp_datapath{i});
+        rootfolder = ['/home/group/' rootfolder];
+    end
+
     %%% Determine the data type
     if exist([rootfolder filesep foldernames{i} filesep 'spec_2D.dat'],'file') ~= 0
         dataType                = 'Simulation';
@@ -112,11 +127,11 @@ for i=1:Ndatafiles
     %%% Do the fit
     try
         disp([datestr(now,-1) ': ' 'Starting fit of ' foldernames{i} ' ...']);
-        [dataStruct,~] = Gaussian2D_analysis(app,dataStruct,cut_data,fitparameters,t2_fitrange,equal_SxSy,diffSyfor12,writepath,Nskip);
+%         [dataStruct,~] = Gaussian2D_analysis(app,dataStruct,cut_data,fitparameters,t2_fitrange,equal_SxSy,diffSyfor12,writepath,Nskip);
     catch
         disp([datestr(now,-1) ': ' 'Error fitting ' foldernames{i} ' ...']);
         continue
     end
 end
 
-exit
+% exit
