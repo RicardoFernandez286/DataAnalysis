@@ -4,9 +4,9 @@ function batch2DGC_fit(rootfolder,fitType,varargin)
 % fitType     = 'Test'; % 'Ricardo' or 'Andrea'
 
 %% Start parallel pool (if none exists)
-% if isempty(gcp('nocreate'))
-%    parpool;
-% end
+if isempty(gcp('nocreate'))
+   parpool;
+end
 
 %% Build list of (sub)folders, which contain the data
 folderslist  = dir(rootfolder);
@@ -128,11 +128,11 @@ for i=1:Ndatafiles
     %%% Do the fit
     try
         disp([datestr(now,-1) ': ' 'Starting fit of ' foldernames{i} ' ...']);
-%         [dataStruct,~] = Gaussian2D_analysis(app,dataStruct,cut_data,fitparameters,t2_fitrange,equal_SxSy,diffSyfor12,writepath,Nskip);
+        [dataStruct,~] = Gaussian2D_analysis(app,dataStruct,cut_data,fitparameters,t2_fitrange,equal_SxSy,diffSyfor12,writepath,Nskip);
     catch
         disp([datestr(now,-1) ': ' 'Error fitting ' foldernames{i} ' ...']);
         continue
     end
 end
 
-% exit
+exit
