@@ -1,7 +1,12 @@
 function batch2DGC_fit(rootfolder,fitType,varargin)
 %% Define startup variables
-% rootfolder  = '/home/group/Ricardo/Dimer - distance 1';
+% rootfolder  = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Dimer_distance1';
 % fitType     = 'Test'; % 'Ricardo' or 'Andrea'
+
+%% Start parallel pool (if none exists)
+if isempty(gcp('nocreate'))
+   parpool;
+end
 
 %% Build list of (sub)folders, which contain the data
 folderlist  = dir(rootfolder);
@@ -114,4 +119,4 @@ for i=1:Ndatafiles
     end
 end
 
-exit
+% exit

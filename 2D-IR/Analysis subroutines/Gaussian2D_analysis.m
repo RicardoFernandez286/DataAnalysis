@@ -113,7 +113,12 @@ else
     equal_SxSy      = varargin{4};
     diffSyfor12     = varargin{5};
     writepath       = varargin{6};
-    Nskip           = varargin{7};
+    if isempty(varargin{7})
+        Nskip   = 1;
+    else
+        Nskip   = varargin{7};
+    end
+    
     exitcode=0;
 end
 
