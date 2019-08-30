@@ -1,7 +1,7 @@
 %% Get a list of MAT files
-% scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\8) 2D IR distance - na\Data';
+% scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Data\Original fits\';
 % subdir      = 'Dilution with Re18 - New';
-% subdir      = 'Dilution with CNBzCOOH - New';
+% subdir      = 'Dilution with CNBzCOOH';
 % subdir = 'New';
 
 % scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Simulations\Data - small mol\NEW TESTS';
@@ -9,13 +9,13 @@
 scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Dimer_distance1';
 subdir    = 'FitResults_new';
 
-plotWhat    = 'Xpeak GSB'; % Xpeak or Diagonal + GSB/ESA
-plotFormat  = 'Horizontal'; % 'Horizontal' or 'Vertical'
-concType    = '100-%'; % '100-%' or '%'
+plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
+plotFormat  = 'Vertical'; % 'Horizontal' or 'Vertical'
+concType    = '%'; % '100-%' or '%'
 diluent     = 'Re(^{13}C^{18}O)'; % 'Re(^{13}C^{18}O)'
 
 % diluent     = 'Re(^{13}C^{18}O)';
-xpos        = 0.1; % 1.02 for CNBz, 0.1 horizontal
+xpos        = 1.0; % 1.02 for CNBz, 0.1 horizontal
 
 filelist    = dir([scriptdir filesep subdir]);
 
@@ -67,15 +67,6 @@ cmBW = colormap(ax_BW,othercolor('Mrainbow',Nconc));
 % cmFW = colormap(ax_FW,flip(othercolor('Blues3',Nconc)));
 % cmBW = colormap(ax_BW,flip(othercolor('Reds3',Nconc)));
 
-switch plotFormat
-    case 'Vertical'
-        text(ax_BW,xpos,0.94,['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized')
-        plot(ax_BW,NaN,NaN,'.','Color','w','DisplayName','')
-        text(ax_FW,xpos,0.94,['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized')
-        plot(ax_FW,NaN,NaN,'.','Color','w','DisplayName','')
-    case 'Horizontal'
-        text(ax_FW,xpos,1.2,['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized')
-end
 %% Read the MAT files one by one and store the results in a cell array
 % Read the concentrations and sort them in ascending order
 for i=1:Nconc
@@ -96,7 +87,7 @@ for i=1:Nconc
     VoumeData_ESA{i} = NormVols(:,:,2);
     
     if isnan(ConcPercent(i))
-        decay = 1*(0.1*exp(-t2delays./5) + 0.7*exp(-t2delays./40))/1.2;
+        decay = 1*(0.15*exp(-t2delays./5) + 0.85*exp(-t2delays./20))/1.2;
 %         decay = ones(length(t2delays),1);
         line_up = ':';
         line_dw = ':';
@@ -116,8 +107,8 @@ for i=1:Nconc
             plot(ax_FW,t2delays,NormVols(:,3,1).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
             plot(ax_BW,t2delays,NormVols(:,4,1).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
             
-            plot(ax_FW,t2delays,NormVols(:,3,1),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,NormVols(:,4,1),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+%             plot(ax_FW,t2delays,NormVols(:,3,1),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
+%             plot(ax_BW,t2delays,NormVols(:,4,1),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
         case 'Diagonal ESA'
             plot(ax_FW,t2delays,NormVols(:,1,2).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
             plot(ax_BW,t2delays,NormVols(:,2,2).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
@@ -125,8 +116,8 @@ for i=1:Nconc
             plot(ax_FW,t2delays,NormVols(:,3,2).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
             plot(ax_BW,t2delays,NormVols(:,4,2).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
             
-            plot(ax_FW,t2delays,NormVols(:,3,2),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,NormVols(:,4,2),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+%             plot(ax_FW,t2delays,NormVols(:,3,2),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
+%             plot(ax_BW,t2delays,NormVols(:,4,2),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
             %             pepita(i) = NormVols(15,3,2)+NormVols(14,3,2); % WAS 3 AND 4
     end
     switch concType
@@ -203,15 +194,20 @@ hline_BW = yline(ax_BW,0,'HandleVisibility','off'); hline_BW.Color = [0.5 0.5 0.
 % Legends
 switch plotFormat
     case 'Vertical'
-        leg_BW = legend(ax_BW,'show');
-        legend(ax_BW,'boxoff','FontWeight','bold')
-        legend(ax_BW,'location','eastoutside')
+        text(ax_FW,xpos,0.94,['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized')
+        plot(ax_FW,NaN,NaN,'.','Color','w','DisplayName','')
+%         text(ax_BW,xpos,0.94,['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized')
+%         plot(ax_BW,NaN,NaN,'.','Color','w','DisplayName','')
+%         leg_BW = legend(ax_BW,'show');
+%         legend(ax_BW,'boxoff','FontWeight','bold')
+%         legend(ax_BW,'location','eastoutside')
+%         leg_BW.ItemTokenSize = [20,10];
         leg_FW = legend(ax_FW,'show');
         legend(ax_FW,'boxoff','FontWeight','bold')
-        legend(ax_FW,'location','eastoutside')
+        legend(ax_FW,'location','bestoutside')
         leg_FW.ItemTokenSize = [20,10];
-        leg_BW.ItemTokenSize = [20,10];
     case 'Horizontal'
+        text(ax_FW,xpos,1.2,['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized')
         leg_FW = legend(ax_FW,'show');
         legend(ax_FW,'boxoff')
         legend(ax_FW,'FontWeight','bold')

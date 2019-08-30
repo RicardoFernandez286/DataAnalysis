@@ -86,11 +86,10 @@ for k=1:Nplots
         dataStruct.Transient2D      = 0;
         % Read the fit results
         load([fitfolder filesep foldernames{i} '_FIT_RESULTS.mat']);
-        input_st = load([fitfolder filesep foldernames{i} '_FIT_RESULTS.mat'],'input');
         dataStruct.FitResults   = FitResults;
         dataStruct.t2_fitrange  = minmax(dataStruct.t2delays');
         dataStruct.t2_fitdelays = t2delays;
-        dataStruct.FitInput     = input_st.input;
+        dataStruct.FitInput     = input_st;
         % Do the plot
         ContourPlot_2DIR(plotOptions,dataStruct,ax);
         title(ax,foldernames{i},'interpreter','none');
