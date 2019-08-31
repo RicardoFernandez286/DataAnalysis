@@ -122,7 +122,7 @@ for i=1:Ndatafiles
     switch dataType
         case 'Experiment'
             disp([datestr(now,-1) ': ' 'Processing ' foldernames{i} ' ...']);
-            app.I2D_AutocalibrateprobeaxisCheckBox.Value = 1;
+            app.I2D_AutocalibrateprobeaxisCheckBox.Value = 0;
             dataStruct = process2DIR(app,dataStruct,0,'NoWaitBar');
     end
 

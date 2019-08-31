@@ -2,11 +2,11 @@ function CheckFitResults(plotDelay)
 %% Define startup variables
 % rootfolder  = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Dimer_distance1';
 % fitfolder   = [rootfolder filesep 'FitResults_new'];
-rootfolder  = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\RESULTS\2D-IR\Lab 4\Second round\20181002';
-fitfolder   = rootfolder;
+rootfolder  = '\\idnetapp-chem.uzh.ch\g_chem_hamm$\Group\Andrea\AUGUST';
+fitfolder   = [rootfolder filesep 'FitResults'];
 
 plotDelay       = 20;
-multiPlot       = 0;
+multiPlot       = 1;
 plotResiduals   = 0;
 
 %% Build list of (sub)folders, which contain the data
