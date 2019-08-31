@@ -1,8 +1,6 @@
 %% Get a list of MAT files
-scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\PROJECTS\Ionic Liquids\Results Lab 1 Andrea';
-subdir      = 'LAST BATCH MAY 19';
-% subdir      = 'Dilution with CNBzCOOH';
-% subdir = 'New';
+scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Data\New fits';
+subdir      = 'Andrea';
 
 plotWhat    = 'Xpeak GSB + C(t)'; 
 % plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
@@ -77,7 +75,7 @@ end
 % Read the concentrations and sort them in ascending order
 for i=1:Nconc
     nameparts       = split(names{i},'_');
-    ConcPercent(i)  = str2double(erase(nameparts{3},'w'));
+    ConcPercent(i)  = str2double(erase(nameparts{4},'w'));
 end
 
 [ConcPercent,idx]   = sort(ConcPercent,'descend');
@@ -109,6 +107,10 @@ for i=1:Nconc
         case 'Xpeak GSB + C(t)'
             plot(ax_BW,t2delays,fitPar.C(:,1),'^-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
             plot(ax_FW,t2delays,NormVols(:,4,1),'v-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+            pepita(i) = fitPar.C(4,1);
+        case 'Xpeak ESA + C(t)'
+            plot(ax_BW,t2delays,fitPar.C(:,1),'^-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
+            plot(ax_FW,t2delays,NormVols(:,4,2),'v-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
             pepita(i) = fitPar.C(4,1);
     end
     switch concType

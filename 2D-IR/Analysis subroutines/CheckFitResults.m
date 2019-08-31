@@ -1,10 +1,12 @@
 function CheckFitResults(plotDelay)
 %% Define startup variables
-rootfolder  = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Dimer_distance1';
-fitfolder   = [rootfolder filesep 'FitResults_new'];
+% rootfolder  = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Dimer_distance1';
+% fitfolder   = [rootfolder filesep 'FitResults_new'];
+rootfolder  = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\RESULTS\2D-IR\Lab 4\Second round\20181002';
+fitfolder   = rootfolder;
 
 plotDelay       = 20;
-multiPlot       = 1;
+multiPlot       = 0;
 plotResiduals   = 0;
 
 %% Build list of (sub)folders, which contain the data
@@ -57,6 +59,10 @@ for k=1:Nplots
             disp([datestr(now,-1) ': ' 'Loading dataset ' foldernames{i} ' [Experiment]']);
             dataStruct.Transient2D = 0;
             dataStruct = load2DIRlab1(dataStruct,'NoWaitBar');
+            load([fileparts(mfilename('fullpath')) filesep 'defaultGUI.mat']);
+            disp([datestr(now,-1) ': ' 'Processing ' foldernames{i} ' ...']);
+            app.I2D_AutocalibrateprobeaxisCheckBox.Value = 1;
+            dataStruct = process2DIR(app,dataStruct,0,'NoWaitBar');
     end
 
     %%% Load the fit results .MAT file
@@ -89,7 +95,12 @@ for k=1:Nplots
         dataStruct.FitResults   = FitResults;
         dataStruct.t2_fitrange  = minmax(dataStruct.t2delays');
         dataStruct.t2_fitdelays = t2delays;
-        dataStruct.FitInput     = input_st;
+        if exist('input','var') == 1
+            input_st = load([fitfolder filesep foldernames{i} '_FIT_RESULTS.mat'],'input');
+            dataStruct.FitInput     = input_st.input;
+        else    
+            dataStruct.FitInput     = input_st;
+        end
         % Do the plot
         ContourPlot_2DIR(plotOptions,dataStruct,ax);
         title(ax,foldernames{i},'interpreter','none');
