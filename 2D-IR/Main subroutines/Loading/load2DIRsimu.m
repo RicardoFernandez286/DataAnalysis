@@ -87,7 +87,37 @@ end
     dataStruct.t1delays      = []; % in fs!
     dataStruct.Nscans        = 1;
 
-%% WRITE to dataStruct (Process)
+%% Read surface trajectories
+    % Read the first line
+    trajectInfo     = readmatrix([rootdir filesep datafilename filesep 'trajectory.dat'],'Range',[1 1 1 4]);
+    switch length(trajectInfo)
+        case 4
+            version = 2;
+        case 3
+            version = 1;
+    end
+    % Read the rest
+    trajectData_2D  = readmatrix([rootdir filesep datafilename filesep 'trajectory.dat'],'NumHeaderLines',1);
+    Nmolecules      = trajectInfo(1);
+    Nsamples        = size(trajectData_2D,1)/Nmolecules;
+    Radius_LJ_Re    = trajectInfo(2)/(2*2^(1/6));
+    switch version
+        case 1
+            Radius_LJ_CN    = 1;
+            Rbox            = trajectInfo(3);
+            trajectData_3D  = zeros(Nmolecules,6,Nsamples);
+        case 2
+            Radius_LJ_CN    = trajectInfo(3)/(2*2^(1/6));
+            Rbox            = trajectInfo(4);
+            trajectData_3D  = zeros(Nmolecules,7,Nsamples);
+    end
+    for i=0:Nsamples-1
+        start_id    = i*Nmolecules+1;
+        end_id      = (i+1)*Nmolecules;
+        trajectData_3D(:,:,i+1)   = trajectData_2D(start_id:end_id,:);
+    end
+    
+%% WRITE to dataStruct (Process 2D-IR)
     dataStruct.ProbeAxis           = W3;
     dataStruct.freq_fit            = [];
     dataStruct.scattering_maxima   = [];
@@ -116,6 +146,19 @@ dataStruct.FitResults    = [];
 dataStruct.t2_startFit   = [];
 dataStruct.FitInput      = [];
 
+%% WRITE to simData structure (Surface trajectories)
+simData.version				= version;
+simData.trajectInfo			= trajectInfo;
+simData.trajectData_2D		= trajectData_2D;
+simData.trajectData_3D 		= trajectData_3D;
+simData.Nmolecules			= Nmolecules;
+simData.Nsamples			= Nsamples;
+simData.Radius_LJ_Re		= Radius_LJ_Re;
+simData.Radius_LJ_CN		= Radius_LJ_CN;
+simData.Rbox				= Rbox;
+
+%% Write the simData structure to dataStruct
+dataStruct.simData = simData;
 
 else
     error('Not a valid 2D-IR dataset: empty folder or corrupt data')

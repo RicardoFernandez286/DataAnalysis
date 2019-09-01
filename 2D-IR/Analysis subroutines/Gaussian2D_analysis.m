@@ -164,152 +164,151 @@ ProbeAxis           = ProbeAxis(probe_idxrange(1):probe_idxrange(2));
 Omega               = {PumpAxis;ProbeAxis};
 
 try
-% Parse the input into a fit function, calculate starting parameters and limits for the fit
-[PeaksFunction,Start_param,UB,LB,ParamPos] = parse_2DGC_input(fitparameters,equal_SxSy,diffSyfor12,Ndelays,Omega,ZData);
+    % Parse the input into a fit function, calculate starting parameters and limits for the fit
+    [PeaksFunction,Start_param,UB,LB,ParamPos] = parse_2DGC_input(fitparameters,equal_SxSy,diffSyfor12,Ndelays,Omega,ZData);
 
-%% DO the fit
-% Ensure there are no zeros in the Start_param
-TypicalX                = Start_param;
-TypicalX(TypicalX==0)   = TypicalX(Start_param==0) + eps;
+    %% DO the fit
+    % Ensure there are no zeros in the Start_param
+    TypicalX                = Start_param;
+    TypicalX(TypicalX==0)   = TypicalX(Start_param==0) + eps;
 
-if ShowFigures
-    options = optimoptions('lsqcurvefit',...
-                'MaxFunctionEvaluations',6500,...
-                'MaxIterations',50,...
-                'Algorithm','trust-region-reflective',...  %'levenberg-marquardt' 'trust-region-reflective'
-                'OptimalityTolerance',5e-5,...
-                'FunctionTolerance',5e-5,...
-                'StepTolerance',5e-5,...
-                'UseParallel',true,...
-                'TypicalX',TypicalX,...
-                'SubproblemAlgorithm','factorization',...
-                'PlotFcn','optimplotresnorm');
-else
-    options = optimoptions('lsqcurvefit',...
-                'MaxFunctionEvaluations',7500,...
-                'MaxIterations',50,...
-                'Algorithm','trust-region-reflective',...  %'levenberg-marquardt' 'trust-region-reflective'
-                'OptimalityTolerance',5e-5,...
-                'FunctionTolerance',5e-5,...
-                'StepTolerance',5e-5,...
-                'UseParallel',true,...
-                'TypicalX',Start_param,...
-                'Display','off',...
-                'SubproblemAlgorithm','factorization');
-end
-    
-% options = optimoptions('lsqcurvefit',...
-%             'MaxFunctionEvaluations',5000,...
-%             'MaxIterations',10,...
-%             'Algorithm','levenberg-marquardt',...  %'levenberg-marquardt' 'trust-region-reflective'
-%             'OptimalityTolerance',1e-5,...
-%             'FunctionTolerance',1e-5,...
-%             'StepTolerance',1e-4,...
-%             'PlotFcn','optimplotresnorm',...
-%             'UseParallel',true,...
-%             'TypicalX',Start_param);
-% %             'ScaleProblem','jacobian',...
-
-% Build the input structure with the necessary ingredients
-input_st.Omega         = Omega;
-input_st.ParamPos      = ParamPos;
-input_st.PkFunction    = PeaksFunction;
-
-% Perform the actual fit
-t_start = tic;
-% [fitted_param,resnorm,residuals,exitflag,output_st,lambda,jacobian_fit] = lsqcurvefit(@FitFunction,Start_param,input,ZData,[],[],options);
-[fitted_param,SSR,residuals,exitflag,output_st,~,jacobian_fit] = lsqcurvefit(@FitFunction,Start_param,input_st,ZData,LB,UB,options);
-t_fit   = toc(t_start);
-
-if exitflag >= 0
     if ShowFigures
-        msgbox({['Fit completed in ' num2str(t_fit,'%.4g') ' seconds.'];[];['SSR = ' num2str(SSR,'%.5g')];['Iterations = ' num2str(output_st.iterations)];['Func. evals. = ' num2str(output_st.funcCount)];['Step size = ' num2str(output_st.stepsize)]},'Fit completed!','help');
+        options = optimoptions('lsqcurvefit',...
+                    'MaxFunctionEvaluations',6500,...
+                    'MaxIterations',50,...
+                    'Algorithm','trust-region-reflective',...  %'levenberg-marquardt' 'trust-region-reflective'
+                    'OptimalityTolerance',5e-5,...
+                    'FunctionTolerance',5e-5,...
+                    'StepTolerance',5e-5,...
+                    'UseParallel',true,...
+                    'TypicalX',TypicalX,...
+                    'SubproblemAlgorithm','factorization',...
+                    'PlotFcn','optimplotresnorm');
     else
-        disp({['Fit completed in ' num2str(t_fit,'%.4g') ' seconds.'];['SSR = ' num2str(SSR,'%.5g')];['Iterations = ' num2str(output_st.iterations)];['Func. evals. = ' num2str(output_st.funcCount)];['Step size = ' num2str(output_st.stepsize)]});
+        options = optimoptions('lsqcurvefit',...
+                    'MaxFunctionEvaluations',7500,...
+                    'MaxIterations',50,...
+                    'Algorithm','trust-region-reflective',...  %'levenberg-marquardt' 'trust-region-reflective'
+                    'OptimalityTolerance',5e-5,...
+                    'FunctionTolerance',5e-5,...
+                    'StepTolerance',5e-5,...
+                    'UseParallel',true,...
+                    'TypicalX',Start_param,...
+                    'Display','off',...
+                    'SubproblemAlgorithm','factorization');
     end
-else
-    if ShowFigures
-        msgbox('Error in the fit! Please check all parameters','Error during fit','error');
+
+    % options = optimoptions('lsqcurvefit',...
+    %             'MaxFunctionEvaluations',5000,...
+    %             'MaxIterations',10,...
+    %             'Algorithm','levenberg-marquardt',...  %'levenberg-marquardt' 'trust-region-reflective'
+    %             'OptimalityTolerance',1e-5,...
+    %             'FunctionTolerance',1e-5,...
+    %             'StepTolerance',1e-4,...
+    %             'PlotFcn','optimplotresnorm',...
+    %             'UseParallel',true,...
+    %             'TypicalX',Start_param);
+    % %             'ScaleProblem','jacobian',...
+
+    % Build the input structure with the necessary ingredients
+    input_st.Omega         = Omega;
+    input_st.ParamPos      = ParamPos;
+    input_st.PkFunction    = PeaksFunction;
+
+    % Perform the actual fit
+    t_start = tic;
+    % [fitted_param,resnorm,residuals,exitflag,output_st,lambda,jacobian_fit] = lsqcurvefit(@FitFunction,Start_param,input,ZData,[],[],options);
+    [fitted_param,SSR,residuals,exitflag,output_st,~,jacobian_fit] = lsqcurvefit(@FitFunction,Start_param,input_st,ZData,LB,UB,options);
+    t_fit   = toc(t_start);
+
+    if exitflag >= 0
+        if ShowFigures
+            msgbox({['Fit completed in ' num2str(t_fit,'%.4g') ' seconds.'];[];['SSR = ' num2str(SSR,'%.5g')];['Iterations = ' num2str(output_st.iterations)];['Func. evals. = ' num2str(output_st.funcCount)];['Step size = ' num2str(output_st.stepsize)]},'Fit completed!','help');
+        else
+            disp({['Fit completed in ' num2str(t_fit,'%.4g') ' seconds.'];['SSR = ' num2str(SSR,'%.5g')];['Iterations = ' num2str(output_st.iterations)];['Func. evals. = ' num2str(output_st.funcCount)];['Step size = ' num2str(output_st.stepsize)]});
+        end
     else
-        disp('Error in the fit! Please check all parameters');
+        if ShowFigures
+            msgbox('Error in the fit! Please check all parameters','Error during fit','error');
+        else
+            disp('Error in the fit! Please check all parameters');
+        end
     end
-end
 
-%% Evaluate the solution
-FitResults = bsxfun(@times,FitFunction(fitted_param,input_st),reshape(Znormfactor,1,1,[]));
+    %% Evaluate the solution
+    FitResults = bsxfun(@times,FitFunction(fitted_param,input_st),reshape(Znormfactor,1,1,[]));
 
-% Get the solution parameters
-fitPar.X0           = fitted_param(ParamPos.x0_pos)*1000;
-fitPar.Anharm       = fitted_param(ParamPos.y0_pos);
-fitPar.Y0           = fitted_param(ParamPos.x0_pos)-fitted_param(ParamPos.y0_pos);
-fitPar.Sx           = fitted_param(ParamPos.Sx_pos);
-fitPar.Sy           = fitted_param(ParamPos.Sy_pos);
-fitPar.S12          = fitted_param(ParamPos.S12_pos);
-fitPar.C            = fitted_param(ParamPos.C_pos(:,ParamPos.isDiagonal));
-fitPar.Amps(:,:,1)  = fitted_param(ParamPos.GSBamp_pos).*Znormfactor;
-fitPar.Amps(:,:,2)  = fitted_param(ParamPos.ESAamp_pos).*Znormfactor;
+    % Get the solution parameters
+    fitPar.X0           = fitted_param(ParamPos.x0_pos)*1000;
+    fitPar.Anharm       = fitted_param(ParamPos.y0_pos);
+    fitPar.Y0           = fitted_param(ParamPos.x0_pos)-fitted_param(ParamPos.y0_pos);
+    fitPar.Sx           = fitted_param(ParamPos.Sx_pos);
+    fitPar.Sy           = fitted_param(ParamPos.Sy_pos);
+    fitPar.S12          = fitted_param(ParamPos.S12_pos);
+    fitPar.C            = fitted_param(ParamPos.C_pos(:,ParamPos.isDiagonal));
+    fitPar.Amps(:,:,1)  = fitted_param(ParamPos.GSBamp_pos).*Znormfactor;
+    fitPar.Amps(:,:,2)  = fitted_param(ParamPos.ESAamp_pos).*Znormfactor;
 
-% Calculate the errors of the fitted parameters
-% fitPar_CI = nlparci(fitted_param,residuals,'jacobian',jacobian_fit);
-fitPar_CI = zeros(length(fitted_param),2);
-fitted_err= (fitPar_CI(:,2)-fitPar_CI(:,1))./2;
+    % Calculate the errors of the fitted parameters
+    % fitPar_CI = nlparci(fitted_param,residuals,'jacobian',jacobian_fit);
+    fitPar_CI = zeros(length(fitted_param),2);
+    fitted_err= (fitPar_CI(:,2)-fitPar_CI(:,1))./2;
 
-fitErr.X0           = fitted_err(ParamPos.x0_pos)*1000;
-fitErr.Anharm       = fitted_err(ParamPos.y0_pos);
-fitErr.Y0           = fitted_err(ParamPos.x0_pos)+fitted_err(ParamPos.y0_pos);
-fitErr.Sx           = fitted_err(ParamPos.Sx_pos);
-fitErr.Sy           = fitted_err(ParamPos.Sy_pos);
-fitErr.S12          = fitted_err(ParamPos.S12_pos);
-fitErr.C            = fitted_err(ParamPos.C_pos(:,ParamPos.isDiagonal));
-fitErr.Amps(:,:,1)  = fitted_err(ParamPos.GSBamp_pos).*Znormfactor;
-fitErr.Amps(:,:,2)  = fitted_err(ParamPos.ESAamp_pos).*Znormfactor;
+    fitErr.X0           = fitted_err(ParamPos.x0_pos)*1000;
+    fitErr.Anharm       = fitted_err(ParamPos.y0_pos);
+    fitErr.Y0           = fitted_err(ParamPos.x0_pos)+fitted_err(ParamPos.y0_pos);
+    fitErr.Sx           = fitted_err(ParamPos.Sx_pos);
+    fitErr.Sy           = fitted_err(ParamPos.Sy_pos);
+    fitErr.S12          = fitted_err(ParamPos.S12_pos);
+    fitErr.C            = fitted_err(ParamPos.C_pos(:,ParamPos.isDiagonal));
+    fitErr.Amps(:,:,1)  = fitted_err(ParamPos.GSBamp_pos).*Znormfactor;
+    fitErr.Amps(:,:,2)  = fitted_err(ParamPos.ESAamp_pos).*Znormfactor;
 
-% Calculate the amplitude-to-volume conversion factor (including C)
-corrterm                        = zeros(Ndelays,ParamPos.Npeaks);
-corrterm(:,ParamPos.isDiagonal) = fitted_param(ParamPos.C_pos(:,ParamPos.isDiagonal));
-corrterm                        = sqrt(1-corrterm.^2);
+    % Calculate the amplitude-to-volume conversion factor (including C)
+    corrterm                        = zeros(Ndelays,ParamPos.Npeaks);
+    corrterm(:,ParamPos.isDiagonal) = fitted_param(ParamPos.C_pos(:,ParamPos.isDiagonal));
+    corrterm                        = sqrt(1-corrterm.^2);
 
-fitPar.Vols(:,:,1)  = fitPar.Amps(:,:,1).*corrterm;
-fitPar.Vols(:,:,2)  = fitPar.Amps(:,:,2).*corrterm;
-fitErr.Vols(:,:,1)  = fitErr.Amps(:,:,1).*corrterm;
-fitErr.Vols(:,:,2)  = fitErr.Amps(:,:,2).*corrterm;
+    fitPar.Vols(:,:,1)  = fitPar.Amps(:,:,1).*corrterm;
+    fitPar.Vols(:,:,2)  = fitPar.Amps(:,:,2).*corrterm;
+    fitErr.Vols(:,:,1)  = fitErr.Amps(:,:,1).*corrterm;
+    fitErr.Vols(:,:,2)  = fitErr.Amps(:,:,2).*corrterm;
 
-if Npeaks == 4
-    % Normalize the data in the "usual" way
-    NormVols(:,[1 3],1) = -fitPar.Vols(:,[1 3],1)./max(abs(fitPar.Vols(:,1,1)));
-    NormVols(:,[1 3],2) = fitPar.Vols(:,[1 3],2)./max(abs(fitPar.Vols(:,1,2)));
-    NormVols(:,[2 4],1) = -fitPar.Vols(:,[2 4],1)./max(abs(fitPar.Vols(:,2,1)));
-    NormVols(:,[2 4],2) = fitPar.Vols(:,[2 4],2)./max(abs(fitPar.Vols(:,2,2)));
+    if Npeaks == 4
+        % Normalize the data in the "usual" way
+        NormVols(:,[1 3],1) = -fitPar.Vols(:,[1 3],1)./max(abs(fitPar.Vols(:,1,1)));
+        NormVols(:,[1 3],2) = fitPar.Vols(:,[1 3],2)./max(abs(fitPar.Vols(:,1,2)));
+        NormVols(:,[2 4],1) = -fitPar.Vols(:,[2 4],1)./max(abs(fitPar.Vols(:,2,1)));
+        NormVols(:,[2 4],2) = fitPar.Vols(:,[2 4],2)./max(abs(fitPar.Vols(:,2,2)));
 
-    NormErr(:,[1 3],1)  = fitErr.Vols(:,[1 3],1)./max(abs(fitPar.Vols(:,1,1)));
-    NormErr(:,[1 3],2)  = fitErr.Vols(:,[1 3],2)./max(abs(fitPar.Vols(:,1,2)));
-    NormErr(:,[2 4],1)  = fitErr.Vols(:,[2 4],1)./max(abs(fitPar.Vols(:,2,1)));
-    NormErr(:,[2 4],2)  = fitErr.Vols(:,[2 4],2)./max(abs(fitPar.Vols(:,2,2)));
+        NormErr(:,[1 3],1)  = fitErr.Vols(:,[1 3],1)./max(abs(fitPar.Vols(:,1,1)));
+        NormErr(:,[1 3],2)  = fitErr.Vols(:,[1 3],2)./max(abs(fitPar.Vols(:,1,2)));
+        NormErr(:,[2 4],1)  = fitErr.Vols(:,[2 4],1)./max(abs(fitPar.Vols(:,2,1)));
+        NormErr(:,[2 4],2)  = fitErr.Vols(:,[2 4],2)./max(abs(fitPar.Vols(:,2,2)));
 
-    NormVols(:,[3 4],:) = 10*NormVols(:,[3 4],:);
-    NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:);
-else
-    NormVols = [];
-    NormErr  = [];
-end
+        NormVols(:,[3 4],:) = 10*NormVols(:,[3 4],:);
+        NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:);
+    else
+        NormVols = [];
+        NormErr  = [];
+    end
 
-%% Save the fit results to a file
-try
-    filename    = [dataStruct.rootdir filesep dataStruct.datafilename '_FIT_RESULTS.mat'];
-    save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input_st','FitResults','NormVols','NormErr');
-catch
-    filename    = [writepath filesep dataStruct.datafilename '_FIT_RESULTS.mat'];
-    save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input_st','FitResults','NormVols','NormErr');
-end
+    %% Save the fit results to a file
+    try
+        filename    = [dataStruct.rootdir filesep dataStruct.datafilename '_FIT_RESULTS.mat'];
+        save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input_st','FitResults','NormVols','NormErr');
+    catch
+        filename    = [writepath filesep dataStruct.datafilename '_FIT_RESULTS.mat'];
+        save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input_st','FitResults','NormVols','NormErr');
+    end
 
-%% Save the fit to dataStruct
-dataStruct.FitResults  = FitResults;
-dataStruct.t2_fitrange = t2_fitrange;
-dataStruct.t2_fitdelays= t2delays;
-dataStruct.FitInput    = input_st;
+    %% Save the fit to dataStruct
+    dataStruct.FitResults  = FitResults;
+    dataStruct.t2_fitrange = t2_fitrange;
+    dataStruct.t2_fitdelays= t2delays;
+    dataStruct.FitInput    = input_st;
 
     exitcode = 0;
-
 catch err
     errordlg(err.message);
     exitcode = 1;
