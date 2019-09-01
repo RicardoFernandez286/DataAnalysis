@@ -8,7 +8,7 @@ function varargout = ContourPlot_2DIR(plotOptions,dataStruct,plotaxis)
 % Outputs:
 %     (plot)
 %     plotLimits.min/max_cut
-% Ricardo Fernández-Terán / 14.04.2019 / v4.0a
+% Ricardo FernÃ¡ndez-TerÃ¡n / 01.09.2019 / v4.5a
 
 debug=0;
 cla(plotaxis);
@@ -386,19 +386,24 @@ if plot_showcontours == 1
         pos_zero        = (plot_Nwhites/Ncontours)*max_cut;
         contourlines    = [min_cut:step:neg_zero pos_zero:step:max_cut];
     case '2'
-        negCont         = decimate(linspace(min_cut,0,round(Ncontours/2)),plot_skiplevels);
-        posCont         = decimate(linspace(0,max_cut,round(Ncontours/2)),plot_skiplevels);
+%         negCont         = decimate(linspace(min_cut,0,round(Ncontours/2)),plot_skiplevels,8);
+%         posCont         = decimate(linspace(0,max_cut,round(Ncontours/2)),plot_skiplevels,8);
+
         if plot_skiplevels > 1
-            contourlines    = [negCont(:,end-1)' posCont(:,2)'] ;
+            negCont         = decim(linspace(min_cut,0,round((Ncontours+1)/2)),plot_skiplevels,'max');
+            posCont         = decim(linspace(0,max_cut,round((Ncontours+1)/2)),plot_skiplevels,'max');
+            contourlines    = [negCont; posCont];
         else
-            contourlines    = [negCont' posCont'] ;
+            negCont         = linspace(min_cut,0,round((Ncontours+1)/2))';
+            posCont         = linspace(0,max_cut,round((Ncontours+1)/2))';
+            contourlines    = [negCont; posCont];
         end
     end
     
-    LineColor       = 'k';
+    LineColor       = 0.4*[1 1 1];
     
     hold(plotaxis,'on')
-        contour(plotaxis,X,Y,Z,contourlines,'LineColor',LineColor,'LineStyle',ContourLineStyle,'LineWidth',0.1);
+        contour(plotaxis,X,Y,Z,contourlines,'LineColor',LineColor,'LineStyle',ContourLineStyle,'LineWidth',0.05);
     hold(plotaxis,'off')
 end
 
