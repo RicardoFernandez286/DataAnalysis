@@ -1,12 +1,12 @@
 function CheckFitResults(plotDelay)
 %% Define startup variables
-% rootfolder  = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Dimer_distance1';
-% fitfolder   = [rootfolder filesep 'FitResults_new'];
-rootfolder  = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\RESULTS\2D-IR\Lab 4\Second round\20181002';
-fitfolder   = rootfolder;
+rootfolder  = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Surface_Big5';
+fitfolder   = [rootfolder filesep 'FitResults'];
+% rootfolder  = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\RESULTS\2D-IR\Lab 4\Second round\20181002';
+% fitfolder   = rootfolder;
 
-plotDelay       = 20;
-multiPlot       = 0;
+plotDelay       = 60;
+multiPlot       = 1;
 plotResiduals   = 0;
 
 %% Build list of (sub)folders, which contain the data
@@ -26,6 +26,7 @@ Nplots = length(idx);
 
 if multiPlot == 1
     fh = figure(1);
+    clf(fh);
     fh.Color = [1 1 1];
     fh.Units = 'normalized';
     fh.OuterPosition = [0 0 1 1];
@@ -64,7 +65,7 @@ for k=1:Nplots
             app.I2D_AutocalibrateprobeaxisCheckBox.Value = 1;
             dataStruct = process2DIR(app,dataStruct,0,'NoWaitBar');
     end
-
+    
     %%% Load the fit results .MAT file
     if exist([fitfolder filesep foldernames{i} '_FIT_RESULTS.mat'],'file') ~= 0
         if multiPlot == 1
@@ -72,6 +73,7 @@ for k=1:Nplots
         else
             % Create figure    
             fh = figure(k);
+            clf(fh);
             ax = axes(fh);
             ax.Visible='Off';
             fh.Color = [1 1 1];
@@ -90,6 +92,11 @@ for k=1:Nplots
         plotOptions.plotFitResults  = 1;
         plotOptions.plotResidualsFit= plotResiduals;
         dataStruct.Transient2D      = 0;
+        % Set default plot limits
+        plotOptions.minWL_probe     = min(dataStruct.ProbeAxis);
+        plotOptions.maxWL_probe     = max(dataStruct.ProbeAxis);
+        plotOptions.minWL_pump      = min(dataStruct.ProbeAxis);
+        plotOptions.maxWL_pump      = max(dataStruct.ProbeAxis);
         % Read the fit results
         load([fitfolder filesep foldernames{i} '_FIT_RESULTS.mat']);
         dataStruct.FitResults   = FitResults;

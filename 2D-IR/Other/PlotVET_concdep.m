@@ -6,13 +6,13 @@
 
 % scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Simulations\Data - small mol\NEW TESTS';
 
-scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Dimer_distance2';
+scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Surface_Big5';
 subdir    = 'FitResults';
 
 % scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Data\New fits';
 % subdir      = 'Re18';
 
-plotWhat    = 'Xpeak GSB'; % Xpeak or Diagonal + GSB/ESA
+plotWhat    = 'Xpeak Diff'; % Xpeak or Diagonal + GSB/ESA
 plotFormat  = 'Vertical'; % 'Horizontal' or 'Vertical'
 concType    = '%'; % '100-%' or '%'
 diluent     = 'Re(^{13}C^{18}O)'; % 'Re(^{13}C^{18}O)'
@@ -90,7 +90,7 @@ for i=1:Nconc
     VoumeData_ESA{i} = NormVols(:,:,2);
     
     if isnan(ConcPercent(i))
-        decay = 1*(0.15*exp(-t2delays./5) + 0.85*exp(-t2delays./50))/1.2;
+        decay = 1*(0.15*exp(-t2delays./5) + 0.85*exp(-t2delays./30));
 %         decay = ones(length(t2delays),1);
         line_up = ':';
         line_dw = ':';
@@ -109,7 +109,6 @@ for i=1:Nconc
         case 'Xpeak GSB'
             plot(ax_FW,t2delays,NormVols(:,3,1).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
             plot(ax_BW,t2delays,NormVols(:,4,1).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
-            
 %             plot(ax_FW,t2delays,NormVols(:,3,1),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
 %             plot(ax_BW,t2delays,NormVols(:,4,1),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
         case 'Diagonal ESA'
@@ -117,19 +116,22 @@ for i=1:Nconc
             plot(ax_BW,t2delays,NormVols(:,2,2).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
         case 'Xpeak ESA'
             plot(ax_FW,t2delays,NormVols(:,3,2).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,NormVols(:,4,2).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
-            
-            delays{i}     = t2delays;
-            xpeak_fw{i}   = NormVols(:,3,2);
-            xpeak_bw{i}   = NormVols(:,4,2);
-            
+            plot(ax_BW,t2delays,NormVols(:,4,2).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');  
 %             plot(ax_FW,t2delays,NormVols(:,3,2),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
 %             plot(ax_BW,t2delays,NormVols(:,4,2),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
             %             pepita(i) = NormVols(15,3,2)+NormVols(14,3,2); % WAS 3 AND 4
         case 'SpecDiff'
             plot(ax_FW,t2delays,fitPar.C(:,1),line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
             plot(ax_BW,t2delays,fitPar.C(:,2),line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+        case 'Xpeak Diff'
+            plot(ax_FW,t2delays,(NormVols(:,3,1)+NormVols(:,3,2)).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
+            plot(ax_BW,t2delays,(NormVols(:,4,1)+NormVols(:,4,2)).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');  
     end
+    
+    delays{i}     = t2delays;
+    xpeak_fw{i}   = NormVols(:,3,2);
+    xpeak_bw{i}   = NormVols(:,4,2);
+            
     switch concType
         case '100-%'
             plot(ax_FW,NaN,NaN,'-','LineWidth',4,'Color',cmFW(i,:),'DisplayName',num2str(100-ConcPercent(i)))
