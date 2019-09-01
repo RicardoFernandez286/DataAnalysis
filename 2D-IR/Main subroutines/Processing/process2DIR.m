@@ -26,7 +26,7 @@ function dataStruct = process2DIR(app,dataStruct,ReProcess,varargin)
 %     The calculation routines were updated accordingly in MESS and now the chopper signal and all
 %     datastates should be calculated properly.
 %
-% Ricardo Fernández-Terán / 28.08.2018 / v4.0a
+% Ricardo Fernï¿½ndez-Terï¿½n / 28.08.2018 / v4.0a
 
 %% Choose between debug/manual mode and normal mode
 debug=0;
@@ -58,6 +58,7 @@ Nbins           = dataStruct.Nbins;
 interferogram	= dataStruct.interferogram;
 signal		    = dataStruct.signal;
 rootdir         = dataStruct.rootdir;
+datafilename    = dataStruct.datafilename;
 
 %%% Read GUI options
 bkg_sub         = app.I2D_SubtractScatteringCheckBox.Value;

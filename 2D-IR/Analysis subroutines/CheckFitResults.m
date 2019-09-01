@@ -1,11 +1,11 @@
 function CheckFitResults(plotDelay)
 %% Define startup variables
-rootfolder  = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Surface_Big5';
+% rootfolder  = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Dimer_distance1';
+% fitfolder   = [rootfolder filesep 'FitResults_new'];
+rootfolder  = '\\idnetapp-chem.uzh.ch\g_chem_hamm$\Group\Andrea\AUGUST';
 fitfolder   = [rootfolder filesep 'FitResults'];
-% rootfolder  = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\RESULTS\2D-IR\Lab 4\Second round\20181002';
-% fitfolder   = rootfolder;
 
-plotDelay       = 60;
+plotDelay       = 20;
 multiPlot       = 1;
 plotResiduals   = 0;
 
@@ -65,13 +65,13 @@ for k=1:Nplots
             app.I2D_AutocalibrateprobeaxisCheckBox.Value = 1;
             dataStruct = process2DIR(app,dataStruct,0,'NoWaitBar');
     end
-    
+
     %%% Load the fit results .MAT file
     if exist([fitfolder filesep foldernames{i} '_FIT_RESULTS.mat'],'file') ~= 0
         if multiPlot == 1
             ax = subplot(n_sub,n_sub,k);
         else
-            % Create figure    
+            % Create figure
             fh = figure(k);
             clf(fh);
             ax = axes(fh);
@@ -84,7 +84,7 @@ for k=1:Nplots
             ax.TickLength = [0.015 0.035];
             ax.Visible='On';
         end
-        
+
         % Read default plot options
         load([fileparts(mfilename('fullpath')) filesep 'defaultGUI.mat']);
         load([fileparts(mfilename('fullpath')) filesep 'defaultPlotOptions.mat']);
@@ -105,7 +105,7 @@ for k=1:Nplots
         if exist('input','var') == 1
             input_st = load([fitfolder filesep foldernames{i} '_FIT_RESULTS.mat'],'input');
             dataStruct.FitInput     = input_st.input;
-        else    
+        else
             dataStruct.FitInput     = input_st;
         end
         % Do the plot
