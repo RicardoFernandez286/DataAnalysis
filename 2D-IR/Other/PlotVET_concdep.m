@@ -1,24 +1,28 @@
 %% Get a list of MAT files
-% scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Data\Original fits\';
-% subdir      = 'Dilution with Re18 - New';
+scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Data\Original fits\';
+subdir      = 'Dilution with Re18 - New';
 % subdir      = 'Dilution with CNBzCOOH';
 % subdir      = 'New';
 
 % scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Simulations\Data - small mol\NEW TESTS';
 
-scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Surface_Big5';
-subdir    = 'FitResults';
+% scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Surface_Big5';
+% subdir    = 'FitResults';
+
+% scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Dimer_distance2\FitResults';
+% subdir = [];
+
 
 % scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Data\New fits';
 % subdir      = 'Re18';
 
-plotWhat    = 'Xpeak Diff'; % Xpeak or Diagonal + GSB/ESA
-plotFormat  = 'Vertical'; % 'Horizontal' or 'Vertical'
-concType    = '%'; % '100-%' or '%'
+plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
+plotFormat  = 'Horizontal'; % 'Horizontal' or 'Vertical'
+concType    = '100-%'; % '100-%' or '%'
 diluent     = 'Re(^{13}C^{18}O)'; % 'Re(^{13}C^{18}O)'
-
-% diluent     = 'Re(^{13}C^{18}O)';
-xpos        = 1.0; % 1.02 for CNBz, 0.1 horizontal
+% diluent     = 'CNBz';
+xpos        = 0.05; % 1.02 for CNBz, 0.1 horizontal
+ypos        = 0.95;
 
 filelist    = dir([scriptdir filesep subdir]);
 
@@ -44,11 +48,11 @@ fh.Units        = 'normalized';
 % fh.Position(4)  = fh.Position(4)*2;
 switch plotFormat
     case 'Vertical'
-        fh.Position     = [0.3536    0.1000    0.35    0.75];
+%         fh.Position     = [0.3536    0.1000    0.35    0.75];
         ax_FW           = subplot(2,1,1);
         ax_BW           = subplot(2,1,2);
     case 'Horizontal'
-        fh.Position     = [0.15    0.15    0.6    0.45];
+%         fh.Position     = [0.15    0.15    0.6    0.45];
         ax_FW           = subplot(1,2,1);
         ax_BW           = subplot(1,2,2);
 end
@@ -90,8 +94,8 @@ for i=1:Nconc
     VoumeData_ESA{i} = NormVols(:,:,2);
     
     if isnan(ConcPercent(i))
-        decay = 1*(0.15*exp(-t2delays./5) + 0.85*exp(-t2delays./30));
-%         decay = ones(length(t2delays),1);
+%         decay = 1*(0.15*exp(-t2delays./5) + 0.85*exp(-t2delays./30));
+        decay = ones(length(t2delays),1);
         line_up = ':';
         line_dw = ':';
     else
@@ -152,9 +156,11 @@ end
 % Customize axes
 xpeakUp     = 'Re(^{13}CO) \rightarrow Re(^{12}CO) \rm{\times10}';
 xpeakDown   = 'Re(^{13}CO) \leftarrow Re(^{12}CO) \rm{\times10}';
-titFW       = ['Downhill energy transfer' ', ' xpeakDown];
-titBW       = ['Uphill energy transfer' ', ' xpeakUp];
+% titFW       = ['Downhill energy transfer' ', ' xpeakDown];
+% titBW       = ['Uphill energy transfer' ', ' xpeakUp];
 
+titFW       = 'Downhill energy transfer';
+titBW       = 'Uphill energy transfer';
 % Set axes limits
 axis(ax_FW,'tight');
 axis(ax_BW,'tight');
@@ -214,17 +220,17 @@ hline_BW = yline(ax_BW,0,'HandleVisibility','off'); hline_BW.Color = [0.5 0.5 0.
 % Legends
 switch plotFormat
     case 'Vertical'
-        text(ax_FW,xpos,0.94,['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized')
+        text(ax_FW,xpos,ypos,['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized')
         plot(ax_FW,NaN,NaN,'.','Color','w','DisplayName','')
-%         text(ax_BW,xpos,0.94,['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized')
-%         plot(ax_BW,NaN,NaN,'.','Color','w','DisplayName','')
-%         leg_BW = legend(ax_BW,'show');
-%         legend(ax_BW,'boxoff','FontWeight','bold')
-%         legend(ax_BW,'location','eastoutside')
-%         leg_BW.ItemTokenSize = [20,10];
+        text(ax_BW,xpos,ypos,['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized')
+        plot(ax_BW,NaN,NaN,'.','Color','w','DisplayName','')
+        leg_BW = legend(ax_BW,'show');
+        legend(ax_BW,'boxoff','FontWeight','bold')
+        legend(ax_BW,'location','eastoutside')
+        leg_BW.ItemTokenSize = [20,10];
         leg_FW = legend(ax_FW,'show');
         legend(ax_FW,'boxoff','FontWeight','bold')
-        legend(ax_FW,'location','bestoutside')
+        legend(ax_FW,'location','eastoutside')
         leg_FW.ItemTokenSize = [20,10];
     case 'Horizontal'
         text(ax_FW,xpos,1.2,['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized')

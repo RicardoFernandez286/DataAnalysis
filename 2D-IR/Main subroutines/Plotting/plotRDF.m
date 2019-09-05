@@ -3,6 +3,7 @@ function plotRDF(simData)
 version				= simData.version;
 trajectInfo			= simData.trajectInfo;
 trajectData_3D 		= simData.trajectData_3D;
+Nsamples            = simData.Nsamples;
 Nmolecules			= simData.Nmolecules;
 Rbox				= simData.Rbox;
 
@@ -30,8 +31,11 @@ BoxSizes            = [Rbox, Rbox];
 isoShift            = [0 iso13_shift iso18_shift];
 
 %% Do the calculation
-isCN    = squeeze(trajectData_3D(:,7,:) == trajectInfo(3));
-nCN     = sum(isCN(:));
+nTo = numel(trajectData_3D(:,1,:));
+n12 = sum(squeeze(trajectData_3D(:,6,:) == -isoShift(1) & trajectData_3D(:,7,:) == trajectInfo(2)),'All');
+n13 = sum(squeeze(trajectData_3D(:,6,:) == -isoShift(2) & trajectData_3D(:,7,:) == trajectInfo(2)),'All');
+n18 = sum(squeeze(trajectData_3D(:,6,:) == -isoShift(3) & trajectData_3D(:,7,:) == trajectInfo(2)),'All');
+nCN = sum(squeeze(trajectData_3D(:,7,:) == trajectInfo(3)),'All');
 
 if version == 2 && nCN > 0
     [gx,gTot,gAA,gBB,gCC,gAB,gAC,gBC] = calcPGR(trajectData_3D,nGR,BoxSizes,Nmolecules,PBC,isoShift,trajectInfo(3));
@@ -71,6 +75,7 @@ plot(axGR,gx,gAC./(gx.^k),'--','Color',colRe12.*colRe18,'DisplayName',['12-' dil
 plot(axGR,gx,gBC./(gx.^k),'--','Color',colRe13.*colRe18,'DisplayName',['13-' dilName],'LineWidth',1);
 
 yline(axGR,0,'HandleVisibility','off');
+yline(axGR,1,'HandleVisibility','off');
 
 % % Plot all of those with 18
 % plot(axGR,gx,(gCC+gAC+gBC)./(gx.^k),'Color',colRe12.*colRe18,'DisplayName','12-18 + 13-18','LineWidth',1);
@@ -93,8 +98,13 @@ switch k
         ylabel(axGR,'g(r)/r^6','FontWeight','bold');
 end
 
-% endInt = findClosestId2Val(gx,8.36);
-% (2*pi)*trapz(gx(1:endInt),(gx(1:endInt).^2).*gAB(1:endInt))
+endInt  = findClosestId2Val(gx,8.36);
+
+N_ab    = min([n12,n13])/Nsamples;
+rho     = n12/prod(BoxSizes);
+
+disp(['Integral k=0: ' num2str((4*pi*rho)*trapz(gx(1:endInt),(gx(1:endInt).^(2).*(gAA(1:endInt)))))])
+% disp(['Integral k=6: ' num2str((4*pi*rho)*trapz(gx(1:endInt),(gx(1:endInt).^(2-5).*(gAB(1:endInt)))))])
 
 % sum(trajectData_2D(:,6) == 0)
 % sum(trajectData_2D(:,6) == -iso13_shift)

@@ -87,6 +87,9 @@ end
     dataStruct.t1delays      = []; % in fs!
     dataStruct.Nscans        = 1;
 
+%% Read 1D spectra
+    LinSpec_FD  = readmatrix([rootdir filesep datafilename filesep 'spec_lin.dat'],'Delimiter','  ');
+
 %% Read surface trajectories
     % Read the first line
     trajectInfo     = readmatrix([rootdir filesep datafilename filesep 'trajectory.dat'],'Range',[1 1 1 4]);
@@ -147,6 +150,7 @@ dataStruct.t2_startFit   = [];
 dataStruct.FitInput      = [];
 
 %% WRITE to simData structure (Surface trajectories)
+simData.LinSpec_FD          = LinSpec_FD;
 simData.version				= version;
 simData.trajectInfo			= trajectInfo;
 simData.trajectData_2D		= trajectData_2D;

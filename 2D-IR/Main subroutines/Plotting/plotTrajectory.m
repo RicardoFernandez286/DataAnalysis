@@ -12,9 +12,9 @@ Rbox				= simData.Rbox;
 
 %% Plotting options
 % Colors
-colRe12     = [0.5 0.75 1];
-colRe13     = [1 0.75 0.5];
-colRe18     = [0.75 1 0.5];
+colRe12     = brighten([0.5 0.75 1],0.5);
+colRe13     = brighten([1 0.75 0.5],0.5);
+colRe18     = brighten([0.75 1 0.5],0.5);
 colCNBz     = 0.75.*[1 1 1];
 arrowcolor  = 'k';
 
@@ -27,7 +27,7 @@ mu          = 0.1;
 
 % Other settings
 cEdgeMult   = 0.5;      % Circle edge color multiplier (must be <=1)
-cAlpha      = 0.5;      % Circle alpha (0 = transparent, 1 = opaque)
+cAlpha      = 1;      % Circle alpha (0 = transparent, 1 = opaque)
 cLineW      = 1;        % Circle line width
 % DistPlot    = 'All';    % Isotopte distribution pie chart: 'Single' or 'All' trajectories
 
