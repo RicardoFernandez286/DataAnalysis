@@ -1,19 +1,24 @@
+DoFit = 0;
 %% Get a list of MAT files
-scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Data\Original fits\';
-subdir      = 'Dilution with Re18 - New';
+% scriptdir   = 'C:\Users\ricar\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Data\New fits\';
+% subdir      = 'Re18';
+% subdir      = [];
 % subdir      = 'Dilution with CNBzCOOH';
 % subdir      = 'New';
 
-% scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Simulations\Data - small mol\NEW TESTS';
+scriptdir = 'C:\Users\ricar\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Latest Simulations\big7fits';
+subdir = [];
 
-% scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Surface_Big5';
+% scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Simulations\Data - small mol\NEW TESTS';
+
+% scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Latest Simulations\Surface_Big5';
 % subdir    = 'FitResults';
 
-% scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Dimer_distance2\FitResults';
+% scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Latest Simulations\Dimer_distance2\FitResults';
 % subdir = [];
 
 
-% scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Data\New fits';
+% scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Data\New fits';
 % subdir      = 'Re18';
 
 plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
@@ -94,14 +99,24 @@ for i=1:Nconc
     VoumeData_ESA{i} = NormVols(:,:,2);
     
     if isnan(ConcPercent(i))
-%         decay = 1*(0.15*exp(-t2delays./5) + 0.85*exp(-t2delays./30));
-        decay = ones(length(t2delays),1);
-        line_up = ':';
-        line_dw = ':';
+        decay = 1*(0.15*exp(-t2delays./5) + 0.85*exp(-t2delays./20));
+%         decay = ones(length(t2delays),1);
+        if DoFit == 0
+            line_up = ':';
+            line_dw = ':';
+        else
+            line_up = '^';
+            line_dw = 'v';
+        end
     else
-        decay = ones(length(t2delays),1);
-        line_up = '^-';
-        line_dw = 'v-';
+        decay = ones(length(t2delays),1);       
+        if DoFit == 0
+            line_up = '^-';
+            line_dw = 'v-';
+        else
+            line_up = '^';
+            line_dw = 'v';
+        end
     end
     
     SSR_fit(i)       = SSR;
@@ -265,3 +280,26 @@ for i=1:Nconc
     integral_bw(i) = trapz(delays{i},xpeak_bw{i});
     integral_fw(i) = trapz(delays{i},xpeak_fw{i});
 end
+
+if DoFit == 0
+ return
+end
+
+%% Do kinetic model fit
+for i=1:Nconc
+    FW_data = [VoumeData_ESA{i}(:,1) VoumeData_ESA{i}(:,3)/10];
+    BW_data = [VoumeData_ESA{i}(:,2) VoumeData_ESA{i}(:,4)/10];
+    time = delays{i};
+
+    fitPar0 = [3  20   70   90  0.3];
+    LB      = [2  0    0    0   0  ];
+    UB      = [5  50   500  500 1  ];
+
+    ShowOutput = 0;
+    DoFit = 1;
+    tic
+    fitpar(:,i) = Fit_EnT(time,FW_data,BW_data,fitPar0,LB,UB,ShowOutput,DoFit,fh);
+    disp(['Fitting done for ' num2str(i) ' of ' num2str(Nconc) ' (' num2str(toc) 's)']);
+end
+
+fitpar = fitpar';

@@ -9,7 +9,7 @@ function fitted_param = Fit_EnT(time,FW_data,BW_data,start_params,LB,UB,ShowOutp
 %     FW energy transfer means Re(13CO) to Re(12CO) (i.e. uphill)
 %     BW energy transfer means Re(12CO) to Re(13CO) (i.e. downhill)
 %
-% Ricardo Fern√°ndez-Ter√°n, v0.9a - 2018.06.04
+% Ricardo Fern·ndez-Ter·n, v0.9a - 2018.06.04
 fit_routine = 'Analytical LS'; % 'Numerical LS' 'Analytical LS' 'Analytical GA'
 
 %% Build the fit model
@@ -20,7 +20,8 @@ options = optimoptions('lsqcurvefit',...
             'Algorithm','trust-region-reflective',...  %'levenberg-marquardt' 'trust-region-reflective'
             'OptimalityTolerance',1e-15,...
             'FunctionTolerance',1e-15,...
-            'StepTolerance',1e-15);
+            'StepTolerance',1e-15);%,...
+%             'PlotFcn',{@optimplotresnorm,@optimplotfirstorderopt});
 
 % Define the parameter locations
 Tau_index   = 1:4;
@@ -140,6 +141,10 @@ end
     end
 else
     plot_param = start_params;
+end
+
+if ShowOutput == 0
+    return
 end
 %% Plot the data
 % Create figure
