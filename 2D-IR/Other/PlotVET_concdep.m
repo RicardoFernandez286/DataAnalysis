@@ -1,6 +1,6 @@
 %% Get a list of MAT files
-scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Data\Original fits\';
-subdir      = 'Dilution with Re18 - New';
+% scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Data\Original fits\';
+% subdir      = 'Dilution with Re18 - New';
 % subdir      = 'Dilution with CNBzCOOH';
 % subdir      = 'New';
 
@@ -12,6 +12,8 @@ subdir      = 'Dilution with Re18 - New';
 % scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Dimer_distance2\FitResults';
 % subdir = [];
 
+scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Latest Simulations\big7fits';
+subdir = [];
 
 % scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Data\New fits';
 % subdir      = 'Re18';
@@ -76,9 +78,14 @@ cmBW = colormap(ax_BW,othercolor('Mrainbow',Nconc));
 
 %% Read the MAT files one by one and store the results in a cell array
 % Read the concentrations and sort them in ascending order
+nameparts = cell(1,Nconc);
 for i=1:Nconc
-    nameparts       = split(names{i},'_');
-    ConcPercent(i)  = str2double(nameparts{3});
+    nameparts{i}        = split(names{i},'_');
+    if ~isnan(str2double(str2double(nameparts{i}{3})))
+        ConcPercent(i)  = str2double(nameparts{i}{3});
+    else
+        ConcPercent(i)  = str2double(nameparts{i}{2})*100;
+    end
 end
 
 [ConcPercent,idx]   = sort(ConcPercent,'descend');
@@ -86,15 +93,15 @@ names               = names(idx);
 
 % Now plot the stuff
 for i=1:Nconc
-    nameparts       = split(names{i},'_');
-    PrismID(i)      = nameparts{1};
-    SolutionID(i)   = nameparts{2};
+%     nameparts       = split(names{i},'_');
+%     PrismID(i)      = nameparts{1};
+%     SolutionID(i)   = nameparts{2};
     load([scriptdir filesep subdir filesep names{i}])
     VoumeData_GSB{i} = NormVols(:,:,1);
     VoumeData_ESA{i} = NormVols(:,:,2);
     
-    if isnan(ConcPercent(i))
-%         decay = 1*(0.15*exp(-t2delays./5) + 0.85*exp(-t2delays./30));
+    if isnan(str2double(nameparts{i}{2}))
+%         decay = 1.1*(0*exp(-t2delays./5) + 0.85*exp(-t2delays./20))/(0+0.85);
         decay = ones(length(t2delays),1);
         line_up = ':';
         line_dw = ':';

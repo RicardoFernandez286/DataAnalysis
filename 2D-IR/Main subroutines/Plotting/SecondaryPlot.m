@@ -88,19 +88,6 @@ switch what
 %             text(where,0.635,0.9,['Contrast: ' contrast '%'],'Units','normalized','FontSize',10);
 %         end
         yyaxis(where,'left')
-        if pixline == 1 && pixel > 0
-            if strcmp(class(pixline_axis.Children(1)),'matlab.graphics.chart.decoration.ConstantLine')
-                pixline_axis.Children(1).Value = ProbeAxis(pixel);
-            else
-                yl          = yline(pixline_axis,ProbeAxis(pixel));
-                yl.Color    = 0.5*[1 1 1];
-                yl.LineWidth= 3;
-            end
-        elseif pixline == 0
-            if strcmp(class(pixline_axis.Children(1)),'matlab.graphics.chart.decoration.ConstantLine')
-                delete(pixline_axis.Children(1));
-            end
-        end
     case 'ph' % Plot phasing data
         %%% Plot the pump spectrum (real part of FFT[pyro])
         yyaxis(where,'left')
@@ -151,4 +138,20 @@ switch what
         legend(where,'Boxoff')
         legend(where,'Location','northwest')
 end
+
+
+if pixline == 1 && pixel > 0
+    if strcmp(class(pixline_axis.Children(1)),'matlab.graphics.chart.decoration.ConstantLine')
+        pixline_axis.Children(1).Value = ProbeAxis(pixel);
+    else
+        yl          = yline(pixline_axis,ProbeAxis(pixel));
+        yl.Color    = 0.5*[1 1 1];
+        yl.LineWidth= 3;
+    end
+elseif pixline == 0
+    if strcmp(class(pixline_axis.Children(1)),'matlab.graphics.chart.decoration.ConstantLine')
+        delete(pixline_axis.Children(1));
+    end
+end
+        
 where.Box = 'on';

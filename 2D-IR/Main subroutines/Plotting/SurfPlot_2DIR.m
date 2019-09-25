@@ -46,8 +46,10 @@ end
 if debug==0
   % Read from GUI
     cut                 = plotOptions.cut;
-    minWL               = plotOptions.minWL;
-    maxWL               = plotOptions.maxWL;
+    minWL_pump          = plotOptions.minWL_pump;
+    maxWL_pump          = plotOptions.maxWL_pump;
+    minWL_probe         = plotOptions.minWL_probe;
+    maxWL_probe         = plotOptions.maxWL_probe;
     plot_pumpdirection  = plotOptions.plot_pumpdirection;
     plot_contourfill    = plotOptions.plot_contourfill;
     plot_Nwhites        = plotOptions.plot_Nwhites;
@@ -286,11 +288,11 @@ ylabel(hcb,'2D signal (a.u.)','FontWeight','bold')
 % Set appropriate limits
 switch plot_pumpdirection
 case 'Vertical' 
-    xlim(plotaxis,[min(ProbeAxis),max(ProbeAxis)]);
-    ylim(plotaxis,[minWL,maxWL]);
+    xlim(plotaxis,[minWL_probe,maxWL_probe]);
+    ylim(plotaxis,[minWL_pump,maxWL_pump]);
 case 'Horizontal'
-    ylim(plotaxis,[min(ProbeAxis),max(ProbeAxis)]);
-    xlim(plotaxis,[minWL,maxWL]);
+    ylim(plotaxis,[minWL_probe,maxWL_probe]);
+    xlim(plotaxis,[minWL_pump,maxWL_pump]);
 end
 
 % Show the axis legends
