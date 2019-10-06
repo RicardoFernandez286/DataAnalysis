@@ -1,15 +1,20 @@
+DoFit = 0;
 %% Get a list of MAT files
-% scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Data\Original fits\';
-% subdir      = 'Dilution with Re18 - New';
+% scriptdir   = 'C:\Users\ricar\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Data\New fits\';
+% subdir      = 'Re18';
+% subdir      = [];
 % subdir      = 'Dilution with CNBzCOOH';
 % subdir      = 'New';
 
-% scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Simulations\Data - small mol\NEW TESTS';
+scriptdir = 'C:\Users\ricar\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Latest Simulations\big7fits';
+subdir = [];
 
-% scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Surface_Big5';
+% scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Simulations\Data - small mol\NEW TESTS';
+
+% scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Latest Simulations\Surface_Big5';
 % subdir    = 'FitResults';
 
-% scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Dimer_distance2\FitResults';
+% scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Latest Simulations\Dimer_distance2\FitResults';
 % subdir = [];
 
 scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Latest Simulations\Surface_Big8\Fits';
@@ -78,39 +83,44 @@ cmBW = colormap(ax_BW,othercolor('Mrainbow',Nconc));
 
 %% Read the MAT files one by one and store the results in a cell array
 % Read the concentrations and sort them in ascending order
-nameparts = cell(1,Nconc);
 for i=1:Nconc
-    nameparts{i}        = split(names{i},'_');
-    if ~isnan(str2double(str2double(nameparts{i}{3})))
-        ConcPercent(i)  = str2double(nameparts{i}{3});
-    else
-        ConcPercent(i)  = str2double(nameparts{i}{2})*100;
-    end
+    nameparts       = split(names{i},'_');
+    ConcPercent(i)  = str2double(nameparts{3});
 end
 
 [ConcPercent,idx]   = sort(ConcPercent,'descend');
-names               = names(idx);      
+names               = names(idx);
 
 % Now plot the stuff
 for i=1:Nconc
-%     nameparts       = split(names{i},'_');
-%     PrismID(i)      = nameparts{1};
-%     SolutionID(i)   = nameparts{2};
+    nameparts       = split(names{i},'_');
+    PrismID(i)      = nameparts{1};
+    SolutionID(i)   = nameparts{2};
     load([scriptdir filesep subdir filesep names{i}])
     VoumeData_GSB{i} = NormVols(:,:,1);
     VoumeData_ESA{i} = NormVols(:,:,2);
-    
-    if isnan(str2double(str2double(nameparts{i}{3})))
-%         decay = 1.1*(0*exp(-t2delays./5) + 0.85*exp(-t2delays./20))/(0+0.85);
-        decay = ones(length(t2delays),1);
-        line_up = ':';
-        line_dw = ':';
+
+    if isnan(ConcPercent(i))
+        decay = 1*(0.15*exp(-t2delays./5) + 0.85*exp(-t2delays./20));
+%         decay = ones(length(t2delays),1);
+        if DoFit == 0
+            line_up = ':';
+            line_dw = ':';
+        else
+            line_up = '^';
+            line_dw = 'v';
+        end
     else
         decay = ones(length(t2delays),1);
-        line_up = '^-';
-        line_dw = 'v-';
+        if DoFit == 0
+            line_up = '^-';
+            line_dw = 'v-';
+        else
+            line_up = '^';
+            line_dw = 'v';
+        end
     end
-    
+
     SSR_fit(i)       = SSR;
     StepSize(i)      = output_st.stepsize;
     switch plotWhat
@@ -127,7 +137,7 @@ for i=1:Nconc
             plot(ax_BW,t2delays,NormVols(:,2,2).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
         case 'Xpeak ESA'
             plot(ax_FW,t2delays,NormVols(:,3,2)./NormVols(:,1,2).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,NormVols(:,4,2)./NormVols(:,2,2).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');  
+            plot(ax_BW,t2delays,NormVols(:,4,2)./NormVols(:,2,2).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
 %             plot(ax_FW,t2delays,NormVols(:,3,2),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
 %             plot(ax_BW,t2delays,NormVols(:,4,2),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
             %             pepita(i) = NormVols(15,3,2)+NormVols(14,3,2); % WAS 3 AND 4
@@ -136,13 +146,13 @@ for i=1:Nconc
             plot(ax_BW,t2delays,fitPar.C(:,2),line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
         case 'Xpeak Diff'
             plot(ax_FW,t2delays,(NormVols(:,3,1)+NormVols(:,3,2)).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,(NormVols(:,4,1)+NormVols(:,4,2)).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');  
+            plot(ax_BW,t2delays,(NormVols(:,4,1)+NormVols(:,4,2)).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
     end
-    
+
     delays{i}     = t2delays;
     xpeak_fw{i}   = NormVols(:,3,2);
     xpeak_bw{i}   = NormVols(:,4,2);
-            
+
     switch concType
         case '100-%'
             plot(ax_FW,NaN,NaN,'-','LineWidth',4,'Color',cmFW(i,:),'DisplayName',num2str(100-ConcPercent(i)))
@@ -189,7 +199,7 @@ if contains(plotWhat,'Xpeak')
         case 'Vertical'
             ylabel(ax_BW,'Normalised peak volume (\times10)','FontWeight','bold','FontSize',16);
     end
-elseif contains(plotWhat,'SpecDiff')    
+elseif contains(plotWhat,'SpecDiff')
     ylim(ax_FW,[-0.05 1]);
     ylim(ax_BW,[-0.05 1]);
     ylabel(ax_FW,'C (t_{2})','FontWeight','bold','FontSize',16);
@@ -222,7 +232,7 @@ axis(ax_BW,'tight')
 
 % Add zero line
 hline_FW = yline(ax_FW,0,'HandleVisibility','off'); hline_FW.Color = [0.5 0.5 0.5];
-hline_BW = yline(ax_BW,0,'HandleVisibility','off'); hline_BW.Color = [0.5 0.5 0.5];    
+hline_BW = yline(ax_BW,0,'HandleVisibility','off'); hline_BW.Color = [0.5 0.5 0.5];
 
 % Legends
 switch plotFormat
@@ -272,3 +282,26 @@ for i=1:Nconc
     integral_bw(i) = trapz(delays{i},xpeak_bw{i});
     integral_fw(i) = trapz(delays{i},xpeak_fw{i});
 end
+
+if DoFit == 0
+ return
+end
+
+%% Do kinetic model fit
+for i=1:Nconc
+    FW_data = [VoumeData_ESA{i}(:,1) VoumeData_ESA{i}(:,3)/10];
+    BW_data = [VoumeData_ESA{i}(:,2) VoumeData_ESA{i}(:,4)/10];
+    time = delays{i};
+
+    fitPar0 = [3  20   70   90  0.3];
+    LB      = [2  0    0    0   0  ];
+    UB      = [5  50   500  500 1  ];
+
+    ShowOutput = 0;
+    DoFit = 1;
+    tic
+    fitpar(:,i) = Fit_EnT(time,FW_data,BW_data,fitPar0,LB,UB,ShowOutput,DoFit,fh);
+    disp(['Fitting done for ' num2str(i) ' of ' num2str(Nconc) ' (' num2str(toc) 's)']);
+end
+
+fitpar = fitpar';
