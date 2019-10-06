@@ -108,11 +108,11 @@ if EnT ~= 0
     if abs(max(kindata(:))) <= abs(min(kindata(:)))
         kindata = -kindata;
     end
-    
-    diagFW          = kindata(:,1)./max(max(abs(kindata(:,1:2))));
-    diagBW          = kindata(:,3)./max(max(abs(kindata(:,3:4))));
-    xpeakFW         = 10.*kindata(:,2)./max(max(abs(kindata(:,1:2))));
-    xpeakBW         = 10.*kindata(:,4)./max(max(abs(kindata(:,3:4))));
+    decay = 1.1*(0*exp(-t2delays./5) + 0.85*exp(-t2delays./20))/(0+0.85);
+    diagFW          = kindata(:,1)./max(max(abs(kindata(:,1:2)))).*decay;
+    diagBW          = kindata(:,3)./max(max(abs(kindata(:,3:4)))).*decay;
+    xpeakFW         = 10.*kindata(:,2)./max(max(abs(kindata(:,1:2)))).*decay;
+    xpeakBW         = 10.*kindata(:,4)./max(max(abs(kindata(:,3:4)))).*decay;
     time            = dataStruct.t2delays;
     % Create figure
     fh              = figure;

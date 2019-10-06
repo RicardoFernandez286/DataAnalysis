@@ -168,8 +168,10 @@ switch specdif_options{specdif_typeindx}
                 cla(diagnosticAx,'reset'); hold(diagnosticAx,'on'); 
             end
             for i=1:Npeaks
-                probe_segment   = Interp_ProbeAxis(peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola);
-                data_segment    = Interp_Data{m,1}(pump_indexes(i),peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola);
+                start_probe     = max(peak_pos(i)-N_pointsParabola,1);
+                end_probe       = min(peak_pos(i)+N_pointsParabola,length(Interp_ProbeAxis));
+                probe_segment   = Interp_ProbeAxis(start_probe:end_probe);
+                data_segment    = Interp_Data{m,1}(pump_indexes(i),start_probe:end_probe);
                 coeff           = polyfit(probe_segment,data_segment,2);
                 min_values(i,m) = -coeff(2)/(2*coeff(1));
                 if diagnosticPlot == 1

@@ -23,12 +23,14 @@ iso13_shift = 48;
 iso18_shift = 92;
 
 % Dipole moment magnitude (!)
-mu          = 0.1;
+mu          = mean(sqrt(sum((trajectData_2D(trajectData_2D(:,6) == -iso13_shift,3:5)).^2,2)));
 
 % Other settings
 cEdgeMult   = 0.5;      % Circle edge color multiplier (must be <=1)
-cAlpha      = 1;      % Circle alpha (0 = transparent, 1 = opaque)
-cLineW      = 1;        % Circle line width
+cAlpha      = 0.5;      % Circle alpha (0 = transparent, 1 = opaque)
+cLineW      = 1.0;        % Circle line width
+arrowWidth  = 0.35;
+arrowLength = arrowWidth*1.25;
 % DistPlot    = 'All';    % Isotopte distribution pie chart: 'Single' or 'All' trajectories
 
 %% Create figure
@@ -85,12 +87,12 @@ ax.Visible      = 'On';
             
             arrowpoints = traject(traject(:,7) ~= trajectInfo(3),:);
             for i=1:size(arrowpoints,1)
-                    plot_arrow(ax,arrowpoints(i,1),arrowpoints(i,2),arrowpoints(i,1)+arrowpoints(i,3)*Radius_LJ_Re/mu,arrowpoints(i,2)+arrowpoints(i,4)*Radius_LJ_Re/mu,'linewidth',1,'headwidth',1,'headheight',1,'color',arrowcolor,'facecolor',arrowcolor,'edgecolor',arrowcolor);
+                    plot_arrow(ax,arrowpoints(i,1),arrowpoints(i,2),arrowpoints(i,1)+arrowpoints(i,3)*Radius_LJ_Re/mu,arrowpoints(i,2)+arrowpoints(i,4)*Radius_LJ_Re/mu,'linewidth',1,'headwidth',arrowWidth,'headheight',arrowLength,'color',arrowcolor,'facecolor',arrowcolor,'edgecolor',arrowcolor);
             end
         case 1
             CNdil = [];
             for i = 1:Nmolecules
-                plot_arrow(ax,traject(i,1),traject(i,2),traject(i,1)+traject(i,3)*Radius_LJ_Re/mu,traject(i,2)+traject(i,4)*Radius_LJ_Re/mu,'linewidth',1,'headwidth',1,'headheight',1,'color',arrowcolor,'facecolor',arrowcolor,'edgecolor',arrowcolor);
+                plot_arrow(ax,traject(i,1),traject(i,2),traject(i,1)+traject(i,3)*Radius_LJ_Re/mu,traject(i,2)+traject(i,4)*Radius_LJ_Re/mu,'linewidth',1,'headwidth',arrowWidth,'headheight',arrowLength,'color',arrowcolor,'facecolor',arrowcolor,'edgecolor',arrowcolor);
             end
     end
 

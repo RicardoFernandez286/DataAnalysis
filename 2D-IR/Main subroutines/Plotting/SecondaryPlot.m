@@ -37,6 +37,10 @@ if ~isempty(varargin)
     pixel           = varargin{1};
     pixline         = varargin{2};
     pixline_axis    = varargin{3};
+else
+    pixel           = 0;
+    pixline         = 0;
+    pixline_axis    = where;
 end
 
 % apo_interferogram   = dataStruct.apo_interferogram{m,k};
