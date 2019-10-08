@@ -108,11 +108,10 @@ if EnT ~= 0
     if abs(max(kindata(:))) <= abs(min(kindata(:)))
         kindata = -kindata;
     end
-    decay = 1.1*(0*exp(-t2delays./5) + 0.85*exp(-t2delays./20))/(0+0.85);
-    diagFW          = kindata(:,1)./max(max(abs(kindata(:,1:2)))).*decay;
-    diagBW          = kindata(:,3)./max(max(abs(kindata(:,3:4)))).*decay;
-    xpeakFW         = 10.*kindata(:,2)./max(max(abs(kindata(:,1:2)))).*decay;
-    xpeakBW         = 10.*kindata(:,4)./max(max(abs(kindata(:,3:4)))).*decay;
+    diagFW          = kindata(:,1)./max(max(abs(kindata(:,1:2))));
+    diagBW          = kindata(:,3)./max(max(abs(kindata(:,3:4))));
+    xpeakFW         = 10.*kindata(:,2)./max(max(abs(kindata(:,1:2))));
+    xpeakBW         = 10.*kindata(:,4)./max(max(abs(kindata(:,3:4))));
     time            = dataStruct.t2delays;
     % Create figure
     fh              = figure;
@@ -204,10 +203,9 @@ else
     axes2 = axes('Parent',fh);
     axes(axes2);
     cmap=colormap(axes2,othercolor('Mrainbow',L));
-    decay = 3*(0.5*exp(-dataStruct.t2delays./5) + 0.7*exp(-dataStruct.t2delays./20));
     % Plot the data
     for n=1:L
-       plot(axes2,dataStruct.t2delays,kindata(:,n).*decay,'LineWidth',2,'Marker','o','MarkerSize',2,'color',cmap(n,:));
+       plot(axes2,dataStruct.t2delays,kindata(:,n),'LineWidth',2,'Marker','o','MarkerSize',2,'color',cmap(n,:));
        hold on
     end
     %%% Nice formatting
