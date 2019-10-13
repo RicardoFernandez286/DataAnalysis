@@ -8,7 +8,7 @@ function varargout = ContourPlot_2DIR(plotOptions,dataStruct,plotaxis)
 % Outputs:
 %     (plot)
 %     plotLimits.min/max_cut
-% Ricardo Fern√°ndez-Ter√°n / 01.09.2019 / v4.5a
+% Ricardo Fern·ndez-Ter·n / 01.09.2019 / v4.5a
 
 debug=0;
 cla(plotaxis);
