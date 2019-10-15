@@ -111,7 +111,7 @@ switch what
         hold(where,'on')
         % Fitted points
         p4 = plot(where,PumpAxis(phasepoints),wrapToPi(fittedPhase(phasepoints)),'dg','LineWidth',0.1,'MarkerSize',6,'DisplayName','Fitted phase');
-        p5 = plot(where,PumpAxis,wrapToPi(fittedPhase),'g','LineWidth',3,'DisplayName','Fitted phase');
+        p5 = plot(where,PumpAxis,wrapToPi(fittedPhase),'-g','LineWidth',3,'DisplayName','Fitted phase');
         % Original phase
         p6 = plot(where,PumpAxis,wrapToPi(ZP_phase),'-r','LineWidth',1,'DisplayName','Calculated phase');
         ylabel(where,'Phase (rad)','FontWeight','bold')
