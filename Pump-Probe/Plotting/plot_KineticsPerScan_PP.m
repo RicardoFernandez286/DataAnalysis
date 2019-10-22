@@ -55,6 +55,7 @@ switch app.PP_DataFormat.Value
         % The first scan has no _n.csv termination
             Scan1           = [tempdir filesep datafilename '_signal.csv'];
             TempScanData    = csvread(Scan1);
+            RawDelays       = csvread([app.rootdir filesep datafilename filesep datafilename '_delays.csv']);
         if Nscans > 1
             ScanData(:,1) = TempScanData(:,k);
             % Load scans 2 to Nscans
@@ -72,21 +73,15 @@ switch app.PP_DataFormat.Value
             ScanData(:,1) = TempScanData(:,k);
         end
     case {'Pump-Probe [Lab 1 & Lab 4]','Pump-Probe [TRUVIS]'}
-        % The first scan has no _n.csv termination
-        ending = '_sp0_sm0_du0_';
+        % The first scan has _0.csv termination, then _(n-1).csv
+        ending      = '_sp0_sm0_du0_';
+        RawDelays   = csvread([app.rootdir filesep datafilename filesep datafilename '_delays.csv']);
+        ScanData    = zeros(length(unique(RawDelays)),Nscans);
         for i=1:Nscans
-            ScanNr   = [tempdir filesep datafilename '_signal' ending num2str(i-1) '.csv'];
-            ScanNrch = char(ScanNr);
-            TempScanData = csvread(ScanNrch);
-            % Average rows 1:n and subtract them
-            n=10; 
-            TempScanData =  TempScanData - mean(TempScanData(1:n-1,:),1);
-            TempScanData =  TempScanData(n:end,:);
-            if dataStruct.removeduplicates == 1
-%                 % Average last 3 rows and collapse into a single row
-%                 TempScanData(end-2,:) = mean(TempScanData(end-2:end,:),1);
-%                 TempScanData(end-1:end,:)=[];
-            end
+            ScanNr              = [tempdir filesep datafilename '_signal' ending num2str(i-1) '.csv'];
+            ScanNrch            = char(ScanNr);
+            TempScanData        = csvread(ScanNrch);
+            [~,TempScanData]    = RemoveDuplicates(RawDelays,TempScanData);
             % Store it
             ScanData(:,i) = TempScanData(:,k);   
         end

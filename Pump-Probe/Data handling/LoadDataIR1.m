@@ -65,8 +65,10 @@ end
 % Consider anisotropy or magic angle signal calculation
 if ~isempty(varargin)
     anisotropy = varargin{1};
+    recalcscans = varargin{2};
 else
     anisotropy = 'NONE';
+    recalcscans = 0;
 end
 
 % Count the number of scans
@@ -122,9 +124,12 @@ else
     cmprobe     = csvread([filename '_wavenumbers.csv']);
 end
 
-
 % Read the actual data
-rawsignal={}; noise={};
+rawsignal   = {};
+noise       = {};
+tempsignal  = cell(Nslowmod,Nspectra);
+tempnoise   = cell(Nslowmod,Nspectra);
+
 for m=1:Nslowmod
     for k=1:Nspectra
         ending            = ['_sp' num2str(k-1) '_sm' num2str(m-1) '_du0.csv'];
@@ -177,6 +182,11 @@ switch anisotropy
         noise             = (par_n + 2.*perp_n)./3;
 end
 
+if recalcscans == 1
+    rawsignal       = dataStruct.rawsignal;
+    noise           = dataStruct.noise;
+end
+
 % If Nspec = 0, then we have ONE spectrometer state (i.e. the spectrometer doesn't move)
 % Otherwise, we have Nspec spectrometer states
 % Recalculate the wavenumber axis according to which state is read
@@ -203,15 +213,20 @@ maxwl           = max(cmprobe);
 Ncontours       = 40;
 plotranges      = [mintime maxtime minwl maxwl minabs maxabs];
 
-% Remove duplicate delays and average the data for repeated delays (new universal method)
-[delays,~,idx]  = unique(delays,'stable');
-new_rawsignal   = zeros(length(delays),size(rawsignal,2));
-new_noise       = zeros(length(delays),size(rawsignal,2));
+% Remove duplicate delays and average the data for repeated delays (new universal method - old way)
+% [delays,~,idx]  = unique(delays,'stable');
+% new_rawsignal   = zeros(length(delays),size(rawsignal,2));
+% new_noise       = zeros(length(delays),size(rawsignal,2));
+% 
+% for i=1:size(rawsignal,2)
+%     new_rawsignal(:,i)       = accumarray(idx,rawsignal(:,i),[],@mean); 
+%     new_noise(:,i)           = accumarray(idx,noise(:,i),[],@mean); 
+% end
 
-for i=1:size(rawsignal,2)
-    new_rawsignal(:,i)       = accumarray(idx,rawsignal(:,i),[],@mean); 
-    new_noise(:,i)           = accumarray(idx,noise(:,i),[],@mean); 
-end
+%%% Remove duplicate delays and average the data for repeated delays (new universal method - FASTER OCT 2019)
+%%% !!!!!
+[delays,new_rawsignal]      = RemoveDuplicates(delays,rawsignal);
+[delays,new_noise]          = RemoveDuplicates(delays,noise);
 
 % Sort the delays from negative to positive
 [delays,sortID] = sort(delays);
