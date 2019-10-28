@@ -2,7 +2,7 @@ function dataStruct = LoadDataIR1(dataStruct,SpectrumToDisplay,varargin)
 % Loading routine for Pump-Probe data from Labs 1 and 4, FileFormat 2
 % Updated for the new AppDesigner GUI.
 %
-% v4.0a / 16.04.2019 / Ricardo Fernández-Terán
+% v4.5a / 28.10.2019 / Ricardo Fernández-Terán
 
 %% READ from dataStruct
 rootdir         = dataStruct.rootdir;
@@ -117,7 +117,10 @@ end
 
 delays          = csvread([filename '_delays.csv']);
 % If there is a calibrated probe file, use it. Otherwise, use the normal one
-if exist([rootdir filesep 'CalibratedProbe.csv'],'file') == 2
+if exist([rootdir filesep filename filesep 'CalibratedProbe.csv'],'file') == 2
+    WNfile      = 'CalibratedProbe.csv';
+    cmprobe     = csvread([rootdir filesep filename filesep WNfile]);
+elseif exist([rootdir filesep 'CalibratedProbe.csv'],'file') == 2
     WNfile      = 'CalibratedProbe.csv';
     cmprobe     = csvread([rootdir filesep WNfile]);
 else
