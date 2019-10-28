@@ -118,11 +118,9 @@ end
 delays          = csvread([filename '_delays.csv']);
 % If there is a calibrated probe file, use it. Otherwise, use the normal one
 if exist([rootdir filesep datafilename filesep 'CalibratedProbe.csv'],'file') == 2
-    WNfile      = 'CalibratedProbe.csv';
-    cmprobe     = csvread([rootdir filesep filename filesep WNfile]);
+    cmprobe     = csvread([rootdir filesep datafilename filesep 'CalibratedProbe.csv']);
 elseif exist([rootdir filesep 'CalibratedProbe.csv'],'file') == 2
-    WNfile      = 'CalibratedProbe.csv';
-    cmprobe     = csvread([rootdir filesep WNfile]);
+    cmprobe     = csvread([rootdir filesep 'CalibratedProbe.csv']);
 else
     cmprobe     = csvread([filename '_wavenumbers.csv']);
 end
