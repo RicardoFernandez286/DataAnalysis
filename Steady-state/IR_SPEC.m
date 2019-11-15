@@ -271,6 +271,9 @@ switch ExpType
         %% Plot the CV difference data (with and without offset correction)
         %%% 1) Ask for the open potential (or 0 V) scan
             [ZeroPotFile,ZeroPath,~] = uigetfile({'*.?*','Bruker OPUS files (*.#)'},'Select the baseline spectrum to load...');
+            if ZeroPotFile == 0
+                return
+            end
             % Use this as the "zero potential" baseline
             try
                 [y,x,~] = ImportOpus([ZeroPath ZeroPotFile],'RatioAbsorption');

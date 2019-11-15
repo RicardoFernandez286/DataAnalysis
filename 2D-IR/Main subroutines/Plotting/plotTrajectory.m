@@ -100,7 +100,10 @@ ax.Visible      = 'On';
 
     xlim(ax,[0 Rbox]);
     ylim(ax,[0 Rbox]);
-    box(ax,'on');
+    ax.Box      = 1;
+    ax.BoxStyle = 'full';
+    ax.Layer    = 'top';
+    
     ax.PlotBoxAspectRatio   = [1 1 1];
     ax.FontSize             = 16;
 
@@ -130,7 +133,7 @@ if strcmp(plotPie,'with pie')
             case 'Single'
                 MolDist     = [length(iso12) length(iso13) length(CNdil)];
             case 'All'
-                MolDist     = [length(trajectData_2D(trajectData_2D(:,6) == 0,:))-length(trajectData_2D(trajectData_2D(:,7) == trajectInfo(3),:)) length(trajectData_2D(trajectData_2D(:,6) == -iso13_shift,:)) length(trajectData_2D(trajectData_2D(:,7) == trajectInfo(3),:))];
+                MolDist     = [length(trajectData_2D(trajectData_2D(:,6) == 0,:)) length(trajectData_2D(trajectData_2D(:,6) == -iso13_shift,:)) length(trajectData_2D(trajectData_2D(:,7) == trajectInfo(3),:))];
         end
     else
         switch DistPlot
@@ -154,6 +157,8 @@ if strcmp(plotPie,'with pie')
     else
         colormap(ax,[colRe12;colRe13])
         isolabel = {['Re(^{12}CO)' newline],['Re(^{13}CO)' newline]};
+        prcntVal = prcntVal(1:2); 
+        pText    = pText(1:2);
     end
 
     newLabel = strcat(isolabel,prcntVal)';
