@@ -1,6 +1,6 @@
 %% Get a list of MAT files
-scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Data\New fits';
-subdir      = 'Andrea';
+scriptdir   = '\\idnetapp-chem.uzh.ch\g_chem_hamm$\Group\Andrea\october_2019';
+subdir      = 'fits';
 
 plotWhat    = 'Xpeak GSB + C(t)'; 
 % plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
@@ -75,7 +75,7 @@ end
 % Read the concentrations and sort them in ascending order
 for i=1:Nconc
     nameparts       = split(names{i},'_');
-    ConcPercent(i)  = str2double(erase(nameparts{4},'w'));
+    ConcPercent(i)  = str2double(erase(nameparts{3},'w'));
 end
 
 [ConcPercent,idx]   = sort(ConcPercent,'descend');

@@ -1,13 +1,21 @@
-DoFit = 0;
+DoFit   = 0;
+DoSave  = 0;
+
+PlotSimOnly = 0;
+PlotExpOnly = 0;
+PlotAllSim  = 1;
 %% Get a list of MAT files
 % scriptdir   = 'C:\Users\ricar\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Data\New fits\';
+% scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Data\New fits';
 % subdir      = 'Re18';
+% scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Data\Original fits\Dilution with Re18 - New';
+% subdir = [];
 % subdir      = [];
 % subdir      = 'Dilution with CNBzCOOH';
 % subdir      = 'New';
 
-scriptdir = 'C:\Users\ricar\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Latest Simulations\big7fits';
-subdir = [];
+% scriptdir = 'C:\Users\ricar\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Latest Simulations\big7fits';
+% subdir = [];
 
 % scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Simulations\Data - small mol\NEW TESTS';
 
@@ -17,33 +25,40 @@ subdir = [];
 % scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Latest Simulations\Dimer_distance2\FitResults';
 % subdir = [];
 
-scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Latest Simulations\Surface_Big8\Fits';
-subdir = [];
+% scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Latest Simulations\Surface_Big9dil1\Fits';
+% subdir = [];
 
-% scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Data\New fits';
-% subdir      = 'Re18';
+% scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Latest Simulations\Surface_Small\FitResults';
+% scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Latest Simulations\Surface_Small2\Fits';
+% scriptdir = '\\idnetapp-chem.uzh.ch\g_chem_hamm$\Group\Ricardo\SURFACE\Surface_SmallDil2\Fits';
+% subdir      = [];
+
+scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\10) 2D IR distance - na\Data\New fits';
+subdir      = 'Re18';
+% subdir = 'CNBz';
 
 plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
 plotFormat  = 'Horizontal'; % 'Horizontal' or 'Vertical'
 concType    = '100-%'; % '100-%' or '%'
-diluent     = 'Re(^{13}C^{18}O)'; % 'Re(^{13}C^{18}O)'
-% diluent     = 'CNBz';
-xpos        = 0.05; % 1.02 for CNBz, 0.1 horizontal
+% diluent     = 'Re(^{13}C^{18}O)'; % 'Re(^{13}C^{18}O)'
+diluent     = 'CNBz';
+xpos        = -0.1; % 1.02 for CNBz, 0.1 horizontal
+% xpos        = -0.175;
 ypos        = 0.95;
 
 filelist    = dir([scriptdir filesep subdir]);
 
 %% Parse the names into concentrations and make a list
 names       = {filelist.name}';
-names       = names(contains(names,'.mat'));
+names       = flipud(names(contains(names,'.mat')));
 Nconc       = length(names);
 
 % Initialise variables
 ConcPercent     = zeros(Nconc,1);
 PrismID         = strings(Nconc,1);
 SolutionID      = strings(Nconc,1);
-VoumeData_GSB   = cell(Nconc,1);
-VoumeData_ESA   = cell(Nconc,1);
+VolumeData_GSB  = cell(Nconc,1);
+VolumeData_ESA  = cell(Nconc,1);
 SSR_fit         = zeros(Nconc,1);
 StepSize_fit    = zeros(Nconc,1);
 
@@ -75,8 +90,17 @@ box(ax_BW,'on');
 hold(ax_FW,'on');
 hold(ax_BW,'on');
 
-cmFW = colormap(ax_FW,othercolor('Mrainbow',Nconc));
-cmBW = colormap(ax_BW,othercolor('Mrainbow',Nconc));
+IsExp= contains(names,'2D');
+Nexp = sum(IsExp);
+Nsimu= sum(IsExp);
+
+if PlotAllSim == 1
+    cmFW = colormap(ax_FW,(othercolor('Mrainbow',Nconc)));
+    cmBW = colormap(ax_BW,(othercolor('Mrainbow',Nconc)));
+else
+    cmFW = colormap(ax_FW,(othercolor('Mrainbow',Nexp)));
+    cmBW = colormap(ax_BW,(othercolor('Mrainbow',Nexp)));
+end
 
 % cmFW = colormap(ax_FW,flip(othercolor('Blues3',Nconc)));
 % cmBW = colormap(ax_BW,flip(othercolor('Reds3',Nconc)));
@@ -85,23 +109,41 @@ cmBW = colormap(ax_BW,othercolor('Mrainbow',Nconc));
 % Read the concentrations and sort them in ascending order
 for i=1:Nconc
     nameparts       = split(names{i},'_');
-    ConcPercent(i)  = str2double(nameparts{3});
+    if IsExp(i)
+        ConcPercent(i)  = round(str2double(nameparts{3}));
+    else
+        ConcPercent(i)  = round(str2double(nameparts{2})*100);
+    end
 end
 
 [ConcPercent,idx]   = sort(ConcPercent,'descend');
 names               = names(idx);
+IsExp               = IsExp(idx);
 
 % Now plot the stuff
 for i=1:Nconc
-    nameparts       = split(names{i},'_');
-    PrismID(i)      = nameparts{1};
-    SolutionID(i)   = nameparts{2};
     load([scriptdir filesep subdir filesep names{i}])
-    VoumeData_GSB{i} = NormVols(:,:,1);
-    VoumeData_ESA{i} = NormVols(:,:,2);
-
-    if isnan(ConcPercent(i))
-        decay = 1*(0.15*exp(-t2delays./5) + 0.85*exp(-t2delays./20));
+    VolumeData_GSB{i} = NormVols(:,:,1);
+    VolumeData_ESA{i} = NormVols(:,:,2);
+    
+    if PlotAllSim == 1
+        plotID = i;
+    else
+        plotID          = find(ConcPercent(IsExp)==ConcPercent(i),1,'first');
+    end
+    delays{i}     = t2delays;
+    xpeak_fw{i}   = NormVols(:,3,2);
+    xpeak_bw{i}   = NormVols(:,4,2);
+    
+    if ~IsExp(i)
+        if PlotExpOnly == 1
+            continue
+        end
+        if PlotAllSim ~= 1 && ~ismember(ConcPercent(i),ConcPercent(IsExp))
+            continue
+        end
+        decay = 1*(0.15*exp(-t2delays./2.5) + 0.85*exp(-t2delays./20));
+%         decay = 1.25*(0.3*exp(-t2delays./3) + 0.7*exp(-t2delays./20)); % From JP's paper
 %         decay = ones(length(t2delays),1);
         if DoFit == 0
             line_up = ':';
@@ -111,6 +153,9 @@ for i=1:Nconc
             line_dw = 'v';
         end
     else
+        if PlotSimOnly == 1
+            continue
+        end
         decay = ones(length(t2delays),1);
         if DoFit == 0
             line_up = '^-';
@@ -125,46 +170,46 @@ for i=1:Nconc
     StepSize(i)      = output_st.stepsize;
     switch plotWhat
         case 'Diagonal GSB'
-            plot(ax_FW,t2delays,NormVols(:,1,1).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,NormVols(:,2,1).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+            plot(ax_FW,t2delays,NormVols(:,1,1).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(plotID,:),'HandleVisibility','off');
+            plot(ax_BW,t2delays,NormVols(:,2,1).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(plotID,:),'HandleVisibility','off');
         case 'Xpeak GSB'
-            plot(ax_FW,t2delays,NormVols(:,3,1).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,NormVols(:,4,1).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+            plot(ax_FW,t2delays,NormVols(:,3,1).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(plotID,:),'HandleVisibility','off');
+            plot(ax_BW,t2delays,NormVols(:,4,1).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(plotID,:),'HandleVisibility','off');
 %             plot(ax_FW,t2delays,NormVols(:,3,1),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
 %             plot(ax_BW,t2delays,NormVols(:,4,1),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
         case 'Diagonal ESA'
-            plot(ax_FW,t2delays,NormVols(:,1,2).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,NormVols(:,2,2).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+            plot(ax_FW,t2delays,NormVols(:,1,2).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(plotID,:),'HandleVisibility','off');
+            plot(ax_BW,t2delays,NormVols(:,2,2).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(plotID,:),'HandleVisibility','off');
         case 'Xpeak ESA'
-            plot(ax_FW,t2delays,NormVols(:,3,2)./NormVols(:,1,2).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,NormVols(:,4,2)./NormVols(:,2,2).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
-%             plot(ax_FW,t2delays,NormVols(:,3,2),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-%             plot(ax_BW,t2delays,NormVols(:,4,2),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+%             plot(ax_FW,t2delays,NormVols(:,3,2)./NormVols(:,1,2).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
+%             plot(ax_BW,t2delays,NormVols(:,4,2)./NormVols(:,2,2).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+            plot(ax_FW,t2delays,NormVols(:,3,2).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(plotID,:),'HandleVisibility','off');
+            plot(ax_BW,t2delays,NormVols(:,4,2).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(plotID,:),'HandleVisibility','off');
             %             pepita(i) = NormVols(15,3,2)+NormVols(14,3,2); % WAS 3 AND 4
         case 'SpecDiff'
-            plot(ax_FW,t2delays,fitPar.C(:,1),line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,fitPar.C(:,2),line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+            plot(ax_FW,t2delays,fitPar.C(:,1),line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(plotID,:),'HandleVisibility','off');
+            plot(ax_BW,t2delays,fitPar.C(:,2),line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(plotID,:),'HandleVisibility','off');
         case 'Xpeak Diff'
-            plot(ax_FW,t2delays,(NormVols(:,3,1)+NormVols(:,3,2)).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
-            plot(ax_BW,t2delays,(NormVols(:,4,1)+NormVols(:,4,2)).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
+            plot(ax_FW,t2delays,(NormVols(:,3,1)+NormVols(:,3,2)).*decay,line_dw,'MarkerSize',2,'LineWidth',1.5,'Color',cmFW(plotID,:),'HandleVisibility','off');
+            plot(ax_BW,t2delays,(NormVols(:,4,1)+NormVols(:,4,2)).*decay,line_up,'MarkerSize',2,'LineWidth',1.5,'Color',cmBW(plotID,:),'HandleVisibility','off');
     end
-
-    delays{i}     = t2delays;
-    xpeak_fw{i}   = NormVols(:,3,2);
-    xpeak_bw{i}   = NormVols(:,4,2);
-
+    
     switch concType
         case '100-%'
-            plot(ax_FW,NaN,NaN,'-','LineWidth',4,'Color',cmFW(i,:),'DisplayName',num2str(100-ConcPercent(i)))
+            if ~isnan(str2double(SolutionID(i))) % Simu
+%                 plot(ax_FW,NaN,NaN,'-','LineWidth',4,'Color',cmFW(plotID,:),'DisplayName',[num2str(100-ConcPercent(i)) '*'])
+            else
+                plot(ax_FW,NaN,NaN,'-','LineWidth',4,'Color',cmFW(plotID,:),'DisplayName',num2str(100-ConcPercent(i)))
+            end
             switch plotFormat
             case 'Vertical'
-                plot(ax_BW,NaN,NaN,'-','LineWidth',4,'Color',cmBW(i,:),'DisplayName',num2str(100-ConcPercent(i)))
+                plot(ax_BW,NaN,NaN,'-','LineWidth',4,'Color',cmBW(plotID,:),'DisplayName',num2str(100-ConcPercent(i)))
             end
         case '%'
-            plot(ax_FW,NaN,NaN,'-','LineWidth',4,'Color',cmFW(i,:),'DisplayName',num2str(ConcPercent(i)))
+            plot(ax_FW,NaN,NaN,'-','LineWidth',4,'Color',cmFW(plotID,:),'DisplayName',num2str(ConcPercent(i)))
             switch plotFormat
             case 'Vertical'
-                plot(ax_BW,NaN,NaN,'-','LineWidth',4,'Color',cmBW(i,:),'DisplayName',num2str(ConcPercent(i)))
+                plot(ax_BW,NaN,NaN,'-','LineWidth',4,'Color',cmBW(plotID,:),'DisplayName',num2str(ConcPercent(i)))
             end
     end
 
@@ -283,14 +328,23 @@ for i=1:Nconc
     integral_fw(i) = trapz(delays{i},xpeak_fw{i});
 end
 
+if DoSave == 1
+    for i=1:Nconc
+        ESA_down(:,i)    = VolumeData_ESA{i}(:,3);
+        ESA_up(:,i)      = VolumeData_ESA{i}(:,4);
+    end
+    dlmwrite([scriptdir filesep subdir 'ESA_DOWN.dat'],[[0 ConcPercent'];[t2delays ESA_down.*decay]]);
+    dlmwrite([scriptdir filesep subdir 'ESA_UP.dat'],[[0 ConcPercent'];[t2delays ESA_up.*decay]]);
+end
+
 if DoFit == 0
  return
 end
 
 %% Do kinetic model fit
 for i=1:Nconc
-    FW_data = [VoumeData_ESA{i}(:,1) VoumeData_ESA{i}(:,3)/10];
-    BW_data = [VoumeData_ESA{i}(:,2) VoumeData_ESA{i}(:,4)/10];
+    FW_data = [VolumeData_ESA{i}(:,1) VolumeData_ESA{i}(:,3)/10];
+    BW_data = [VolumeData_ESA{i}(:,2) VolumeData_ESA{i}(:,4)/10];
     time = delays{i};
 
     fitPar0 = [3  20   70   90  0.3];
@@ -305,3 +359,8 @@ for i=1:Nconc
 end
 
 fitpar = fitpar';
+
+
+% FIGURE SIZE
+fh.Units = 'pixels';
+% fh.Position = [275 718 1285 620];

@@ -21,7 +21,7 @@ mean_ref    = mean(ref_shots,1);
 dIprobe     = probe_shots - mean(probe_shots,1);
 dIref       = ref_shots - mean(ref_shots,1);
 
-%% Calculate the correlation matrices (for δI)
+%% Calculate the correlation matrices (for δI) - Probe/reference correlation maps
 if DoPlot==1
     dPP_Corr = corr(dIprobe,dIprobe);
     dPR_Corr = corr(dIprobe,dIref);
