@@ -182,6 +182,7 @@ switch ExpType
         xmatrix = [];
         ymatrix = [];
         header  = [];
+        time_str= cell(length(files),1);
         for i=1:length(files)
             currfile    = char(files(i));
             IRfile      = [SPECDir filesep currfile];
@@ -192,8 +193,8 @@ switch ExpType
             end
             xmatrix(:,i)    = x';
             ymatrix(:,i)    = double(y);
-            time_str(i,:)   = strsplit(params.RatioDataAbsorptionChanged.TIM,' ');
-            time_num(i,:)   = datenum(time_str{i,1},'HH:MM:SS.FFF');
+            time_str{i}     = strsplit(params.RatioDataAbsorptionChanged.TIM,' ');
+            time_num(i,:)   = datenum(time_str{i}(1),'HH:MM:SS.FFF');
         end
         %% Convert relative time into potentials
         %%% 1) Read the saved scan parameters

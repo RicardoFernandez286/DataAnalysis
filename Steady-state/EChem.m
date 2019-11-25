@@ -1,14 +1,15 @@
 function EChem()
 % CURRENT VERSION: v1.1a
-% 14.11.2019 / Ricardo Fernandez-Teran
+% 26.11.2019 / Ricardo Fernandez-Teran
 % Changelog:
+% - Added compatibility with Ivium data (XY XY XY XY format). Can discriminate in the case E I Q was saved instead of XY XY XY
 % - Updated potential referencing and unit conversion
 % - Other major improvements
 
 %% Change the input units here
 inI_units   = 'mA';     % Options: 'mA', 'microA' or 'A'
 inE_units   = 'V';      % Options: 'mV' or 'V'
-DataType    = 'EC-lab'; % Options: 'EC-lab' or 'Ivium'
+DataType    = 'Ivium'; % Options: 'EC-lab' or 'Ivium'
 
 %% Plotting options
 WhichScan   = 1;
@@ -38,21 +39,21 @@ switch ref_type
         if(isempty(ref_pot))
             return
         end
-        ref_pot_mV      = str2double(ref_pot{1});
+        ref_pot_mV      = str2num(ref_pot{1});
         ref_pot_name    = 'Fc/Fc^+';
     case 'Fc(Cp*)2'
         ref_pot         = inputdlg({'Reference couple half-potential (mV):';'Potential of Ferrocene in your solvent (mV vs. Fc(Cp*)2):'},'Define potential scale',[1,50],{'0';'MeCN=505; THF=427'});
         if(isempty(ref_pot))
             return
         end
-        ref_pot_mV      = str2double(ref_pot{1})+str2double(ref_pot{2});
+        ref_pot_mV      = str2num(ref_pot{1})+str2double(ref_pot{2});
         ref_pot_name    = 'Fc/Fc^+';
     case 'None/Other'
         ref_pot         = inputdlg({'Reference couple half-potential (mV):';'Reference couple name:'},'Define potential scale',[1,50],{'0';'Fc/Fc^+'});
         if(isempty(ref_pot))
             return
         end
-        ref_pot_mV      = str2double(ref_pot{1});
+        ref_pot_mV      = str2num(ref_pot{1});
         ref_pot_name    = ref_pot{2};
 end
 
@@ -93,8 +94,23 @@ caption     = cell(Nfiles,1);
 
 switch DataType
     case 'Ivium'
-        warndlg('NOT IMPLEMENTED!');
-        return
+        for i=1:Nfiles
+            % Read from file
+            data        = readmatrix([rootdir filesep filenames{filenames_idx(i)}],'NumHeaderLines',1);
+            % Remove NaN columns
+            data        = data(:,any(~isnan(data), 1));
+            % Sort into {[E x I]} vs scan number
+            Nscans(i)   = floor(size(data,2)/2); 
+            
+            % Sort into {[E x I]} vs scan number
+            for j=1:Nscans(i)
+                data(:,1)   = data(:,1)*outE_factor - ref_pot_mV;
+                data(:,2)   = data(:,2)*outI_factor;
+                AllData{i,j}    = data(:,(2*j-1):2*j);
+            end
+            % Get a caption string
+            [~,caption{i},~]    = fileparts(filenames{filenames_idx(i)});
+        end
     case 'EC-lab'
         for i=1:Nfiles
             % Read from file
