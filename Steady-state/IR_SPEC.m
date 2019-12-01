@@ -182,6 +182,7 @@ switch ExpType
         xmatrix = [];
         ymatrix = [];
         header  = [];
+        time_str= cell(length(files),1);
         for i=1:length(files)
             currfile    = char(files(i));
             IRfile      = [SPECDir filesep currfile];
@@ -192,8 +193,8 @@ switch ExpType
             end
             xmatrix(:,i)    = x';
             ymatrix(:,i)    = double(y);
-            time_str(i,:)   = strsplit(params.RatioDataAbsorptionChanged.TIM,' ');
-            time_num(i,:)   = datenum(time_str{i,1},'HH:MM:SS.FFF');
+            time_str{i}     = strsplit(params.RatioDataAbsorptionChanged.TIM,' ');
+            time_num(i,:)   = datenum(time_str{i}(1),'HH:MM:SS.FFF');
         end
         %% Convert relative time into potentials
         %%% 1) Read the saved scan parameters
@@ -271,6 +272,9 @@ switch ExpType
         %% Plot the CV difference data (with and without offset correction)
         %%% 1) Ask for the open potential (or 0 V) scan
             [ZeroPotFile,ZeroPath,~] = uigetfile({'*.?*','Bruker OPUS files (*.#)'},'Select the baseline spectrum to load...');
+            if ZeroPotFile == 0
+                return
+            end
             % Use this as the "zero potential" baseline
             try
                 [y,x,~] = ImportOpus([ZeroPath ZeroPotFile],'RatioAbsorption');

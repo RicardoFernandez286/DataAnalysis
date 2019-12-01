@@ -12,7 +12,7 @@ nGR         = 200;
 filt_gR     = 0;
 
 % Exponent for plot
-k           = 0; % can be 0 or 6
+k           = 6; % can be 0 or 6
 
 % Isotope shifts
 iso13_shift = 48;
@@ -23,7 +23,7 @@ iso18_shift = 92;
 colRe12     = [0.5 0.75 1];
 colRe13     = [1 0.75 0.5];
 colRe18     = [0.75 1 0.5];
-% colCNBz     = 0.75.*[1 1 1];
+colCNBz     = 0.75.*[1 1 1];
 
 %% Initialise variables
 PBC                 = 1;
@@ -75,7 +75,9 @@ plot(axGR,gx,gAC./(gx.^k),'--','Color',colRe12.*colRe18,'DisplayName',['12-' dil
 plot(axGR,gx,gBC./(gx.^k),'--','Color',colRe13.*colRe18,'DisplayName',['13-' dilName],'LineWidth',1);
 
 yline(axGR,0,'HandleVisibility','off');
-yline(axGR,1,'HandleVisibility','off');
+if k==0
+    yline(axGR,1,'HandleVisibility','off');
+end
 
 % % Plot all of those with 18
 % plot(axGR,gx,(gCC+gAC+gBC)./(gx.^k),'Color',colRe12.*colRe18,'DisplayName','12-18 + 13-18','LineWidth',1);
@@ -98,12 +100,47 @@ switch k
         ylabel(axGR,'g(r)/r^6','FontWeight','bold');
 end
 
-endInt  = findClosestId2Val(gx,8.36);
+%%
+% Select which function to plot
+gIJ = gAB;
 
-N_ab    = min([n12,n13])/Nsamples;
-rho     = n12/prod(BoxSizes);
+% Calculate the first minimum
+[~,P]   = islocalmin(gIJ,'FlatSelection','center','SamplePoints',gx);
+[~,id]  = max(P);
+r_min   = gx(id);
+r_min   = r_min(1);
 
-disp(['Integral k=0: ' num2str((4*pi*rho)*trapz(gx(1:endInt),(gx(1:endInt).^(2).*(gAA(1:endInt)))))])
+xline(axGR,r_min,'-','HandleVisibility','off','LineWidth',1,'Color',[1 0.5 0]);
+
+endInt  = findClosestId2Val(gx,r_min);
+% N_ab    = min([n12,n13])/Nsamples;
+rho     = (n12+n13+n18)/Nsamples/prod(BoxSizes);
+
+N_r = zeros(length(gx),1);
+for i=2:length(gx)
+ N_r(i) = 2*pi*rho*trapz(gx(1:i),gx(1:i).*gIJ(1:i));
+end
+
+fh =figure(5);
+clf(fh);
+axNr=axes('parent',figure(5));
+
+plot(axNr,gx,N_r,'b','LineWidth',2);
+xline(axNr,r_min,'-','HandleVisibility','off','LineWidth',1,'Color',[1 0.5 0]);
+axNr.FontSize = 16;
+xlabel(axNr,'r* (Å)','FontWeight','bold','FontSize',16);
+ylabel(axNr,'N(r)','FontWeight','bold','FontSize',16);
+% disp(max(N_r))
+axis(axNr,'tight');
+% yline(6,'--');
+
+CoordNum = N_r(endInt);
+disp({['R_1min = ' num2str(r_min)];['Coordination number: ' num2str(CoordNum)]})
+%%
+hold(axGR,'on')
+area(axGR,gx(1:endInt),gAB(1:endInt)./(gx(1:endInt).^k),'FaceColor',colRe12.*colRe13,'FaceAlpha',0.5,'HandleVisibility','off')
+hold(axGR,'off')
+
 % disp(['Integral k=6: ' num2str((4*pi*rho)*trapz(gx(1:endInt),(gx(1:endInt).^(2-5).*(gAB(1:endInt)))))])
 
 % sum(trajectData_2D(:,6) == 0)
