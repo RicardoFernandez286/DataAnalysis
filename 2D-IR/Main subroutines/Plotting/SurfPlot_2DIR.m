@@ -374,53 +374,53 @@ if Plot_SpecDiff
     hold(plotaxis,'off')
 end
 
-%% Show the Gaussian fit results
-if ~isempty(t2_startFit)
-    OrigDelays      = t2delays;
-    t2delays        = t2delays(t2delays>t2_startFit);
-    newDelayNumber  = popdelay-(Ndelays-length(t2delays));
-    inputstruct     = dataStruct.FitInput;
-end
-
-if isfield(dataStruct,'FitResults') ~= 0  && ~isempty(dataStruct.FitResults) && plotFitResults && newDelayNumber > 0 
-    switch plot_pumpdirection    
-    case 'Vertical'
-        Xfit            = inputstruct.Omega{2};
-        Yfit            = inputstruct.Omega{1};
-        Zfit            = dataStruct.FitResults(:,:,newDelayNumber);
-    case 'Horizontal'
-        Xfit            = inputstruct.Omega{1};
-        Yfit            = inputstruct.Omega{2};
-        Zfit            = dataStruct.FitResults(:,:,newDelayNumber)';
-    end
-    
-    hold(plotaxis,'on')
-    contour(plotaxis,Xfit,Yfit,Zfit,plot_contours,'LineColor',0.7*[1 1 1],'LineWidth',0.1)
-    hold(plotaxis,'off')
-    
-    if plotResidualsFit == 1
-    PROC_2D_DATA    = dataStruct.PROC_2D_DATA;
-    ProbeAxis       = dataStruct.ProbeAxis;
-    PumpAxis        = dataStruct.PumpAxis{1,1};
-    % Get the indices
-    pump_range      = [min(inputstruct.Omega{1}) max(inputstruct.Omega{1})];
-    probe_range     = [min(inputstruct.Omega{2}) max(inputstruct.Omega{2})];
-    pump_idxrange   = sort(findClosestId2Val(PumpAxis,pump_range));
-    probe_idxrange  = sort(findClosestId2Val(ProbeAxis,probe_range));
-    Ndelays         = length(t2delays);
-    ZData           = zeros(pump_idxrange(2)-pump_idxrange(1)+1,probe_idxrange(2)-probe_idxrange(1)+1,Ndelays);       
-    % Cut the data
-    NOrigDelays     = length(OrigDelays);
-    for m=1:Ndelays
-        data                = PROC_2D_DATA{m+(NOrigDelays-Ndelays),1};
-        ZData(:,:,m)        = data(pump_idxrange(1):pump_idxrange(2),probe_idxrange(1):probe_idxrange(2));
-    end
-    hold(plotaxis,'on')
-    contourf(plotaxis,Xfit,Yfit,(ZData(:,:,newDelayNumber)-Zfit')',plot_contours,'LineColor','flat')
-    diagline = refline(plotaxis,1,0);
-    diagline.Color = 'k';
-    end
-end
+% %% Show the Gaussian fit results
+% if ~isempty(t2_startFit)
+%     OrigDelays      = t2delays;
+%     t2delays        = t2delays(t2delays>t2_startFit);
+%     newDelayNumber  = popdelay-(Ndelays-length(t2delays));
+%     inputstruct     = dataStruct.FitInput;
+% end
+% 
+% if isfield(dataStruct,'FitResults') ~= 0  && ~isempty(dataStruct.FitResults) && plotFitResults && newDelayNumber > 0 
+%     switch plot_pumpdirection    
+%     case 'Vertical'
+%         Xfit            = inputstruct.Omega{2};
+%         Yfit            = inputstruct.Omega{1};
+%         Zfit            = dataStruct.FitResults(:,:,newDelayNumber);
+%     case 'Horizontal'
+%         Xfit            = inputstruct.Omega{1};
+%         Yfit            = inputstruct.Omega{2};
+%         Zfit            = dataStruct.FitResults(:,:,newDelayNumber)';
+%     end
+%     
+%     hold(plotaxis,'on')
+%     contour(plotaxis,Xfit,Yfit,Zfit,plot_contours,'LineColor',0.7*[1 1 1],'LineWidth',0.1)
+%     hold(plotaxis,'off')
+%     
+%     if plotResidualsFit == 1
+%     PROC_2D_DATA    = dataStruct.PROC_2D_DATA;
+%     ProbeAxis       = dataStruct.ProbeAxis;
+%     PumpAxis        = dataStruct.PumpAxis{1,1};
+%     % Get the indices
+%     pump_range      = [min(inputstruct.Omega{1}) max(inputstruct.Omega{1})];
+%     probe_range     = [min(inputstruct.Omega{2}) max(inputstruct.Omega{2})];
+%     pump_idxrange   = sort(findClosestId2Val(PumpAxis,pump_range));
+%     probe_idxrange  = sort(findClosestId2Val(ProbeAxis,probe_range));
+%     Ndelays         = length(t2delays);
+%     ZData           = zeros(pump_idxrange(2)-pump_idxrange(1)+1,probe_idxrange(2)-probe_idxrange(1)+1,Ndelays);       
+%     % Cut the data
+%     NOrigDelays     = length(OrigDelays);
+%     for m=1:Ndelays
+%         data                = PROC_2D_DATA{m+(NOrigDelays-Ndelays),1};
+%         ZData(:,:,m)        = data(pump_idxrange(1):pump_idxrange(2),probe_idxrange(1):probe_idxrange(2));
+%     end
+%     hold(plotaxis,'on')
+%     contourf(plotaxis,Xfit,Yfit,(ZData(:,:,newDelayNumber)-Zfit')',plot_contours,'LineColor','flat')
+%     diagline = refline(plotaxis,1,0);
+%     diagline.Color = 'k';
+%     end
+% end
 
 %% Show the plot
 plotaxis.Visible='On';
