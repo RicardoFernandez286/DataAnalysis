@@ -11,6 +11,9 @@ inI_units   = 'mA';     % Options: 'mA', 'microA' or 'A'
 inE_units   = 'V';      % Options: 'mV' or 'V'
 DataType    = 'Ivium'; % Options: 'EC-lab' or 'Ivium'
 
+%% Sort by scan rate?
+SortScanRate = 0;
+
 %% Plotting options
 WhichScan   = 1;
 LineWidth   = 1.5;
@@ -63,9 +66,9 @@ end
 % Change units
 switch inI_units
     case 'mA'
-        outI_factor = 1000;
-    case 'microA'
         outI_factor = 1;
+    case 'microA'
+        outI_factor = 10^-3;
     case 'A'
         outI_factor = 10^6;
 end
@@ -77,7 +80,7 @@ switch inE_units
         outE_factor = 1000;
 end
 
-outI_units  = '\muA';   % set the legend of the current axis
+outI_units  = 'mA';   % set the legend of the current axis
 
 if ~isempty(ref_pot_name)
     outE_units  = ['mV vs. ' ref_pot_name];     % set the legend of the potential axis (reference comes later)
@@ -127,15 +130,48 @@ switch DataType
         end
 end
 
+%% Sort scan rate dependence
+if SortScanRate == 1
+    ScanRates_st        = inputdlg(caption,'Input scan rate (mV/s), -1 to ignore');
+    
+    if isempty(ScanRates_st)
+        return
+    end
+    Nfiles              = length(ScanRates_st);
+    ScanRates_num       = zeros(Nfiles,1);
+    for i=1:Nfiles
+        ScanRates_num(i)= str2double(ScanRates_st{i});
+        if ScanRates_num(i) > 1000
+            caption{i}      = [num2str(ScanRates_num(i)/1000) ' V/s'];
+        else
+            caption{i}      = [num2str(ScanRates_num(i)) ' mV/s'];
+        end
+    end
+    
+    [sort_SR,sort_id]   = sort(ScanRates_num,'ascend');
+    AllData             = AllData(sort_id(sort_SR > 0 & ~isnan(sort_SR)),:);
+    caption             = caption(sort_id(sort_SR > 0 & ~isnan(sort_SR)));
+    Nscans              = Nscans(sort_id(sort_SR > 0 & ~isnan(sort_SR)));           
+    Nfiles              = size(AllData,1);
+end
+
 %% Plot
 fh = figure(1);
 clf(fh);
 ax = axes('parent',fh);
 
 hold(ax,'on')
-for i=1:Nfiles
-    plotScan = min(Nscans(i),WhichScan);
-    plot(AllData{i,plotScan}(:,1),AllData{i,plotScan}(:,2)*outI_factor,'DisplayName',caption{i},'LineWidth',LineWidth)
+if SortScanRate == 1
+    cmap = colormap(ax,othercolor('Mrainbow',Nfiles));
+    for i=1:Nfiles
+        plotScan = min(Nscans(i),WhichScan);
+        plot(AllData{i,plotScan}(:,1),AllData{i,plotScan}(:,2)*outI_factor,'DisplayName',caption{i},'Color',cmap(i,:),'LineWidth',LineWidth)
+    end
+else
+    for i=1:Nfiles
+        plotScan = min(Nscans(i),WhichScan);
+        plot(AllData{i,plotScan}(:,1),AllData{i,plotScan}(:,2)*outI_factor,'DisplayName',caption{i},'LineWidth',LineWidth)
+    end
 end
 hold(ax,'off');
 

@@ -8,9 +8,9 @@ function IR_SPEC()
 %% Get the file list
 % Get the directory
 % read defaultdir, otherwise just show the default dialog
-fileexist = exist('C:\GUIoptions.txt','file');
+fileexist = exist([fileparts(fileparts(mfilename('fullpath'))) 'GUIoptions.txt'],'file');
 if fileexist == 2
-    defaultdir = readParam('defaultSPECdir','C:\GUIoptions.txt');
+    defaultdir = readParam('defaultSPECdir',[fileparts(fileparts(mfilename('fullpath'))) 'GUIoptions.txt']);
     SPECDir = uigetdir(defaultdir);
 else
     SPECDir = uigetdir();
@@ -231,7 +231,7 @@ switch ExpType
                 opts.Interpreter = 'tex';
                 ref_pot = inputdlg({'Which scale?: ';'E_{1/2} in current scale (mV): '},'Reference potentials',[1,50],{'Fc^{+}/Fc','500'},opts);
                 ref_name= ['mV vs ' ref_pot{1}];
-                ref_val = str2double(ref_pot{2});
+                ref_val = str2num(ref_pot{2});
             else
                 ref_name= 'mV';
                 ref_val = 0;
