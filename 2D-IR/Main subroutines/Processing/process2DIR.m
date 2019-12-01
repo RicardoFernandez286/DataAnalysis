@@ -35,7 +35,7 @@ show_int=1*debug;
 
 dummy = 1;
 % dummy = 'diff'; % Can be the dummy number of 'diff' (will plot 2 - 1) - more options coming soon
-% dummydiff = 3;
+dummydiff = 3;
 
 %% READ from dataStruct
 if isempty(varargin)
@@ -56,7 +56,6 @@ else
 end
 Nspectra        = dataStruct.Nspectra;
 Ndummies        = dataStruct.Ndummies;
-dummydiff       = min(dummydiff,Ndummies);
 Nbins           = dataStruct.Nbins;
 interferogram	= dataStruct.interferogram;
 signal		    = dataStruct.signal;
@@ -388,6 +387,7 @@ if isnumeric(dummy)
     PROC_2D_DATA        = PROC_2D_DATA(:,dummy);
 %     warndlg(['Plotting dummy ' num2str(dummy)]);
 elseif strcmp(dummy,'diff')
+    dummydiff           = min(dummydiff,Ndummies);
     for i=1:Ndelays
         PROCDATA{i,1}   = PROC_2D_DATA{i,dummydiff} - PROC_2D_DATA{i,1};
     end
