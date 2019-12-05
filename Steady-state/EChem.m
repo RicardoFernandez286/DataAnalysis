@@ -157,7 +157,7 @@ if SortScanRate == 1
     Nfiles              = size(AllData,1);
 end
 
-%% Plot
+%% Plot the data
 fh = figure();
 clf(fh);
 ax = axes('parent',fh);
