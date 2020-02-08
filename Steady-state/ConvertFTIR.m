@@ -50,7 +50,11 @@ if ConvertDir ~= 0
         for i=1:length(files)
             currfile = char(files(i));
             IRfile = [ConvertDir,filesep,currfile];
-            [y,x,~] = ImportOpus(IRfile,'RatioAbsorption');
+            try
+                [y,x,~] = ImportOpus(IRfile,'RatioAbsorption');
+            catch
+                [y,x,~] = ImportOpus(IRfile,'RatioAbsorptionChanged');
+            end
             x=transpose(x); x=double(x); y=double(y);
             newname = [currfile,'.dat'];
             ymatrix = [ymatrix,y];
