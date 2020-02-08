@@ -61,19 +61,22 @@ handles.t2_startfit_text.String = num2str(0.1);
 
 if isempty(varargin)
     handles.FitParam_table.Data =    ...
-       [{'1980'}    {'2060'}    {'1980' }    {'2060'  }
-        {'25'  }    {'25'  }    {'-2060'}    {'-1980' }
-        {'15'  }    {'15'  }    {'-1'   }    {'-1'    }
-        {'10'  }    {'10'  }    {'-1'   }    {'-1'    }
-        {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
+       [{'1925'}    {'2076'}    {'1925' }    {'2076'  }
+        {'0'   }    {'0'   }    {'2076' }    {'1925'  }
+        {'15'  }    {'40'  }    {'20'   }    {'30'    }
+        {'10'  }    {'15'  }    {'11'   }    {'12'    }
+        {'10'  }    {'15'  }    {'11'   }    {'12'    }
+        {'1'   }    {'1'   }    {'1'    }    {'1'     }
         {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
-    handles.t2_endfit_text.String = num2str(60);
-    handles.equal_SxSy.Value        = 1;
-    handles.diffSyfor12.Value       = 0;
+    handles.t2_startfit_text.String = num2str(0.5);
+    handles.t2_endfit_text.String   = num2str(5);
+    handles.equal_SxSy.Value        = 0;
+    handles.diffSyfor12.Value       = 1;
 elseif strcmp(varargin{1},'Re1213 VET')
     handles.FitParam_table.Data =    ...
        [{'1979'}    {'2028'}    {'1979' }    {'2028'  }
-        {'11'  }    {'11'  }    {'-2028'}    {'-1979' }
+        {'0'   }    {'0'   }    {'2028' }    {'1979'  }
+        {'25'  }    {'25'  }    {'-1'   }    {'-1'    }
         {'10'  }    {'10'  }    {'-1'   }    {'-1'    }
         {'10'  }    {'10'  }    {'-1'   }    {'-1'    }
         {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
@@ -84,15 +87,27 @@ elseif strcmp(varargin{1},'Re1213 VET')
     handles.diffSyfor12.Value       = 1;
 else
     handles.FitParam_table.Data =    ...
-   [{'1980'}    {'2060'}    {'1980' }    {'2060'  }
-    {'25'  }    {'25'  }    {'-2060'}    {'-1980' }
-    {'15'  }    {'15'  }    {'-1'   }    {'-1'    }
-    {'10'  }    {'10'  }    {'-1'   }    {'-1'    }
-    {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
-    {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
-    t2delays = varargin{2};
-    handles.t2_startfit_text.String = num2str(min(t2delays(t2delays>0)));
-    handles.t2_endfit_text.String   = num2str(max(t2delays));
+       [{'1925'}    {'2076'}    {'1925' }    {'2076'  }
+        {'0'   }    {'0'   }    {'2076' }    {'1925'  }
+        {'15'  }    {'40'  }    {'20'   }    {'30'    }
+        {'10'  }    {'15'  }    {'11'   }    {'12'    }
+        {'10'  }    {'15'  }    {'11'   }    {'12'    }
+        {'1'   }    {'1'   }    {'1'    }    {'1'     }
+        {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
+%    handles.FitParam_table.Data =    ...
+%        [{'1980'}    {'2060'}    {'1980' }    {'2060'  }
+%         {'0'   }    {'0'   }    {'2060' }    {'1980'  }
+%         {'15'  }    {'15'  }    {'-1'   }    {'-1'    }
+%         {'15'  }    {'15'  }    {'-1'   }    {'-1'    }
+%         {'15'  }    {'15'  }    {'-1'   }    {'-1'    }
+%         {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
+%         {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
+
+%     t2delays = varargin{2};
+%     handles.t2_startfit_text.String = num2str(min(t2delays(t2delays>0)));
+%     handles.t2_endfit_text.String   = num2str(max(t2delays));
+    handles.t2_startfit_text.String = num2str(0.5);
+    handles.t2_endfit_text.String   = num2str(3);
     handles.equal_SxSy.Value        = 1;
     handles.diffSyfor12.Value       = 0;
 end

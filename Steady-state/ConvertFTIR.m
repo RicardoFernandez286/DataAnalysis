@@ -47,7 +47,9 @@ if ConvertDir ~= 0
         units = timespec{2};
         % Read all files and write everything in a matrix
         ymatrix = []; xvector = []; header = [];
+        wb = waitbar(0,'Loading files...');
         for i=1:length(files)
+            wb = waitbar(i/length(files),wb,'Loading files...');
             currfile = char(files(i));
             IRfile = [ConvertDir,filesep,currfile];
             try

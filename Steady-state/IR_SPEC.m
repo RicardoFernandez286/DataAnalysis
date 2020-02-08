@@ -8,9 +8,9 @@ function IR_SPEC()
 %% Get the file list
 % Get the directory
 % read defaultdir, otherwise just show the default dialog
-fileexist = exist([fileparts(fileparts(mfilename('fullpath'))) 'GUIoptions.txt'],'file');
+fileexist = exist([fileparts(fileparts(mfilename('fullpath'))) filesep 'GUIoptions.txt'],'file');
 if fileexist == 2
-    defaultdir = readParam('defaultSPECdir',[fileparts(fileparts(mfilename('fullpath'))) 'GUIoptions.txt']);
+    defaultdir = readParam('defaultSPECdir',[fileparts(fileparts(mfilename('fullpath'))) filesep 'GUIoptions.txt']);
     SPECDir = uigetdir(defaultdir);
 else
     SPECDir = uigetdir();
@@ -34,6 +34,16 @@ switch ExpType
     case 'Chronoamperometry'       
         % Read the potentials from "Potentials.txt"
         potentials = csvread('Potentials.txt');
+        if strcmp(questdlg('Convert to a different potential reference scale?'),'Yes')
+            opts.Interpreter = 'tex';
+            ref_pot = inputdlg({'Which scale?: ';'E_{1/2} in current scale (mV): '},'Reference potentials',[1,50],{'Fc^{+}/Fc','500'},opts);
+            ref_name= ['mV vs ' ref_pot{1}];
+            ref_val = str2num(ref_pot{2});
+        else
+            ref_name= 'mV';
+            ref_val = 0;
+        end
+        potentials   = potentials - ref_val;
         % Read all files and write everything in a matrix
         ymatrix = []; xvector = []; header = [];
         for i=1:length(files)
@@ -48,8 +58,10 @@ switch ExpType
             newname = [currfile,'.dat'];
             ymatrix = [ymatrix,y];
         end
+        
         header = transpose(potentials);
-        ymatrix = vertcat(header,ymatrix);
+        [x,id] = sort(x,'ascend');
+        ymatrix = vertcat(header,ymatrix(id,:));
         xvector = vertcat(0,x);
         csvwrite('ALLDATA.dat',[xvector,ymatrix])
         uiwait(msgbox('Conversion completed! Now you will be asked to select the baseline file', 'Success!','warn'));
@@ -65,7 +77,8 @@ switch ExpType
             [y,x,~] = ImportOpus(ZeroFile,'RatioAbsorptionChanged');
         end
         x=transpose(x); x=double(x); y=double(y)*1000; %Baseline also in mOD
-        baseline = vertcat(0,y);
+        [x,id] = sort(x,'ascend');
+        baseline = vertcat(0,y(id));
         deltaymatrix = [];
         for i=1:size(ymatrix,2) % # of columns of ymatrix
             deltaymatrix = [deltaymatrix,ymatrix(:,i)-baseline];

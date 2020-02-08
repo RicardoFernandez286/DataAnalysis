@@ -147,8 +147,8 @@ if dataStruct.isSimulation == 1 && Nskip > 0
     Ndelays         = length(t2delays);
 end
 
-Znormfactor     = zeros(Ndelays,1);
-ZData           = zeros(pump_idxrange(2)-pump_idxrange(1)+1,probe_idxrange(2)-probe_idxrange(1)+1,Ndelays);
+Znormfactor         = zeros(Ndelays,1);
+ZData               = zeros(pump_idxrange(2)-pump_idxrange(1)+1,probe_idxrange(2)-probe_idxrange(1)+1,Ndelays);
 
 % Cut the data
 for m=1:Ndelays
@@ -237,11 +237,11 @@ try
 
     %% Evaluate the solution
     FitResults = bsxfun(@times,FitFunction(fitted_param,input_st),reshape(Znormfactor,1,1,[]));
-
+    
     % Get the solution parameters
     fitPar.X0           = fitted_param(ParamPos.x0_pos)*1000;
-    fitPar.Anharm       = fitted_param(ParamPos.y0_pos);
-    fitPar.Y0           = fitted_param(ParamPos.x0_pos)-fitted_param(ParamPos.y0_pos);
+    fitPar.Y0           = fitted_param(ParamPos.y0_pos)*1000;
+    fitPar.Anharm       = fitted_param(ParamPos.Dy_pos);
     fitPar.Sx           = fitted_param(ParamPos.Sx_pos);
     fitPar.Sy           = fitted_param(ParamPos.Sy_pos);
     fitPar.S12          = fitted_param(ParamPos.S12_pos);
@@ -255,8 +255,8 @@ try
     fitted_err= (fitPar_CI(:,2)-fitPar_CI(:,1))./2;
 
     fitErr.X0           = fitted_err(ParamPos.x0_pos)*1000;
-    fitErr.Anharm       = fitted_err(ParamPos.y0_pos);
-    fitErr.Y0           = fitted_err(ParamPos.x0_pos)+fitted_err(ParamPos.y0_pos);
+    fitErr.Y0           = fitted_err(ParamPos.y0_pos)*1000;
+    fitErr.Anharm       = fitted_err(ParamPos.Dy_pos);
     fitErr.Sx           = fitted_err(ParamPos.Sx_pos);
     fitErr.Sy           = fitted_err(ParamPos.Sy_pos);
     fitErr.S12          = fitted_err(ParamPos.S12_pos);
@@ -313,7 +313,6 @@ catch err
     errordlg(err.message);
     exitcode = 1;
 end
-
 
 %% FUNCTION DEFINITIONS
 

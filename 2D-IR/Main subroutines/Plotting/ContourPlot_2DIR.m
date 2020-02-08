@@ -446,7 +446,7 @@ if isfield(dataStruct,'FitResults') ~= 0  && ~isempty(dataStruct.FitResults) && 
     end
     
     hold(plotaxis,'on')
-    contour(plotaxis,Xfit,Yfit,Zfit,plot_contours,'LineColor',0.7*[1 1 1],'LineWidth',0.1)
+    contour(plotaxis,Xfit,Yfit,Zfit,plot_contours(plot_contours~=0),'LineColor',0.7*[1 1 1],'LineWidth',0.1)
     hold(plotaxis,'off')
     
     if plotResidualsFit == 1
@@ -461,15 +461,17 @@ if isfield(dataStruct,'FitResults') ~= 0  && ~isempty(dataStruct.FitResults) && 
     Ndelays         = length(t2delays);
     ZData           = zeros(pump_idxrange(2)-pump_idxrange(1)+1,probe_idxrange(2)-probe_idxrange(1)+1,Ndelays);       
     % Cut the data
-    NOrigDelays     = length(OrigDelays);
     for m=1:Ndelays
-        data                = PROC_2D_DATA{m+(NOrigDelays-Ndelays),1};
+        data                = PROC_2D_DATA{popdelay,1};
         ZData(:,:,m)        = data(pump_idxrange(1):pump_idxrange(2),probe_idxrange(1):probe_idxrange(2));
     end
     hold(plotaxis,'on')
-    contourf(plotaxis,Xfit,Yfit,(ZData(:,:,newDelayNumber(popdelay))-Zfit')',plot_contours,'LineColor','flat')
+    FitResiduals    = (ZData(:,:,newDelayNumber(popdelay))-Zfit')';
+    contourf(plotaxis,Xfit,Yfit,FitResiduals,plot_contours,'LineColor','flat');
     diagline = refline(plotaxis,1,0);
     diagline.Color = 'k';
+    min_cut = min(FitResiduals(:));
+    max_cut = max(FitResiduals(:));
     end
 end
 
