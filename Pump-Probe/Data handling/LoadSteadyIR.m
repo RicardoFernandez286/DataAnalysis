@@ -23,6 +23,7 @@ else
     [FileName,PathName,FilterIndex] = uigetfile(...
     {'*.dat;*.csv;*.dpt','ASCII spectra (*.dat,*.csv,*.dpt)';'*.??','Bruker OPUS files (*.#)'}, ...
     'Select the FTIR spectrum to load...');
+    old_dir = pwd;
 end
 
 cd(old_dir);
