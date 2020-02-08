@@ -48,8 +48,9 @@ if ConvertDir ~= 0
         % Read all files and write everything in a matrix
         ymatrix = []; xvector = []; header = [];
         wb = waitbar(0,'Loading files...');
-        for i=1:length(files)
-            wb = waitbar(i/length(files),wb,'Loading files...');
+        Nfiles = length(files);
+        for i=1:Nfiles
+            wb = waitbar(i/Nfiles,wb,['Loading file ' num2str(i) ' of ' num2str(Nfiles) '...']);
             currfile = char(files(i));
             IRfile = [ConvertDir,filesep,currfile];
             try
@@ -66,6 +67,7 @@ if ConvertDir ~= 0
         xvector = vertcat(0,x);
         csvwrite('ALLDATA.dat',[xvector,ymatrix])
         uiwait(msgbox('Conversion completed!', 'Success!','warn'));
+        close(wb);
         % Ask the user what to do next
         Struct.Interpreter = 'tex';
         Struct.WindowStyle = 'modal';
@@ -113,7 +115,7 @@ if ConvertDir ~= 0
                 end
                 hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
                 set(gca,'FontSize',14)
-                xlabel('Wavenumbers (cm^{–1})','FontSize',14,'FontWeight','bold')
+                xlabel('Wavenumbers (cm^{-1})','FontSize',14,'FontWeight','bold')
                 ylabel('\DeltaAbs (OD)','FontSize',14,'FontWeight','bold')
                 xlim([xvector(2),xvector(end)]); caxis([0 deltaymatrix(1,end)]); hcb=colorbar;
                 n = round(deltaymatrix(1,end)./6);
@@ -128,7 +130,7 @@ if ConvertDir ~= 0
                 end
                 hline = refline(0,0); hline.Color = [0.5 0.5 0.5];
                 set(gca,'FontSize',14)
-                xlabel('Wavenumbers (cm^{–1})','FontSize',14,'FontWeight','bold')
+                xlabel('Wavenumbers (cm^{-1})','FontSize',14,'FontWeight','bold')
                 ylabel('\DeltaAbs (OD)','FontSize',14,'FontWeight','bold')
                 xlim([xvector(minI),xvector(maxI)]); caxis([0 deltaymatrixselect(1,end)]); hcb=colorbar;
                 n = round(deltaymatrixselect(1,end)./6);
