@@ -10,7 +10,7 @@
 %% Change the input units here
 inI_units   = 'mA';     % Options: 'mA', 'microA' or 'A'
 inE_units   = 'V';      % Options: 'mV' or 'V'
-DataType    = 'EC-lab'; % Options: 'EC-lab' or 'Ivium'
+DataType    = 'Ivium';  % Options: 'EC-lab' or 'Ivium'
 
 %% Sort by scan rate?
 SortScanRate = 1;
@@ -108,8 +108,8 @@ switch DataType
             
             % Sort into {[E x I]} vs scan number
             for j=1:Nscans(i)
-                data(:,1)   = data(:,1)*outE_factor - ref_pot_mV;
-                data(:,2)   = data(:,2)*outI_factor;
+                data(:,2*j-1)   = data(:,2*j-1)*outE_factor - ref_pot_mV;
+                data(:,2*j)     = data(:,2*j)*outI_factor;
                 AllData{i,j}    = data(:,(2*j-1):2*j);
             end
             % Get a caption string
@@ -157,7 +157,7 @@ if SortScanRate == 1
     Nfiles              = size(AllData,1);
 end
 
-%% Plot
+%% Plot the data
 fh = figure();
 clf(fh);
 ax = axes('parent',fh);
@@ -200,24 +200,27 @@ xl = xline(ax,0,'HandleVisibility','off'); xl.Color = 0.75*[1 1 1];
 yl = yline(ax,0,'HandleVisibility','off'); yl.Color = 0.75*[1 1 1];
 
 %% Do the peak analysis
-if SortScanRate == 1
-    doAnalysis = questdlg('Do you want to perform scan-rate dependence analysis?','Scan-rate analysis','Yes','No','No');
-    if isempty(doAnalysis) || strcmp(doAnalysis,'No') 
-        return
-    end
-    pkCurr          = zeros(Nfiles,2);
-    pkPot           = zeros(Nfiles,2);
-    E12             = zeros(Nfiles,1);
-    fw_E            = cell(Nfiles,1);
-    fw_I            = cell(Nfiles,1);
-    bw_E            = cell(Nfiles,1);
-    bw_I            = cell(Nfiles,1);
-    fitrange        = inputdlg('Select range for peak analysis (start,end in mV):','Select range...');
-    if isempty(fitrange)
-        return
-    end
-    fitrange        = str2num(fitrange{1});
-    
+if SortScanRate ~= 1
+    return
+end
+
+doAnalysis = questdlg('Do you want to perform scan-rate dependence analysis?','Scan-rate analysis','Yes','No','No');
+if isempty(doAnalysis) || strcmp(doAnalysis,'No') 
+    return
+end
+pkCurr          = zeros(Nfiles,2);
+pkPot           = zeros(Nfiles,2);
+E12             = zeros(Nfiles,1);
+fw_E            = cell(Nfiles,1);
+fw_I            = cell(Nfiles,1);
+bw_E            = cell(Nfiles,1);
+bw_I            = cell(Nfiles,1);
+fitrange        = inputdlg('Select range for peak analysis (start,end in mV):','Select range...');
+if isempty(fitrange)
+    return
+end
+fitrange        = str2num(fitrange{1});
+
 for i=1:Nfiles
     % First: Separate the scan in forward/backward halves
     AllE            = AllData{i,plotScan}(:,1);
@@ -242,8 +245,9 @@ for i=1:Nfiles
     % Second: Fit peaks on the forward/backward scans
     %%% Forward scan (reductive)
     [fw_E{i},idx_fw_E]  = sort(AllE(slope>0));
+    [fw_E{i},un_fw_E]   = unique(fw_E{i});          
     fw_I{i}             = AllI(slope>0);
-    fw_I{i}             = fw_I{i}(idx_fw_E);
+    fw_I{i}             = fw_I{i}(idx_fw_E(un_fw_E));
     Norm_fw             = min(fw_I{i});
     [pk_I,pk_E]         = findpeaks(fw_I{i}/Norm_fw,fw_E{i},'MinPeakHeight',0.1,'MinPeakDistance',50,'NPeaks',1);
     if ~isempty(pk_I)
@@ -255,8 +259,9 @@ for i=1:Nfiles
     end
     %%% Backward scan (oxidative)
     [bw_E{i},idx_bw_E]  = sort(AllE(slope<0));
+    [bw_E{i},un_bw_E]   = unique(bw_E{i});
     bw_I{i}             = AllI(slope<0);
-    bw_I{i}             = bw_I{i}(idx_bw_E);
+    bw_I{i}             = bw_I{i}(idx_bw_E(un_bw_E));
     Norm_bw             = max(bw_I{i});
     [pk_I,pk_E]         = findpeaks(bw_I{i}/Norm_bw,bw_E{i},'MinPeakHeight',0.1,'MinPeakDistance',50,'NPeaks',1);
     if ~isempty(pk_I)
@@ -268,8 +273,6 @@ for i=1:Nfiles
     end
     %%% E1/2
     E12(i)          = mean(pkPot(i,:));
-end
-
 end
 
 %% Add peak positions to main plot
