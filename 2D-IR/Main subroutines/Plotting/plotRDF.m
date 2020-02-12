@@ -1,4 +1,4 @@
-function plotRDF(simData)
+function plotRDF(simData,rootdir,datafilename,save)
 %% READ from simData
 version				= simData.version;
 trajectInfo			= simData.trajectInfo;
@@ -12,7 +12,7 @@ nGR         = 200;
 filt_gR     = 0;
 
 % Exponent for plot
-k           = 6; % can be 0 or 6
+k           = 0; % can be 0 or 5
 
 % Isotope shifts
 iso13_shift = 48;
@@ -96,8 +96,8 @@ xlabel(axGR,['r* (' char(197) ')'],'FontWeight','bold');
 switch k
     case 0
         ylabel(axGR,'g(r)','FontWeight','bold');
-    case 6
-        ylabel(axGR,'g(r)/r^6','FontWeight','bold');
+    case 5
+        ylabel(axGR,'g(r)/r^5','FontWeight','bold');
 end
 
 %%
@@ -140,6 +140,14 @@ disp({['R_1min = ' num2str(r_min)];['Coordination number: ' num2str(CoordNum)]})
 hold(axGR,'on')
 area(axGR,gx(1:endInt),gAB(1:endInt)./(gx(1:endInt).^k),'FaceColor',colRe12.*colRe13,'FaceAlpha',0.5,'HandleVisibility','off')
 hold(axGR,'off')
+
+%% Save the calculated pRDF
+switch save
+    case 'On'
+        dlmwrite([rootdir filesep datafilename '_pRDF.dat'],[gx,gTot,gAA,gBB,gCC,gAB,gAC,gBC],'delimiter','\t','precision','%.8E');
+end
+
+%% Other stuff
 
 % disp(['Integral k=6: ' num2str((4*pi*rho)*trapz(gx(1:endInt),(gx(1:endInt).^(2-5).*(gAB(1:endInt)))))])
 
