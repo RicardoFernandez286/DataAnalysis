@@ -91,8 +91,8 @@ switch cut_data
             probe_range = [1940 2070];
             pump_range  = probe_range;
         else
-            probe_range = [1950 2050];
-            pump_range  = [1955 2050];
+            probe_range = [1950 2060];
+            pump_range  = [1955 2060];
         end
 end
 

@@ -10,6 +10,7 @@ Rbox				= simData.Rbox;
 %% Hardcoded settings
 nGR         = 200;
 filt_gR     = 0;
+plotArea    = 0;
 
 % Exponent for plot
 k           = 0; % can be 0 or 5
@@ -136,10 +137,13 @@ axis(axNr,'tight');
 
 CoordNum = N_r(endInt);
 disp({['R_1min = ' num2str(r_min)];['Coordination number: ' num2str(CoordNum)]})
-%%
-hold(axGR,'on')
-area(axGR,gx(1:endInt),gAB(1:endInt)./(gx(1:endInt).^k),'FaceColor',colRe12.*colRe13,'FaceAlpha',0.5,'HandleVisibility','off')
-hold(axGR,'off')
+
+%% Plot the area of the first coordination sphere
+if plotArea == 1
+    hold(axGR,'on')
+    area(axGR,gx(1:endInt),gAB(1:endInt)./(gx(1:endInt).^k),'FaceColor',colRe12.*colRe13,'FaceAlpha',0.5,'HandleVisibility','off')
+    hold(axGR,'off')
+end
 
 %% Save the calculated pRDF
 switch save

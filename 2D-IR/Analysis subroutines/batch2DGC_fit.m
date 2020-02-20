@@ -15,6 +15,9 @@ foldernames = foldernames([folderslist.isdir]);
 foldernames = foldernames(3:end);
 Ndatafiles  = length(foldernames);
 
+% Read more options from varargin:
+%   varargin{1} = No. of t2 delays to skip
+%   varargin{2} = Path to a text file containing a list of the datasets to fit
 if ~isempty(varargin)
     Nskip   = varargin{1};
     if length(varargin) > 1
@@ -35,8 +38,8 @@ end
 %% Loop through the folders: Load, process and fit all the spectra
 for i=1:Ndatafiles
     if length(varargin) > 1
-        [rootfolder,foldernames{i}] = fileparts(imp_datapath{i});
-        rootfolder = ['/home/group/' rootfolder];
+        [folderpath,foldernames{i}] = fileparts(imp_datapath{i});
+        rootfolder = ['/home/group' filesep folderpath];
     end
 
     %%% Determine the data type
@@ -68,9 +71,10 @@ for i=1:Ndatafiles
     switch fitType
         case 'Ricardo'
             cut_data = 'Re1213 VET';
-            fitparameters =    ...
+            fitparameters =    ...      
            [{'1979'}    {'2028'}    {'1979' }    {'2028'  }
-            {'10'  }    {'10'  }    {'-2028'}    {'-1979' }
+            {'0'   }    {'0'   }    {'2028' }    {'1979'  }
+            {'10'  }    {'10'  }    {'-1'   }    {'-1'    }
             {'8'   }    {'8'   }    {'-1'   }    {'-1'    }
             {'8'   }    {'8'   }    {'-1'   }    {'-1'    }
             {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
@@ -83,9 +87,10 @@ for i=1:Ndatafiles
             cut_data = 'Use probe axis';
             fitparameters = ...
            [{'1980'}    {'2060'}    {'1980' }    {'2060'  }
-            {'25'  }    {'25'  }    {'-2060'}    {'-1980' }
+            {'0'   }    {'0'   }    {'2060' }    {'1980'  }
             {'15'  }    {'15'  }    {'-1'   }    {'-1'    }
-            {'10'  }    {'10'  }    {'-1'   }    {'-1'    }
+            {'12'  }    {'12'  }    {'-1'   }    {'-1'    }
+            {'12'  }    {'12'  }    {'-1'   }    {'-1'    }
             {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
             {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
             t2_fitrange = [0.5 max(dataStruct.t2delays)];
@@ -94,11 +99,12 @@ for i=1:Ndatafiles
             writepath   = '/home/apasti/FitResults';
         otherwise
             cut_data    = 'Use probe axis';
-            fitparameters =    ...
+            fitparameters =    ...      
            [{'1979'}    {'2028'}    {'1979' }    {'2028'  }
-            {'11'  }    {'11'  }    {'-2028'}    {'-1979' }
+            {'0'   }    {'0'   }    {'2028' }    {'1979'  }
             {'10'  }    {'10'  }    {'-1'   }    {'-1'    }
-            {'10'  }    {'10'  }    {'-1'   }    {'-1'    }
+            {'8'   }    {'8'   }    {'-1'   }    {'-1'    }
+            {'8'   }    {'8'   }    {'-1'   }    {'-1'    }
             {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
             {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
             t2_fitrange = [9, 11];
