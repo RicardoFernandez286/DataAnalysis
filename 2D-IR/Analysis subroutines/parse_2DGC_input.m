@@ -213,9 +213,9 @@ Start_param(S12_pos(isDiagonal))= SY_start(isDiagonal);
 UB(x0_pos(isDiagonal)) = X0_start(isDiagonal)+(25/1000);
 UB(y0_pos(isDiagonal)) = X0_start(isDiagonal)+(25/1000);
 UB(Dy_pos)             = 100;
-UB(Sx_pos(isDiagonal)) = 20;
-UB(Sy_pos(isDiagonal)) = 20;
-UB(S12_pos(isDiagonal))= 20;
+UB(Sx_pos(isDiagonal)) = 30;
+UB(Sy_pos(isDiagonal)) = 30;
+UB(S12_pos(isDiagonal))= 30;
 
 LB(x0_pos(isDiagonal)) = X0_start(isDiagonal)-(10/1000);
 LB(y0_pos(isDiagonal)) = X0_start(isDiagonal)-(10/1000);
