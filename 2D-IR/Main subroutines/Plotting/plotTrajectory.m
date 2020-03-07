@@ -54,11 +54,11 @@ ax.Visible      = 'On';
     end
     traject = squeeze(trajectData_3D(:,:,WhichTraject));
     rLJ_Re  = ones(length(traject),1)*Radius_LJ_Re;
-    if version==2
+    if version>=2
         rLJ_CN  = ones(length(traject),1)*Radius_LJ_CN;
     end
 
-    if version == 2
+    if version >= 2
         iso12   = traject(traject(:,6) == 0 & traject(:,7) ~= trajectInfo(3),:);
     else
         iso12   = traject(traject(:,6) == 0,:);
@@ -79,7 +79,7 @@ ax.Visible      = 'On';
     end
 
     switch version
-        case 2
+        case {2,3}
             CNdil   = traject(traject(:,7) == trajectInfo(3),:);
             if ~isempty(CNdil)
                 circles(ax,CNdil(:,1),CNdil(:,2),rLJ_CN(1:size(CNdil,1)),'facecolor',colCNBz,'facealpha',cAlpha,'EdgeColor',cEdgeMult*colCNBz,'LineWidth',cLineW);

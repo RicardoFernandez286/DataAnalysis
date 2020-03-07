@@ -11,7 +11,7 @@ Rbox				= simData.Rbox;
 nGR         = 200;
 filt_gR     = 0;
 plotArea    = 0;
-
+plotCoordN  = 0;
 % Exponent for plot
 k           = 0; % can be 0 or 5
 
@@ -38,7 +38,7 @@ n13 = sum(squeeze(trajectData_3D(:,6,:) == -isoShift(2) & trajectData_3D(:,7,:) 
 n18 = sum(squeeze(trajectData_3D(:,6,:) == -isoShift(3) & trajectData_3D(:,7,:) == trajectInfo(2)),'All');
 nCN = sum(squeeze(trajectData_3D(:,7,:) == trajectInfo(3)),'All');
 
-if version == 2 && nCN > 0
+if version >= 2 && nCN > 0
     [gx,gTot,gAA,gBB,gCC,gAB,gAC,gBC] = calcPGR(trajectData_3D,nGR,BoxSizes,Nmolecules,PBC,isoShift,trajectInfo(3));
     dilName = '\otimes';
 else
@@ -122,19 +122,20 @@ for i=2:length(gx)
  N_r(i) = 2*pi*rho*trapz(gx(1:i),gx(1:i).*gIJ(1:i));
 end
 
-fh =figure(5);
-clf(fh);
-axNr=axes('parent',figure(5));
+if plotCoordN == 1
+    fh =figure(5);
+    clf(fh);
+    axNr=axes('parent',figure(5));
 
-plot(axNr,gx,N_r,'b','LineWidth',2);
-xline(axNr,r_min,'-','HandleVisibility','off','LineWidth',1,'Color',[1 0.5 0]);
-axNr.FontSize = 16;
-xlabel(axNr,'r* (Å)','FontWeight','bold','FontSize',16);
-ylabel(axNr,'N(r)','FontWeight','bold','FontSize',16);
-% disp(max(N_r))
-axis(axNr,'tight');
-% yline(6,'--');
-
+    plot(axNr,gx,N_r,'b','LineWidth',2);
+    xline(axNr,r_min,'-','HandleVisibility','off','LineWidth',1,'Color',[1 0.5 0]);
+    axNr.FontSize = 16;
+    xlabel(axNr,'r* (Å)','FontWeight','bold','FontSize',16);
+    ylabel(axNr,'N(r)','FontWeight','bold','FontSize',16);
+    % disp(max(N_r))
+    axis(axNr,'tight');
+    % yline(6,'--');
+end
 CoordNum = N_r(endInt);
 disp({['R_1min = ' num2str(r_min)];['Coordination number: ' num2str(CoordNum)]})
 

@@ -92,8 +92,10 @@ end
 
 %% Read surface trajectories
     % Read the first line
-    trajectInfo     = readmatrix([rootdir filesep datafilename filesep 'trajectory.dat'],'Range',[1 1 1 4]);
+    trajectInfo     = rmmissing(readmatrix([rootdir filesep datafilename filesep 'trajectory.dat'],'Range',[1 1 1 6]));
     switch length(trajectInfo)
+        case 6
+            version = 3;
         case 4
             version = 2;
         case 3
@@ -101,8 +103,13 @@ end
     end
     % Read the rest
     trajectData_2D  = readmatrix([rootdir filesep datafilename filesep 'trajectory.dat'],'NumHeaderLines',1);
-    Nmolecules      = trajectInfo(1);
-    Nsamples        = size(trajectData_2D,1)/Nmolecules;
+    if version > 2
+        Nmolecules  = groupcounts(trajectData_2D(:,8));
+        Nsamples    = max(trajectData_2D(:,8));
+    else
+        Nmolecules  = trajectInfo(1);
+        Nsamples    = size(trajectData_2D,1)/Nmolecules;
+    end
     Radius_LJ_Re    = trajectInfo(2)/(2*2^(1/6));
     switch version
         case 1
@@ -113,11 +120,30 @@ end
             Radius_LJ_CN    = trajectInfo(3)/(2*2^(1/6));
             Rbox            = trajectInfo(4);
             trajectData_3D  = zeros(Nmolecules,7,Nsamples);
+        case 3
+            Radius_LJ_CN    = trajectInfo(3)/(2*2^(1/6));
+            Rbox            = trajectInfo(4);
+            maxlength       = max(Nmolecules);
+            trajectData_3D  = nan(maxlength,8,Nsamples);
+            %%% Plot histogram/trajectory of Nmolecules
+            % plot(Nmolecules); yline(mean(Nmolecules)); title(['Avg=' num2str(mean(Nmolecules)) ', shold be ' num2str(trajectInfo(1)/trajectInfo(5)) '. StDev=' num2str(std(Nmolecules))]);
+            % histogram(Nmolecules); xline(mean(Nmolecules)); title(['Avg=' num2str(mean(Nmolecules)) ', shold be ' num2str(trajectInfo(1)/trajectInfo(5)) '. StDev=' num2str(std(Nmolecules))]);
     end
-    for i=0:Nsamples-1
-        start_id    = i*Nmolecules+1;
-        end_id      = (i+1)*Nmolecules;
-        trajectData_3D(:,:,i+1)   = trajectData_2D(start_id:end_id,:);
+    
+    
+    if version > 2
+        end_id = 0;
+        for i=1:Nsamples
+            start_id                = end_id + 1;
+            end_id                  = start_id + Nmolecules(i) - 1;
+            trajectData_3D(:,:,i)   = [trajectData_2D(start_id:end_id,:); nan(maxlength-Nmolecules(i),8)];
+        end
+    else
+        for i=0:Nsamples-1
+            start_id                    = i*Nmolecules+1;
+            end_id                      = (i+1)*Nmolecules;
+            trajectData_3D(:,:,i+1)     = trajectData_2D(start_id:end_id,:);
+        end
     end
     
 %% WRITE to dataStruct (Process 2D-IR)

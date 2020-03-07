@@ -5,7 +5,7 @@ Nframes = size(trajectData_3D,3);   % Number of MD frames
 rc      = min(BoxSizes)/2;          % Cutoff radius  
 dr      = rc/(Nbins+1);             % Bin size
 gx      = (1:Nbins)'*dr;
-rho     = Nmolec/prod(BoxSizes);    % Particle density
+% rho     = Nmolec/prod(BoxSizes);    % Particle density
 
 % Get only the XY coordinate vectors
 pos     = trajectData_3D(:,1:2,:);
@@ -20,9 +20,12 @@ end
 if ~isempty(varargin)
     r_small = varargin{1};
     type(squeeze(trajectData_3D(:,7,:) == r_small)) = 3;
+    type(type==0) = NaN;
 end
 %% Accumulate counts
-msg = msgbox('Calculating pRDF. This may take a while...', 'Calc. in progress...','help','nonmodal');
+% msg = msgbox('Calculating pRDF. This may take a while...', 'Calc. in progress...','help','nonmodal');
+
+msg     = waitbar(0,'Calculating pRDF. This may take a while...','WindowStyle','modal');
 g       = zeros(Nbins+1,Nframes,9); % Nbins+1 x Nframes x 6 (AA,BB,CC,AB,AC,BC)
 
 % The type is calculated from the product of the types of each molecule (i.e. 3x1 = 3 = BC)
@@ -35,9 +38,17 @@ g       = zeros(Nbins+1,Nframes,9); % Nbins+1 x Nframes x 6 (AA,BB,CC,AB,AC,BC)
 molType = [1 4 9 2 3 6];
 gpart   = zeros(Nbins,6);
 for f=1:Nframes
+    waitbar(f/Nframes,msg,'Calculating pRDF. This may take a while...','WindowStyle','modal');
+    
+    if length(unique(Nmolec)) > 1
+        Nmolec_i = Nmolec(f);
+    else
+        Nmolec_i = unique(Nmolec);
+    end
+    rho_i    = Nmolec_i/prod(BoxSizes);
     for itype=1:6
         % Count
-        for n1=1:Nmolec
+        for n1=1:Nmolec_i
             typIdx  = type(n1,f).*type(:,f);
             rij = (pos(n1,:,f) - pos(:,:,f));
             rij = rij - round(rij./BoxSizes).*BoxSizes*PBC;
@@ -52,11 +63,11 @@ for f=1:Nframes
         end
         % Normalise
         for n=1:Nbins
-            g(n,f,itype)  = g(n,f,itype)/Nmolec;        % Divide by Nmolec
+            g(n,f,itype)  = g(n,f,itype)/Nmolec_i;        % Divide by Nmolec
             dA      = 2*pi*(dr*n)*dr;                   % Area of a disc (2D)
 %             dV      = 4*pi*(dr*n)^2*dr;                 % Volume of a spherical shell (3D)
             g(n,f,itype)  = g(n,f,itype)/dA;            % g = Local density
-            g(n,f,itype)  = g(n,f,itype)/rho;           % g = RDF
+            g(n,f,itype)  = g(n,f,itype)/rho_i;           % g = RDF
         end
         gpart(:,itype) = squeeze(sum(g(1:end-1,:,itype),2))/Nframes;
     end
