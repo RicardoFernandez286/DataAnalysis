@@ -15,7 +15,7 @@ Rbox				= simData.Rbox;
 colRe12     = brighten([0.5 0.75 1],0.5);
 colRe13     = brighten([1 0.75 0.5],0.5);
 colRe18     = brighten([0.75 1 0.5],0.5);
-colCNBz     = 0.75.*[1 1 1];
+colCNBz     = 0.85.*[1 1 1];
 arrowcolor  = 'k';
 
 % Isotope shifts
