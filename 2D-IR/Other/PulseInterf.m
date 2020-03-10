@@ -5,10 +5,10 @@ dT_i   = 0.1;
 maxdelay=50;
 Nloops = 20;
 
-HeNe    = 2.11079*10^-3;          % HeNe period (fs)
-c       = 2.99792458e-2;    % Speed of light in cm/ps
+HeNe    = 2.11079*10^-3;                                % HeNe period (fs)
+c       = 2.99792458e-2;                                % Speed of light in cm/ps
 t       = linspace(-maxdelay,maxdelay,2*maxdelay/HeNe); % ps
-w1      = linspace(0,1/(c*HeNe),length(t));
+w1      = linspace(0,1/(c*HeNe),length(t));             % cm-1
 
 omega = 2100; %cm^-1
 FWHM  = 0.150; %ps
