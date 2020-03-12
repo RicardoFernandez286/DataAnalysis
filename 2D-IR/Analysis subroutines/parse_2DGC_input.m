@@ -200,11 +200,13 @@ LB              = zeros(tot_idx,1); % Lower bounds
 
 %%% Diagonal peaks
 % Time-independent parameters
-Start_param(y0_pos(~isDiagonal))= Y0_start(isDiagonal);
-Start_param(x0_pos(isDiagonal)) = X0_start(isDiagonal);
+if ~isempty(y0_pos(~isDiagonal)) %If no cross peaks, don't assign these
+    Start_param(y0_pos(~isDiagonal))= Y0_start(isDiagonal);
+    Start_param(Dy_pos(~isDiagonal))= Dy_start(DiagPkYID(m));
+end
 
+Start_param(x0_pos(isDiagonal)) = X0_start(isDiagonal);
 Start_param(Dy_pos(isDiagonal)) = Dy_start(isDiagonal);
-Start_param(Dy_pos(~isDiagonal))= Dy_start(DiagPkYID(m));
 
 Start_param(Sx_pos(isDiagonal)) = SX_start(isDiagonal);
 Start_param(Sy_pos(isDiagonal)) = SY_start(isDiagonal);
@@ -213,13 +215,13 @@ Start_param(S12_pos(isDiagonal))= SY_start(isDiagonal);
 UB(x0_pos(isDiagonal)) = X0_start(isDiagonal)+(25/1000);
 UB(y0_pos(isDiagonal)) = X0_start(isDiagonal)+(25/1000);
 UB(Dy_pos)             = 100;
-UB(Sx_pos(isDiagonal)) = 30;
-UB(Sy_pos(isDiagonal)) = 30;
-UB(S12_pos(isDiagonal))= 30;
+UB(Sx_pos(isDiagonal)) = 25;
+UB(Sy_pos(isDiagonal)) = 25;
+UB(S12_pos(isDiagonal))= 25;
 
-LB(x0_pos(isDiagonal)) = X0_start(isDiagonal)-(10/1000);
-LB(y0_pos(isDiagonal)) = X0_start(isDiagonal)-(10/1000);
-LB(Dy_pos)             = 0;
+LB(x0_pos(isDiagonal)) = X0_start(isDiagonal)-(25/1000);
+LB(y0_pos(isDiagonal)) = X0_start(isDiagonal)-(25/1000);
+LB(Dy_pos)             = 1;
 LB(Sx_pos(isDiagonal)) = 1;
 LB(Sy_pos(isDiagonal)) = 1;
 LB(S12_pos(isDiagonal))= 1;
@@ -229,7 +231,7 @@ LB(S12_pos(isDiagonal))= 1;
 
 %%% Time-dependent parameters
 % Spectral diffusion
-Start_param(C_pos(C_pos~=0)) = 0.4;     % Starting C value of 0.5 for all points. Needs improvement.
+Start_param(C_pos(C_pos~=0)) = 0.5;     % Starting C value of 0.5 for all points. Needs improvement.
 UB(C_pos(C_pos~=0))     = 0.99;         % C can only be in the range (-1 1). Considering positive only
 LB(C_pos(C_pos~=0))     = 0;            % C can only be in the range (-1 1). Considering positive only
 

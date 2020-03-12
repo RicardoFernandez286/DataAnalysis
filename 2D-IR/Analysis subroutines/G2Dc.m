@@ -19,6 +19,12 @@ function G2Ddata = G2Dc(X,Y,x0,y0,sx,sy,c,varargin)
         A = 1;
     else
         A = varargin{1};
+        if size(unique(A(:))) == 1
+            A=unique(A(:));
+        end
+        if size(unique(c(:))) == 1
+            c=unique(c(:));
+        end
     end
     
     % Calculate the output
