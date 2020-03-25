@@ -5,8 +5,8 @@ PlotSimOnly = 0;
 PlotExpOnly = 0;
 PlotAllSim  = 1;
 %% Get a list of MAT files
-scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\11) 2D IR distance - na\Latest Simulations\Final Fits';
-subdir      = 'SMALL';
+scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\11) VET distance - na\Latest Simulations\Final simulations';
+subdir      = '\SmallDil_BiggerBox_Clustering\All\Selected';
 % subdir = 'CNBz';
 
 plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
@@ -119,8 +119,13 @@ for i=1:Nconc
 %         decay = 1.25*(0.3*exp(-t2delays./3) + 0.7*exp(-t2delays./20)); % From JP's paper
 %         decay = ones(length(t2delays),1);
         if DoFit == 0
-            line_up = ':';
-            line_dw = ':';
+            if contains(names{i},'Clus')
+                line_up = '-';
+                line_dw = '-';
+            else
+                line_up = ':';
+                line_dw = ':';
+            end
         else
             line_up = '^';
             line_dw = 'v';
