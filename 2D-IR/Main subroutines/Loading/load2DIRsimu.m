@@ -91,8 +91,10 @@ end
     LinSpec_FD  = readmatrix([rootdir filesep datafilename filesep 'spec_lin.dat'],'Delimiter','  ');
 
 %% Read surface trajectories
+traj_file = [rootdir filesep datafilename filesep 'trajectory.dat'];
+if exist(traj_file,'file') ~= 0;	
     % Read the first line
-    trajectInfo     = rmmissing(readmatrix([rootdir filesep datafilename filesep 'trajectory.dat'],'Range',[1 1 1 6]));
+    trajectInfo     = rmmissing(readmatrix(traj_file,'Range',[1 1 1 6]));
     switch length(trajectInfo)
         case 6
             version = 3;
@@ -102,7 +104,7 @@ end
             version = 1;
     end
     % Read the rest
-    trajectData_2D  = readmatrix([rootdir filesep datafilename filesep 'trajectory.dat'],'NumHeaderLines',1);
+    trajectData_2D  = readmatrix(traj_file,'NumHeaderLines',1);
     if version > 2
         Nmolecules  = groupcounts(trajectData_2D(:,8));
         Nsamples    = max(trajectData_2D(:,8));
@@ -145,7 +147,17 @@ end
             trajectData_3D(:,:,i+1)     = trajectData_2D(start_id:end_id,:);
         end
     end
-    
+else
+	version				= 1;
+	trajectInfo			= NaN;
+	trajectData_2D		= NaN;
+	trajectData_3D 		= NaN;
+	Nmolecules			= 1;
+	Nsamples			= 1;
+	Radius_LJ_Re		= 1;
+	Radius_LJ_CN		= 1;
+	Rbox				= 1;
+end   
 %% WRITE to dataStruct (Process 2D-IR)
     dataStruct.ProbeAxis           = W3;
     dataStruct.freq_fit            = [];
@@ -175,8 +187,10 @@ dataStruct.FitResults    = [];
 dataStruct.t2_startFit   = [];
 dataStruct.FitInput      = [];
 
-%% WRITE to simData structure (Surface trajectories)
+%% WRITE to simData structure (Linear spectrum)
 simData.LinSpec_FD          = LinSpec_FD;
+
+%% WRITE to simData structure (Surface trajectories)
 simData.version				= version;
 simData.trajectInfo			= trajectInfo;
 simData.trajectData_2D		= trajectData_2D;
