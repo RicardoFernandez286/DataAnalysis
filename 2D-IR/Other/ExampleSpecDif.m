@@ -32,7 +32,7 @@ a2  = 40;       % Anharmonicity of Peak 2
 s1  = 11;       % Sigma of Peak 1
 s2  = 12;       % Sigma of Peak 2
 
-c1  = 0.9;      % Tilt of Peak 1 (0 <= c < 1)
+c1  = 0.80;      % Tilt of Peak 1 (0 <= c < 1)
 c2  = 0.2;      % Tilt of Peak 2 (0 <= c < 1)
 c12 = 0.1;      % Tilt of Cross-peak 1->2 (0 <= c < 1)
 c21 = 0.1;      % Tilt of Cross-peak 2->1 (0 <= c < 1)
@@ -149,7 +149,7 @@ if show1Dtop == 1
     
     linkaxes([ax1 ax2],'x');
     
-    xlim(ax1,[1965 2040])
+    xlim(ax1,[1960 2040])
     ylim(ax1,[1950 2030])
     ax1.Position    = [0.18    0.04    0.75    0.75];
 

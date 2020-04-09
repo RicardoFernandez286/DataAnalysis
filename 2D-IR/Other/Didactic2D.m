@@ -114,7 +114,8 @@ box(ax1,'on');
 
 %% Beautify
 if show1Dtop == 1
-    plot(ax2,x,-sum(ZGSB,2)./max(abs(sum(ZGSB,2))),'Color','k','LineWidth',2);
+    TotalSum = -sum(ZGSB,2)./max(abs(sum(ZGSB,2)));
+    plot(ax2,x,TotalSum,'Color','k','LineWidth',2);
     yl2 = yline(ax2,0);
     yl2.Color = [0.5 0.5 0.5];
     
