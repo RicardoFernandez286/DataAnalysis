@@ -10,7 +10,7 @@ Npoints     = 500;
 Ncontours   = 40;
 n_whites    = 2;
 
-ContourLineColor = 0.65*[1 1 1];
+ContourLineColor = 0.5*[1 1 1];
 ContourLineStyle = '-';
 LineWidth   = 0.5;
 
@@ -19,6 +19,7 @@ LegendStyle = 'Omega'; % 'PumpProbe' 'Omega' 'Both'
 show1Dtop   = 1;
 showPPside  = 0;
 showContours= 1;
+randomColors= 0;
 
 %% Calculate and plot
 
@@ -32,7 +33,7 @@ a2  = 40;       % Anharmonicity of Peak 2
 s1  = 11;       % Sigma of Peak 1
 s2  = 12;       % Sigma of Peak 2
 
-c1  = 0.80;      % Tilt of Peak 1 (0 <= c < 1)
+c1  = 0.0;      % Tilt of Peak 1 (0 <= c < 1)
 c2  = 0.2;      % Tilt of Peak 2 (0 <= c < 1)
 c12 = 0.1;      % Tilt of Cross-peak 1->2 (0 <= c < 1)
 c21 = 0.1;      % Tilt of Cross-peak 2->1 (0 <= c < 1)
@@ -91,7 +92,7 @@ caxis(ax1,[min_cut,max_cut]);
 
 diagline = refline(ax1,1,0);
 diagline.Color = [0 0 0];
-diagline.LineWidth = 0.5;
+diagline.LineWidth = 1;
 
 xlabel(ax1,PP_x,'FontWeight','bold','FontSize',14);
 ylabel(ax1,PP_y,'FontWeight','bold','FontSize',14);
@@ -103,6 +104,7 @@ ax1.PlotBoxAspectRatioMode = 'manual';
 ax1.Layer                  = 'top';
 ax1.FontSize               = 14;
 box(ax1,'on');
+
 
 %% Beautify
 if show1Dtop == 1
@@ -118,8 +120,12 @@ if show1Dtop == 1
         
         Wx = linspace(1975,2025,Ncolors);
         cmap = flipud(othercolor('Mrainbow',Ncolors));
+%         cmap = flipud(othercolor('Spectral10',Ncolors));
+%         cmap = flipud(jet(Ncolors));
         
-%         cmap = cmap(randperm(length(cmap)),:);
+        if randomColors == 1
+            cmap = cmap(randperm(length(cmap)),:);
+        end
         
         hold(ax2,'on');
         for i=1:Nskip:Ncolors
@@ -157,7 +163,9 @@ if show1Dtop == 1
     fh.Position     = [1500 300 520 680];
     ax1.TickLength  = [0.02 0.01];
     ax2.TickLength  = [0.02 0.01];
-
+    ax1.LineWidth   = 1;
+    ax2.LineWidth   = 1;
+    
 else
     fh.Position     = [680 246 520 520];
     ax1.Position    = [0.18    0.18    0.75    0.75];
