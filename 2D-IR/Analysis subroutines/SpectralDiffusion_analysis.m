@@ -54,19 +54,19 @@ PROC_2D_DATA        = dataStruct.PROC_2D_DATA;
 Npixels             = length(ProbeAxis);
 
 % Hardcoded settings
-Interp_method       = 'InterpFT'; % 2D FFT, InterpFT, Mesh 
+Interp_method       = 'InterpFT'; % 2D FFT, InterpFT, Mesh, None. Default = InterpFT
 % Fit_type            = 'Quadratic'; % 'Quadratic' 'None' - Sets the type of fit to calculate the minima along the slices
 
-Interp_order        = 4; % Multiplies Npixels by a factor to interpolate in the probe dimension
+Interp_order        = 2; % Multiplies Npixels by a factor to interpolate in the probe dimension
 Nfitpoints          = 3;
 N_pointsParabola    = round(Interp_order*Nfitpoints); % No. of X points to fit a parabola on each side of the peak: [-x (peak) +x]
 N_points_IvCLS      = 8;
 
-intensity_threshold = 50/100; % Intensity threshold for the linear fit to get the CLS or IvCLS
+intensity_threshold = 40/100; % Intensity threshold for the linear fit to get the CLS or IvCLS
 textcolor           = 'none'; % 'none' or RGB color
 fit_method          = 'LSQ'; % 'GA' or 'LSQ' for Genetic algorithm or Least-squares
 
-diagnosticPlot      = 1; % Plots the cuts and fits for diagnostic purposes
+diagnosticPlot      = 0; % Plots the cuts and fits for diagnostic purposes
 
 % Suppress warnings
 warning('off','MATLAB:polyfit:RepeatedPointsOrRescale');
@@ -100,6 +100,10 @@ switch Interp_method
         end
     case 'Mesh'
         % Do something
+    case 'None'
+        for m=1:Ndelays+N_negdelays
+            Interp_Data{m,1} = PROC_2D_DATA{m,1};
+        end
 end
 
 %% Get the spectral diffusion dynamics

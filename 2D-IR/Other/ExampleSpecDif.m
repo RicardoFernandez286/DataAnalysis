@@ -1,11 +1,20 @@
+function ExampleSpecDif
+% Nc=20;
+% C = linspace(0.9,0,Nc);
+Nc=1;
+C = 0.;
+F(Nc) = struct('cdata',[],'colormap',[]);
+DoMovie = 0;
+
 fh = figure(1);
+fh.Color = 'w';
 clf(fh)
 ax1 = axes('parent',fh);
 
 % Plot parameters
 MinWL       = 1950;
 MaxWL       = 2040;
-Npoints     = 500;
+Npoints     = 256;
 
 Ncontours   = 40;
 n_whites    = 2;
@@ -20,23 +29,19 @@ show1Dtop   = 1;
 showPPside  = 0;
 showContours= 1;
 randomColors= 0;
-
+show1Dinhom = 1;
+show2DverticalLines = 0;
 %% Calculate and plot
 
 % Parameters
 x1  = 2000;     % Centre of Peak 1
-x2  = 2050;     % Centre of Peak 2
 
 a1  = 20;       % Anharmonicity of Peak 1
-a2  = 40;       % Anharmonicity of Peak 2
 
-s1  = 11;       % Sigma of Peak 1
-s2  = 12;       % Sigma of Peak 2
+s1  = 10;       % Sigma of Peak 1
 
-c1  = 0.0;      % Tilt of Peak 1 (0 <= c < 1)
-c2  = 0.2;      % Tilt of Peak 2 (0 <= c < 1)
-c12 = 0.1;      % Tilt of Cross-peak 1->2 (0 <= c < 1)
-c21 = 0.1;      % Tilt of Cross-peak 2->1 (0 <= c < 1)
+% c1  = 0.8;      % Tilt of Peak 1 (0 <= c < 1)
+
 
 GSB1 = -1;      % Amplitude of GSB Peak 1
 ESA1 = +1;      % Amplitude of ESA/SE Peak 1
@@ -54,6 +59,8 @@ if showPPside == 1
     ax3 = axes('parent',fh);
 end
 
+for k=1:Nc
+    c1 = C(k);
 % Calculate the peaks
 ZGSB    = G2Dc(X,Y,x1,x1,s1,s1,c1,GSB1/sqrt(1-c1));
 ZESA    = G2Dc(X,Y,x1,x1-a1,s1,s1,c1,ESA1/sqrt(1-c1));
@@ -79,8 +86,8 @@ plot_contours   = linspace(min_cut,max_cut,Ncontours+1);
 plot_outlines   = linspace(min_cut,max_cut,Ncontours/2);
 
 %% Plot
-hold(ax1,'on')
 contourf(ax1,X,Y,Z,plot_contours,'LineColor','flat','LineStyle',ContourLineStyle,'LineWidth',LineWidth);
+hold(ax1,'on')
 if showContours == 1
     contour(ax1,X,Y,Z,plot_outlines,'LineColor',ContourLineColor,'LineStyle',ContourLineStyle,'LineWidth',LineWidth*2);
 end
@@ -110,8 +117,6 @@ box(ax1,'on');
 if show1Dtop == 1
     TotalLinear = -sum(ZGSB,2)./max(abs(sum(ZGSB,2)));
     
-    show1Dinhom = 1;
-    show2DverticalLines = 0;
     if show1Dinhom == 1    
         Ncolors = 8;
         Nskip = 1;
@@ -165,9 +170,18 @@ if show1Dtop == 1
     ax2.TickLength  = [0.02 0.01];
     ax1.LineWidth   = 1;
     ax2.LineWidth   = 1;
-    
+    if DoMovie == 1
+        drawnow;
+        F(k) = getframe(fh);
+    end
 else
     fh.Position     = [680 246 520 520];
     ax1.Position    = [0.18    0.18    0.75    0.75];
     ax1.TickLength  = [0.02 0.01];
+end
+end
+
+if DoMovie == 1
+    % Write to the GIF File
+    movie2gif(F,'specdif.gif','DelayTime',0.2,'LoopCount',Inf);
 end
