@@ -3,11 +3,6 @@ function batch2DGC_fit(rootfolder,fitType,varargin)
 % rootfolder  = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\9) 2D IR distance - na\Latest Simulations\Dimer_distance1';
 % fitType     = 'Test'; % 'Ricardo' or 'Andrea'
 
-%% Start parallel pool (if none exists)
-if isempty(gcp('nocreate'))
-   parpool;
-end
-
 %% Build list of (sub)folders, which contain the data
 folderslist  = dir(rootfolder);
 foldernames = {folderslist.name}';
@@ -20,7 +15,10 @@ Ndatafiles  = length(foldernames);
 %   varargin{2} = Path to a text file containing a list of the datasets to fit
 if ~isempty(varargin)
     Nskip   = varargin{1};
+    disp([datestr(now,-1) ': Fitting every ' num2str(Nskip) ' points in t2.']);
+    
     if length(varargin) > 1
+        disp([datestr(now,-1) ': Reading directory list...']);
         fid = fopen(varargin{2});
         j=0;
         while ~feof(fid)
@@ -30,9 +28,20 @@ if ~isempty(varargin)
         imp_datapath = imp_datapath';
         Ndatafiles = length(imp_datapath);
         fclose(fid);
+        disp([datestr(now,-1) ': Found ' num2str(Ndatafiles) ' datasets in list.']);
     end
 else
     Nskip   = [];
+end
+
+if Ndatafiles == 0
+    disp([datestr(now,-1) ': Nothing to do here! Bye :)']);
+    exit
+end
+
+%% Start parallel pool (if none exists)
+if isempty(gcp('nocreate'))
+   parpool;
 end
 
 %% Loop through the folders: Load, process and fit all the spectra

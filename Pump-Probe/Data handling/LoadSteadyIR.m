@@ -14,8 +14,10 @@ if fileexist == 2
         warning('Default IR directory not defined in GUIoptions.txt');
         defaultIRdir = pwd;
     end
+    if exist(defaultIRdir,'dir') == 0
+        defaultIRdir = pwd;
+    end
     old_dir = pwd;
-    cd(defaultIRdir);
     [FileName,PathName,FilterIndex] = uigetfile(...
     {'*.dat;*.csv;*.dpt','ASCII spectra (*.dat,*.csv,*.dpt)';'*.??','Bruker OPUS files (*.#)'}, ...
     'Select the FTIR spectrum to load...');
