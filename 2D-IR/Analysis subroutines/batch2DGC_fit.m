@@ -123,10 +123,10 @@ for i=1:Ndatafiles
     end
     
     %%% Check we haven't fitted it before (tiple-check twice...)
-    if exist([rootfolder filesep foldernames{i} '_FIT_RESULTS.mat'],'file') ~= 0
-        disp([datestr(now,-1) ': ' 'Dataset ' foldernames{i} ' has been fitted before! Delete/rename the old fit file before trying to fit again.']);
-        continue
-    end
+%     if exist([rootfolder filesep foldernames{i} '_FIT_RESULTS.mat'],'file') ~= 0
+%         disp([datestr(now,-1) ': ' 'Dataset ' foldernames{i} ' has been fitted before! Delete/rename the old fit file before trying to fit again.']);
+%         continue
+%     end
     
     if exist([writepath filesep foldernames{i} '_FIT_RESULTS.mat'],'file') ~= 0
         disp([datestr(now,-1) ': ' 'Dataset ' foldernames{i} ' has been fitted before! Delete/rename the old fit file before trying to fit again.']);
