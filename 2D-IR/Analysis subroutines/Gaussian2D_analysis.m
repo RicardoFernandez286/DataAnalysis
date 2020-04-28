@@ -294,13 +294,13 @@ try
     end
 
     %% Save the fit results to a file
-    try
-        filename    = [dataStruct.rootdir filesep dataStruct.datafilename '_FIT_RESULTS.mat'];
-        save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input_st','FitResults','NormVols','NormErr');
-    catch
+%     try
+%         filename    = [dataStruct.rootdir filesep dataStruct.datafilename '_FIT_RESULTS.mat'];
+%         save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input_st','FitResults','NormVols','NormErr');
+%     catch
         filename    = [writepath filesep dataStruct.datafilename '_FIT_RESULTS.mat'];
         save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input_st','FitResults','NormVols','NormErr');
-    end
+%     end
 
     %% Save the fit to dataStruct
     dataStruct.FitResults  = FitResults;
