@@ -12,19 +12,19 @@ function G2Ddata = G2Dc(X,Y,x0,y0,sx,sy,c,varargin)
     %   sx,sy   = Sigma values along the X and Y dimensions, respectively.
     %   c       = Correlation coefficient ranging from -1 to 1 (typically positive).
     %
-    % Ricardo Fernández-Terán / 2019.03.24 / v1.9b
+    % Ricardo Fernï¿½ndez-Terï¿½n / 2019.03.24 / v1.9b
     
     % Check if the amplitude is given or not (set it to 1 if not)
     if isempty(varargin)
         A = 1;
     else
         A = varargin{1};
-        if size(unique(A(:))) == 1
-            A=unique(A(:));
-        end
-        if size(unique(c(:))) == 1
-            c=unique(c(:));
-        end
+%         if size(unique(A(:))) == 1
+%             A=unique(A(:));
+%         end
+%         if size(unique(c(:))) == 1
+%             c=unique(c(:));
+%         end
     end
     
     % Calculate the output
@@ -45,4 +45,5 @@ function G2Ddata = G2Dc(X,Y,x0,y0,sx,sy,c,varargin)
     else
         G2Ddata=calc;
     end
+    
 end

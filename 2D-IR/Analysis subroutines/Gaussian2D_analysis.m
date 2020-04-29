@@ -12,7 +12,7 @@ function [dataStruct,exitcode] = Gaussian2D_analysis(app,dataStruct,varargin)
 % Outputs:
 %     fitPar and firErr: two data structures containing the fit results and their standard errors.
 %
-% Ricardo Fernández-Terán / 04.04.2019 / v2.2a
+% Ricardo Fernï¿½ndez-Terï¿½n / 04.04.2019 / v2.2a
 
 %% READ from dataStruct
 % Get information from the GUI
@@ -310,7 +310,11 @@ try
 
     exitcode = 0;
 catch err
-    errordlg(err.message);
+    if ShowFigures
+        errordlg(err.message);
+    else
+        disp('Error found!'); disp(err)
+    end
     exitcode = 1;
 end
 
