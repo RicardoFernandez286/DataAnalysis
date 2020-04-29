@@ -36,7 +36,7 @@ xpos        = 1.04; % 1.02 for CNBz, 0.1 horizontal
 % xpos        = -0.175;
 ypos        = 0.35;
 FontSize    = 14;
-LineWidth   = 2;
+LineWidth   = 1;
 filelist    = dir([scriptdir filesep subdir]);
 
 %% Parse the names into concentrations and make a list
@@ -196,11 +196,11 @@ for i=1:Nconc
 %         decay = ones(length(t2delays),1);
         if DoFit == 0
             if contains(names{i},'Clus')
-                line_up = '-';
-                line_dw = '-';
+                line_up = '--';
+                line_dw = '--';
             else
-                line_up = '-';
-                line_dw = '-';
+                line_up = '-.';
+                line_dw = '-.';
             end
         else
             line_up = '^';
