@@ -40,15 +40,21 @@ if Ndatafiles == 0
 end
 
 %% Start parallel pool (if none exists)
-if isempty(gcp('nocreate'))
-   parpool;
-end
+% if isempty(gcp('nocreate'))
+%    parpool;
+% end
 
 %% Loop through the folders: Load, process and fit all the spectra
 for i=1:Ndatafiles
     if length(varargin) > 1
-        [folderpath,foldernames{i}] = fileparts(imp_datapath{i});
-        rootfolder = ['/home/group' filesep folderpath];
+%         [folderpath,foldernames{i}] = fileparts(imp_datapath{i});
+        imp_parts   = strsplit(imp_datapath{i},filesep);
+        folderpath  = [];
+        for s=1:length(imp_parts)-1
+            folderpath = [folderpath filesep imp_parts{s}];
+        end
+        foldernames{i} = imp_parts{end};
+        rootfolder  = ['/home/group' filesep folderpath];
     end
 
     %%% Determine the data type
@@ -152,4 +158,4 @@ for i=1:Ndatafiles
 end
 
 disp([datestr(now,-1) ': ' 'Everything done!']);
-exit
+% exit
