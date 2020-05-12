@@ -2,7 +2,7 @@ function ExampleSpecDif
 % Nc=20;
 % C = linspace(0.9,0,Nc);
 Nc=1;
-C = 0.;
+C = 0.8;
 F(Nc) = struct('cdata',[],'colormap',[]);
 DoMovie = 0;
 
@@ -36,7 +36,7 @@ show2DverticalLines = 0;
 % Parameters
 x1  = 2000;     % Centre of Peak 1
 
-a1  = 20;       % Anharmonicity of Peak 1
+a1  = 15;       % Anharmonicity of Peak 1
 
 s1  = 10;       % Sigma of Peak 1
 

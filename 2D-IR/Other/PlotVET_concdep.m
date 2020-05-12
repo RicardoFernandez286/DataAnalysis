@@ -1,9 +1,12 @@
 DoFit   = 0;
 DoSave  = 0;
 
-NormType='Sqrt'; % 'Old' 'Sqrt' 'Prod'
+NormType='Sqrt'; % 'Old' 'Sqrt' 'Prod' 'Squared'
 
-PlotWhat='Sim';
+% PlotWhat='Pick';
+% PlotWhat='Sim';
+% PlotWhat='Exp';
+PlotWhat='Mixed';
 
 PlotSimOnly = 0;
 PlotExpOnly = 0;
@@ -15,28 +18,35 @@ switch PlotWhat
 %         subdir      = '\SmallDil_BiggerBox_NOClustering\FitResults';
 %         subdir      = '\SmallDil_BiggerBox_Clustering\FitResults';
 %         subdir      = 'CNBz';
-        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\11) VET distance - na\Latest Simulations\Final Fits';
-        subdir      = 'SMALL-New_NOclus';
-%         subdir      = 'SMALL-New_Clus';
+        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\11) VET distance - na\Data\Final Fits\Simulations';
+%         subdir      = 'Big molecule';
+%         subdir      = 'Small molecule - NO clustering';
+        subdir      = 'Small molecule - WITH clustering';
     case 'Exp'
-        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\11) VET distance - na\Data\New fits';
-%         subdir      = 'CNBz';
-        subdir      = 'Re18';
-%         subdir      = 'Andrea';
+        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\11) VET distance - na\Data\Final Fits\Experiment';
+        subdir      = 'CNBz - All';
+%         subdir      = 'Re18 - All';
     case 'Pick'
         scriptdir = uigetdir();
         subdir = [];
+    case 'Mixed'
+        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\11) VET distance - na\Data\Final Fits\';
+        subdir      = 'Mixed\Big';
 end
 plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
 plotFormat  = 'Vertical'; % 'Horizontal' or 'Vertical'
 concType    = '100-%'; % '100-%' or '%'
-diluent     = 'Re(^{13}C^{18}O)'; % 'Re(^{13}C^{18}O)'
-% diluent     = 'CNBz';
-xpos        = 1.04; % 1.02 for CNBz, 0.1 horizontal
+% diluent     = 'Re(^{13}C^{18}O)'; % 'Re(^{13}C^{18}O)'
+diluent     = 'CNBz';
+
+xpos        = 0.83; % 0.8 for Re18; 0.83 for CNBz
+
+% xpos        = 1.04; % 1.04 for Re18; 1.06 for CNBz; 0.1 horizontal
 % xpos        = -0.175;
 ypos        = 0.35;
+
 FontSize    = 14;
-LineWidth   = 1;
+LineWidth   = 2;
 filelist    = dir([scriptdir filesep subdir]);
 
 %% Parse the names into concentrations and make a list
@@ -153,7 +163,7 @@ for i=1:Nconc
             end
             NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:);
         case 'Prod'
-                        % Normalise by dividing by (pump*probe)
+            % Normalise by dividing by (pump*probe)
             for p=1:2 % 1=GSB, 2=ESA ---- VOLUMES
                 NormVols(:,1,p) = ((-1)^p)*fitPar.Vols(:,1,p)./max(abs(fitPar.Vols(:,1,p))); % 13CO diag
                 NormVols(:,2,p) = ((-1)^p)*fitPar.Vols(:,2,p)./max(abs(fitPar.Vols(:,2,p))); % 12CO diag
@@ -167,6 +177,23 @@ for i=1:Nconc
                 NormErr(:,2,p)  = ((-1)^p)*fitErr.Vols(:,2,p)./max(abs(fitErr.Vols(:,2,p))); % 12CO diag
                 NormErr(:,3,p)  = ((-1)^p)*fitErr.Vols(:,3,p)./(max(abs(fitErr.Vols(:,1,p))).*max(abs(fitErr.Vols(:,2,p)))); % 13->12 uphill Xpeak
                 NormErr(:,4,p)  = ((-1)^p)*fitErr.Vols(:,4,p)./(max(abs(fitErr.Vols(:,1,p))).*max(abs(fitErr.Vols(:,2,p)))); % 12->13 downhill Xpeak
+            end
+            NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:);
+        case 'Square'
+            % Normalise by dividing by (pump*probe)^2
+            for p=1:2 % 1=GSB, 2=ESA ---- VOLUMES
+                NormVols(:,1,p) = ((-1)^p)*fitPar.Vols(:,1,p)./(max(abs(fitPar.Vols(:,1,p)))).^2; % 13CO diag
+                NormVols(:,2,p) = ((-1)^p)*fitPar.Vols(:,2,p)./(max(abs(fitPar.Vols(:,2,p)))).^2;    % 12CO diag
+                NormVols(:,3,p) = ((-1)^p)*fitPar.Vols(:,3,p)./(max(abs(fitPar.Vols(:,1,p))).*max(abs(fitPar.Vols(:,2,p)))).^2; % 13->12 uphill Xpeak
+                NormVols(:,4,p) = ((-1)^p)*fitPar.Vols(:,4,p)./(max(abs(fitPar.Vols(:,1,p))).*max(abs(fitPar.Vols(:,2,p)))).^2; % 12->13 downhill Xpeak
+            end
+            NormVols(:,[3 4],:) = 10*NormVols(:,[3 4],:);
+            
+            for p=1:2 % 1=GSB, 2=ESA  ---- ERRORS
+                NormErr(:,1,p)  = ((-1)^p)*fitErr.Vols(:,1,p)./(max(abs(fitErr.Vols(:,1,p)))).^2; % 13CO diag
+                NormErr(:,2,p)  = ((-1)^p)*fitErr.Vols(:,2,p)./(max(abs(fitErr.Vols(:,2,p)))).^2; % 12CO diag
+                NormErr(:,3,p)  = ((-1)^p)*fitErr.Vols(:,3,p)./(max(abs(fitErr.Vols(:,1,p))).*max(abs(fitErr.Vols(:,2,p)))).^2; % 13->12 uphill Xpeak
+                NormErr(:,4,p)  = ((-1)^p)*fitErr.Vols(:,4,p)./(max(abs(fitErr.Vols(:,1,p))).*max(abs(fitErr.Vols(:,2,p)))).^2; % 12->13 downhill Xpeak
             end
             NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:);
     end
@@ -191,13 +218,14 @@ for i=1:Nconc
         if PlotAllSim ~= 1 && ~ismember(ConcPercent(i),ConcPercent(IsExp))
             continue
         end
-        decay = 1*(0.15*exp(-t2delays./2.5) + 0.85*exp(-t2delays./20));
+        a = 0.85;
+        decay = 1*((1-a)*exp(-t2delays./2.5) + a*exp(-t2delays./20));
 %         decay = 1.25*(0.3*exp(-t2delays./3) + 0.7*exp(-t2delays./20)); % From JP's paper
 %         decay = ones(length(t2delays),1);
         if DoFit == 0
             if contains(names{i},'Clus')
-                line_up = '--';
-                line_dw = '--';
+                line_up = '-.';
+                line_dw = '-.';
             else
                 line_up = '-.';
                 line_dw = '-.';
@@ -371,7 +399,7 @@ switch plotFormat
         title(ax_UP,'(A) Uphill transfer (Peak 1)','Units','normalized','position',[0.3 1.05]);
         title(ax_DW,'(B) Downhill transfer (Peak 2)','Units','normalized','position',[0.33 1.05]);
         leg_UP.Position(1:2) = [0.85  (0.5-leg_UP.Position(4)/2)];
-        annotation(fh,'textbox',[0.8 -0.05+leg_UP.Position(4)+leg_UP.Position(2) 0.5 0.05],'String',['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized','EdgeColor','none');
+        annotation(fh,'textbox',[xpos -0.05+leg_UP.Position(4)+leg_UP.Position(2) 0.5 0.05],'String',['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized','EdgeColor','none');
     case 'Horizontal'
         ax_UP.Position = [0.10 0.15 0.385 0.65];
         ax_DW.Position = [0.55 0.15 0.385 0.65];

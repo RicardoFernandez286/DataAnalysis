@@ -43,6 +43,7 @@ rootdir         = dataStruct.rootdir;
 
 %% Load all the necessary files after checking that they exist
 filename        = [rootdir filesep datafilename filesep 'spec_2D.dat'];
+t2list_filename = [rootdir filesep datafilename filesep  't2_list.dat'];
 
 % Create progress bar and clear error string
 if ShowWaitBar
@@ -59,13 +60,20 @@ delta_t2        = Spec_2DIR_raw(1,1);
 Spec_2DIR_raw   = Spec_2DIR_raw(2:end,:);
 Ndelays         = size(Spec_2DIR_raw,2) - 2;
 t2delays        = delta_t2*(0:1:Ndelays-1)';
+
+% If there is an external list of t2 delays (for non-constant)
+if exist(t2list_filename,'file') ~= 0
+    t2delays    = dlmread(t2list_filename).*delta_t2;
+    Ndelays     = length(t2delays);
+end
+
 Nt1             = sqrt(size(Spec_2DIR_raw,1));
 PROC_2D_DATA    = cell(Ndelays,1);
 PumpAxis        = cell(Ndelays,1);
-dummy_cell     = cell(Ndelays,1);
+dummy_cell      = cell(Ndelays,1);
 
 for i=1:Ndelays
-    [W1,W3,Z]     = xyz2mat(Spec_2DIR_raw(:,[1:2 i+2]));
+    [W1,W3,Z]           = xyz2mat(Spec_2DIR_raw(:,[1:2 i+2]));
     PROC_2D_DATA{i,1}   = Z*1000;
     PumpAxis{i,1}       = W1;
     dummy_cell{i,1}     = 0;
@@ -92,7 +100,7 @@ end
 
 %% Read surface trajectories
 traj_file = [rootdir filesep datafilename filesep 'trajectory.dat'];
-if exist(traj_file,'file') ~= 0;	
+if exist(traj_file,'file') ~= 0	
     % Read the first line
     trajectInfo     = rmmissing(readmatrix(traj_file,'Range',[1 1 1 6]));
     switch length(trajectInfo)

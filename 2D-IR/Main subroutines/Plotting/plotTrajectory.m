@@ -39,6 +39,7 @@ clf(fh);
 ax          = axes(fh);
 ax.Visible  = 'Off';
 fh.Color    = [1 1 1];
+fh.Position(3) = 400;
 fh.Position(2) = fh.Position(2) + (fh.Position(4) - fh.Position(3));
 fh.Position(4) = fh.Position(3);
 
