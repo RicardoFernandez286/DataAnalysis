@@ -17,8 +17,7 @@ if exist([rootfolder filesep '1D'],'dir') == 0
 end
 
 % Read more options from varargin:
-%   varargin{1} = No. of t2 delays to skip
-%   varargin{2} = Path to a text file containing a list of the datasets to fit
+%   varargin{1} = Path to a text file containing a list of the datasets to analyse
 if ~isempty(varargin)   
     disp([datestr(now,-1) ': Reading directory list...']);
     fid = fopen(varargin{2});

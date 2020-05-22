@@ -16,10 +16,11 @@ MinWL       = 1950;
 MaxWL       = 2040;
 Npoints     = 256;
 
-Ncontours   = 40;
+Ncontours   = 16;
 n_whites    = 2;
 
 ContourLineColor = 0.5*[1 1 1];
+LineColor        = ContourLineColor;   
 ContourLineStyle = '-';
 LineWidth   = 0.5;
 
@@ -27,7 +28,7 @@ LegendStyle = 'Omega'; % 'PumpProbe' 'Omega' 'Both'
 
 show1Dtop   = 1;
 showPPside  = 0;
-showContours= 1;
+showContours= 0;
 randomColors= 0;
 show1Dinhom = 1;
 show2DverticalLines = 0;
@@ -36,7 +37,7 @@ show2DverticalLines = 0;
 % Parameters
 x1  = 2000;     % Centre of Peak 1
 
-a1  = 15;       % Anharmonicity of Peak 1
+a1  = 20;       % Anharmonicity of Peak 1
 
 s1  = 10;       % Sigma of Peak 1
 
@@ -82,18 +83,18 @@ end
 
 max_cut         = max(abs(Z(:)));
 min_cut         = -max_cut;
-plot_contours   = linspace(min_cut,max_cut,Ncontours+1);
+plot_contours   = linspace(min_cut,max_cut,Ncontours+2);
 plot_outlines   = linspace(min_cut,max_cut,Ncontours/2);
 
 %% Plot
-contourf(ax1,X,Y,Z,plot_contours,'LineColor','flat','LineStyle',ContourLineStyle,'LineWidth',LineWidth);
+contourf(ax1,X,Y,Z,plot_contours,'LineColor',LineColor,'LineStyle',ContourLineStyle,'LineWidth',LineWidth);
 hold(ax1,'on')
 if showContours == 1
     contour(ax1,X,Y,Z,plot_outlines,'LineColor',ContourLineColor,'LineStyle',ContourLineStyle,'LineWidth',LineWidth*2);
 end
 hold(ax1,'off')
 
-cmap    = darkb2r(min_cut,max_cut,Ncontours,n_whites);
+cmap    = darkb2r(min_cut,max_cut,2*(Ncontours+1),n_whites);
 colormap(ax1,cmap);
 caxis(ax1,[min_cut,max_cut]);
 
@@ -118,7 +119,7 @@ if show1Dtop == 1
     TotalLinear = -sum(ZGSB,2)./max(abs(sum(ZGSB,2)));
     
     if show1Dinhom == 1    
-        Ncolors = 8;
+        Ncolors = 9;
         Nskip = 1;
 %         sH = s1*(Ncolors/2);
         sH = s1/4;
