@@ -4,9 +4,9 @@ DoSave  = 0;
 NormType='Sqrt'; % 'Old' 'Sqrt' 'Prod' 'Squared'
 
 % PlotWhat='Pick';
-% PlotWhat='Sim';
+PlotWhat='Sim';
 % PlotWhat='Exp';
-PlotWhat='Mixed';
+% PlotWhat='Mixed';
 
 PlotSimOnly = 0;
 PlotExpOnly = 0;
@@ -18,12 +18,12 @@ switch PlotWhat
 %         subdir      = '\SmallDil_BiggerBox_NOClustering\FitResults';
 %         subdir      = '\SmallDil_BiggerBox_Clustering\FitResults';
 %         subdir      = 'CNBz';
-        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\11) VET distance - na\Data\Final Fits\Simulations';
+        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\12) VET distance - na\Data\Final Fits\Simulations';
 %         subdir      = 'Big molecule';
 %         subdir      = 'Small molecule - NO clustering';
         subdir      = 'Small molecule - WITH clustering';
     case 'Exp'
-        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\11) VET distance - na\Data\Final Fits\Experiment';
+        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\12) VET distance - na\Data\Final Fits\Experiment';
         subdir      = 'CNBz - All';
 %         subdir      = 'Re18 - All';
     case 'Pick'
