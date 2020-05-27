@@ -26,6 +26,7 @@ t2delays            = dataStruct.t2delays;
 PROC_2D_DATA        = dataStruct.PROC_2D_DATA;
 
 % Hardcoded settings
+NormType            = 'Sqrt';
 
 % Initialize variables (ensures only the current analysis is saved)
 if isempty(varargin)
@@ -274,24 +275,83 @@ try
     fitErr.Vols(:,:,1)  = fitErr.Amps(:,:,1).*corrterm;
     fitErr.Vols(:,:,2)  = fitErr.Amps(:,:,2).*corrterm;
 
-    if Npeaks == 4
-        % Normalize the data in the "usual" way
-        NormVols(:,[1 3],1) = -fitPar.Vols(:,[1 3],1)./max(abs(fitPar.Vols(:,1,1)));
-        NormVols(:,[1 3],2) = fitPar.Vols(:,[1 3],2)./max(abs(fitPar.Vols(:,1,2)));
-        NormVols(:,[2 4],1) = -fitPar.Vols(:,[2 4],1)./max(abs(fitPar.Vols(:,2,1)));
-        NormVols(:,[2 4],2) = fitPar.Vols(:,[2 4],2)./max(abs(fitPar.Vols(:,2,2)));
+if Npeaks == 4  
+    NormVols = zeros(Ndelays,4,2);
+    NormErr  = zeros(Ndelays,4,2);
+    switch NormType
+        case 'Old'
+            % Normalize the data in the "usual" way
+            NormVols(:,[1 3],1) = -fitPar.Vols(:,[1 3],1)./max(abs(fitPar.Vols(:,1,1))); % GSB (Diag, Xpeak
+            NormVols(:,[1 3],2) = fitPar.Vols(:,[1 3],2)./max(abs(fitPar.Vols(:,1,2)));     
+            NormVols(:,[2 4],1) = -fitPar.Vols(:,[2 4],1)./max(abs(fitPar.Vols(:,2,1)));
+            NormVols(:,[2 4],2) = fitPar.Vols(:,[2 4],2)./max(abs(fitPar.Vols(:,2,2)));
 
-        NormErr(:,[1 3],1)  = fitErr.Vols(:,[1 3],1)./max(abs(fitPar.Vols(:,1,1)));
-        NormErr(:,[1 3],2)  = fitErr.Vols(:,[1 3],2)./max(abs(fitPar.Vols(:,1,2)));
-        NormErr(:,[2 4],1)  = fitErr.Vols(:,[2 4],1)./max(abs(fitPar.Vols(:,2,1)));
-        NormErr(:,[2 4],2)  = fitErr.Vols(:,[2 4],2)./max(abs(fitPar.Vols(:,2,2)));
+            NormErr(:,[1 3],1)  = fitErr.Vols(:,[1 3],1)./max(abs(fitPar.Vols(:,1,1)));
+            NormErr(:,[1 3],2)  = fitErr.Vols(:,[1 3],2)./max(abs(fitPar.Vols(:,1,2)));
+            NormErr(:,[2 4],1)  = fitErr.Vols(:,[2 4],1)./max(abs(fitPar.Vols(:,2,1)));
+            NormErr(:,[2 4],2)  = fitErr.Vols(:,[2 4],2)./max(abs(fitPar.Vols(:,2,2)));
 
-        NormVols(:,[3 4],:) = 10*NormVols(:,[3 4],:);
-        NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:);
-    else
+            NormVols(:,[3 4],:) = 10*NormVols(:,[3 4],:);   % MULTIPLY CROSS PEAKS BY 10
+            NormErr(:,[3 4],:) = 10*NormErr(:,[3 4],:);     % MULTIPLY ERRORS BY 10 [ACCORDINGLY]
+        case 'Sqrt'
+            % Normalise by dividing by sqrt(pump*probe)
+            for p=1:2 % 1=GSB, 2=ESA ---- VOLUMES
+                NormVols(:,1,p) = ((-1)^p)*fitPar.Vols(:,1,p)./max(abs(fitPar.Vols(:,1,p))); % 13CO diag
+                NormVols(:,2,p) = ((-1)^p)*fitPar.Vols(:,2,p)./max(abs(fitPar.Vols(:,2,p))); % 12CO diag
+                NormVols(:,3,p) = ((-1)^p)*fitPar.Vols(:,3,p)./sqrt(max(abs(fitPar.Vols(:,1,p))).*max(abs(fitPar.Vols(:,2,p)))); % 13->12 uphill Xpeak
+                NormVols(:,4,p) = ((-1)^p)*fitPar.Vols(:,4,p)./sqrt(max(abs(fitPar.Vols(:,1,p))).*max(abs(fitPar.Vols(:,2,p)))); % 12->13 downhill Xpeak
+            end
+            NormVols(:,[3 4],:) = 10*NormVols(:,[3 4],:); % MULTIPLY CROSS PEAKS BY 10
+            
+            for p=1:2 % 1=GSB, 2=ESA  ---- ERRORS
+                NormErr(:,1,p)  = ((-1)^p)*fitErr.Vols(:,1,p)./max(abs(fitErr.Vols(:,1,p))); % 13CO diag
+                NormErr(:,2,p)  = ((-1)^p)*fitErr.Vols(:,2,p)./max(abs(fitErr.Vols(:,2,p))); % 12CO diag
+                NormErr(:,3,p)  = ((-1)^p)*fitErr.Vols(:,3,p)./sqrt(max(abs(fitErr.Vols(:,1,p))).*max(abs(fitErr.Vols(:,2,p)))); % 13->12 uphill Xpeak
+                NormErr(:,4,p)  = ((-1)^p)*fitErr.Vols(:,4,p)./sqrt(max(abs(fitErr.Vols(:,1,p))).*max(abs(fitErr.Vols(:,2,p)))); % 12->13 downhill Xpeak
+            end
+            NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:); % MULTIPLY ERRORS BY 10 [ACCORDINGLY]
+        case 'Prod'
+            % Normalise by dividing by (pump*probe)
+            for p=1:2 % 1=GSB, 2=ESA ---- VOLUMES
+                NormVols(:,1,p) = ((-1)^p)*fitPar.Vols(:,1,p)./max(abs(fitPar.Vols(:,1,p))); % 13CO diag
+                NormVols(:,2,p) = ((-1)^p)*fitPar.Vols(:,2,p)./max(abs(fitPar.Vols(:,2,p))); % 12CO diag
+                NormVols(:,3,p) = ((-1)^p)*fitPar.Vols(:,3,p)./(max(abs(fitPar.Vols(:,1,p))).*max(abs(fitPar.Vols(:,2,p)))); % 13->12 uphill Xpeak
+                NormVols(:,4,p) = ((-1)^p)*fitPar.Vols(:,4,p)./(max(abs(fitPar.Vols(:,1,p))).*max(abs(fitPar.Vols(:,2,p)))); % 12->13 downhill Xpeak
+            end
+            NormVols(:,[3 4],:) = 10*NormVols(:,[3 4],:); % MULTIPLY CROSS PEAKS BY 10
+            
+            for p=1:2 % 1=GSB, 2=ESA  ---- ERRORS
+                NormErr(:,1,p)  = ((-1)^p)*fitErr.Vols(:,1,p)./max(abs(fitErr.Vols(:,1,p))); % 13CO diag
+                NormErr(:,2,p)  = ((-1)^p)*fitErr.Vols(:,2,p)./max(abs(fitErr.Vols(:,2,p))); % 12CO diag
+                NormErr(:,3,p)  = ((-1)^p)*fitErr.Vols(:,3,p)./(max(abs(fitErr.Vols(:,1,p))).*max(abs(fitErr.Vols(:,2,p)))); % 13->12 uphill Xpeak
+                NormErr(:,4,p)  = ((-1)^p)*fitErr.Vols(:,4,p)./(max(abs(fitErr.Vols(:,1,p))).*max(abs(fitErr.Vols(:,2,p)))); % 12->13 downhill Xpeak
+            end
+            NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:); % MULTIPLY ERRORS BY 10 [ACCORDINGLY]
+        case 'Square'
+            % Normalise by dividing by (pump*probe)^2
+            for p=1:2 % 1=GSB, 2=ESA ---- VOLUMES
+                NormVols(:,1,p) = ((-1)^p)*fitPar.Vols(:,1,p)./(max(abs(fitPar.Vols(:,1,p)))).^2; % 13CO diag
+                NormVols(:,2,p) = ((-1)^p)*fitPar.Vols(:,2,p)./(max(abs(fitPar.Vols(:,2,p)))).^2;    % 12CO diag
+                NormVols(:,3,p) = ((-1)^p)*fitPar.Vols(:,3,p)./(max(abs(fitPar.Vols(:,1,p))).*max(abs(fitPar.Vols(:,2,p)))).^2; % 13->12 uphill Xpeak
+                NormVols(:,4,p) = ((-1)^p)*fitPar.Vols(:,4,p)./(max(abs(fitPar.Vols(:,1,p))).*max(abs(fitPar.Vols(:,2,p)))).^2; % 12->13 downhill Xpeak
+            end
+            NormVols(:,[3 4],:) = 10*NormVols(:,[3 4],:); % MULTIPLY CROSS PEAKS BY 10
+            
+            for p=1:2 % 1=GSB, 2=ESA  ---- ERRORS
+                NormErr(:,1,p)  = ((-1)^p)*fitErr.Vols(:,1,p)./(max(abs(fitErr.Vols(:,1,p)))).^2; % 13CO diag
+                NormErr(:,2,p)  = ((-1)^p)*fitErr.Vols(:,2,p)./(max(abs(fitErr.Vols(:,2,p)))).^2; % 12CO diag
+                NormErr(:,3,p)  = ((-1)^p)*fitErr.Vols(:,3,p)./(max(abs(fitErr.Vols(:,1,p))).*max(abs(fitErr.Vols(:,2,p)))).^2; % 13->12 uphill Xpeak
+                NormErr(:,4,p)  = ((-1)^p)*fitErr.Vols(:,4,p)./(max(abs(fitErr.Vols(:,1,p))).*max(abs(fitErr.Vols(:,2,p)))).^2; % 12->13 downhill Xpeak
+            end
+            NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:); % MULTIPLY ERRORS BY 10 [ACCORDINGLY]
+        case 'None'
+            NormVols = [];
+            NormErr  = [];
+    end
+else
         NormVols = [];
         NormErr  = [];
-    end
+end
 
     %% Save the fit results to a file
 %     try

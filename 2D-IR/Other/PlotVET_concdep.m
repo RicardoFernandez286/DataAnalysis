@@ -61,7 +61,10 @@ SolutionID      = strings(Nconc,1);
 VolumeData_GSB  = cell(Nconc,1);
 VolumeData_ESA  = cell(Nconc,1);
 SSR_fit         = zeros(Nconc,1);
-StepSize_fit    = zeros(Nconc,1);
+StepSize        = zeros(Nconc,1);
+delays          = cell(Nconc,1);
+xpeak_fw        = cell(Nconc,1);
+xpeak_bw        = cell(Nconc,1);
 
 % Create figure
 fh              = figure(1);
@@ -145,6 +148,7 @@ for i=1:Nconc
             NormErr(:,[2 4],2)  = fitErr.Vols(:,[2 4],2)./max(abs(fitPar.Vols(:,2,2)));
 
             NormVols(:,[3 4],:) = 10*NormVols(:,[3 4],:);
+            NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:); 
         case 'Sqrt'
             % Normalise by dividing by sqrt(pump*probe)
             for p=1:2 % 1=GSB, 2=ESA ---- VOLUMES
@@ -408,8 +412,8 @@ hold(ax_UP,'off');
 hold(ax_DW,'off');
 
 
-ax_UP.XTick = [0:10:max(t2delays)];
-ax_DW.XTick = [0:10:max(t2delays)];
+ax_UP.XTick = 0:10:max(t2delays);
+ax_DW.XTick = 0:10:max(t2delays);
 ax_UP.TickLength = 1.6*ax_UP.TickLength;
 ax_DW.TickLength = 1.6*ax_DW.TickLength;
 leg_UP.Position(2) = leg_UP.Position(2)-0.04;
@@ -430,6 +434,12 @@ if DoSave == 1
     end
     dlmwrite([scriptdir filesep subdir 'ESA_DOWN.dat'],[[0 ConcPercent'];[t2delays ESA_down.*decay]]);
     dlmwrite([scriptdir filesep subdir 'ESA_UP.dat'],[[0 ConcPercent'];[t2delays ESA_up.*decay]]);
+    for i=1:Nconc
+        GSB_down(:,i)    = VolumeData_GSB{i}(:,3);
+        GSB_up(:,i)      = VolumeData_GSB{i}(:,4);
+    end
+    dlmwrite([scriptdir filesep subdir 'GSB_DOWN.dat'],[[0 ConcPercent'];[t2delays GSB_down.*decay]]);
+    dlmwrite([scriptdir filesep subdir 'GSB_UP.dat'],[[0 ConcPercent'];[t2delays GSB_up.*decay]]);
 end
 
 if DoFit == 0
@@ -437,12 +447,13 @@ if DoFit == 0
 end
 
 %% Do kinetic model fit
+fitPar0 = [3  20   70   90  0.3];
+fitpar = zeros(length(fitPar0),Nconc);
 for i=1:Nconc
     FW_data = [VolumeData_ESA{i}(:,1) VolumeData_ESA{i}(:,3)/10];
     BW_data = [VolumeData_ESA{i}(:,2) VolumeData_ESA{i}(:,4)/10];
     time = delays{i};
 
-    fitPar0 = [3  20   70   90  0.3];
     LB      = [2  0    0    0   0  ];
     UB      = [5  50   500  500 1  ];
 
