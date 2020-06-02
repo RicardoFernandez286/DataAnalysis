@@ -24,7 +24,10 @@ iso18_shift = 92;
 
 % Dipole moment magnitude (!)
 mu          = mean(sqrt(sum((trajectData_2D(trajectData_2D(:,6) == -iso13_shift,3:5)).^2,2)));
-
+if mu==0
+    idx = trajectData_2D(:,6) == 0 & trajectData_2D(:,7) == trajectInfo(2);
+    mu          = mean(sqrt(sum(trajectData_2D(idx,3:5).^2,2)));
+end
 % Other settings
 cEdgeMult   = 0.5;      % Circle edge color multiplier (must be <=1)
 cAlpha      = 0.5;      % Circle alpha (0 = transparent, 1 = opaque)
@@ -87,6 +90,7 @@ ax.Visible      = 'On';
             end
             
             arrowpoints = traject(traject(:,7) ~= trajectInfo(3),:);
+            arrowpoints = arrowpoints(sum(arrowpoints(:,3:5).^2,2)~=0,:);
             for i=1:size(arrowpoints,1)
                     plot_arrow(ax,arrowpoints(i,1),arrowpoints(i,2),arrowpoints(i,1)+arrowpoints(i,3)*Radius_LJ_Re/mu,arrowpoints(i,2)+arrowpoints(i,4)*Radius_LJ_Re/mu,'linewidth',1,'headwidth',arrowWidth,'headheight',arrowLength,'color',arrowcolor,'facecolor',arrowcolor,'edgecolor',arrowcolor);
             end

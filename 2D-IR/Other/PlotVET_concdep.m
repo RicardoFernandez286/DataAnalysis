@@ -19,25 +19,25 @@ switch PlotWhat
 %         subdir      = '\SmallDil_BiggerBox_Clustering\FitResults';
 %         subdir      = 'CNBz';
         scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\12) VET distance - na\Data\Final Fits\Simulations';
-%         subdir      = 'Big molecule';
+        subdir      = 'Big molecule';
 %         subdir      = 'Small molecule - NO clustering';
-        subdir      = 'Small molecule - WITH clustering';
+%         subdir      = 'Small molecule - WITH clustering';
     case 'Exp'
         scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\12) VET distance - na\Data\Final Fits\Experiment';
-        subdir      = 'CNBz - All';
-%         subdir      = 'Re18 - All';
+%         subdir      = 'CNBz - All';
+        subdir      = 'Re18 - All';
     case 'Pick'
         scriptdir = uigetdir();
         subdir = [];
     case 'Mixed'
-        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\11) VET distance - na\Data\Final Fits\';
+        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\12) VET distance - na\Data\Final Fits\';
         subdir      = 'Mixed\Big';
 end
-plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
+plotWhat    = 'Diagonal GSB'; % Xpeak or Diagonal + GSB/ESA
 plotFormat  = 'Vertical'; % 'Horizontal' or 'Vertical'
 concType    = '100-%'; % '100-%' or '%'
-% diluent     = 'Re(^{13}C^{18}O)'; % 'Re(^{13}C^{18}O)'
-diluent     = 'CNBz';
+diluent     = 'Re(^{13}C^{18}O)'; % 'Re(^{13}C^{18}O)'
+% diluent     = 'CNBz';
 
 xpos        = 0.83; % 0.8 for Re18; 0.83 for CNBz
 
@@ -223,9 +223,9 @@ for i=1:Nconc
             continue
         end
         a = 0.85;
-        decay = 1*((1-a)*exp(-t2delays./2.5) + a*exp(-t2delays./20));
+%         decay = 1*((1-a)*exp(-t2delays./2.5) + a*exp(-t2delays./20));
 %         decay = 1.25*(0.3*exp(-t2delays./3) + 0.7*exp(-t2delays./20)); % From JP's paper
-%         decay = ones(length(t2delays),1);
+        decay = ones(length(t2delays),1);
         if DoFit == 0
             if contains(names{i},'Clus')
                 line_up = '-.';
