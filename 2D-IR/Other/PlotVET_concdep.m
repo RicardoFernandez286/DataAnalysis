@@ -1,10 +1,10 @@
 DoFit   = 0;
-DoSave  = 0;
+DoSave  = 1;
 
 NormType='Sqrt'; % 'Old' 'Sqrt' 'Prod' 'Squared'
 
-% PlotWhat='Pick';
-PlotWhat='Sim';
+PlotWhat='Pick';
+% PlotWhat='Sim';
 % PlotWhat='Exp';
 % PlotWhat='Mixed';
 
@@ -18,10 +18,12 @@ switch PlotWhat
 %         subdir      = '\SmallDil_BiggerBox_NOClustering\FitResults';
 %         subdir      = '\SmallDil_BiggerBox_Clustering\FitResults';
 %         subdir      = 'CNBz';
-        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\12) VET distance - na\Data\Final Fits\Simulations';
-        subdir      = 'Big molecule';
+%         scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\12) VET distance - na\Data\Final Fits\Simulations';
+%         subdir      = 'Big molecule';
 %         subdir      = 'Small molecule - NO clustering';
 %         subdir      = 'Small molecule - WITH clustering';
+        scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\12) VET distance - na\Latest Simulations\Final simulations\Development version - cone\For Polaron\Cone_dil\FitResults';
+        subdir = [];
     case 'Exp'
         scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\12) VET distance - na\Data\Final Fits\Experiment';
 %         subdir      = 'CNBz - All';
@@ -33,13 +35,13 @@ switch PlotWhat
         scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\12) VET distance - na\Data\Final Fits\';
         subdir      = 'Mixed\Big';
 end
-plotWhat    = 'Diagonal GSB'; % Xpeak or Diagonal + GSB/ESA
+plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
 plotFormat  = 'Vertical'; % 'Horizontal' or 'Vertical'
 concType    = '100-%'; % '100-%' or '%'
 diluent     = 'Re(^{13}C^{18}O)'; % 'Re(^{13}C^{18}O)'
 % diluent     = 'CNBz';
 
-xpos        = 0.83; % 0.8 for Re18; 0.83 for CNBz
+xpos        = 0.8; % 0.8 for Re18; 0.83 for CNBz
 
 % xpos        = 1.04; % 1.04 for Re18; 1.06 for CNBz; 0.1 horizontal
 % xpos        = -0.175;
@@ -52,6 +54,7 @@ filelist    = dir([scriptdir filesep subdir]);
 %% Parse the names into concentrations and make a list
 names       = {filelist.name}';
 names       = flipud(names(contains(names,'.mat')));
+% names       = names(1:end-1);
 Nconc       = length(names);
 
 % Initialise variables
@@ -222,10 +225,9 @@ for i=1:Nconc
         if PlotAllSim ~= 1 && ~ismember(ConcPercent(i),ConcPercent(IsExp))
             continue
         end
-        a = 0.85;
-%         decay = 1*((1-a)*exp(-t2delays./2.5) + a*exp(-t2delays./20));
-%         decay = 1.25*(0.3*exp(-t2delays./3) + 0.7*exp(-t2delays./20)); % From JP's paper
-        decay = ones(length(t2delays),1);
+        a = 1;
+        decay = 1*((1-a)*exp(-t2delays./2.5) + a*exp(-t2delays./22));
+%         decay = ones(length(t2delays),1);
         if DoFit == 0
             if contains(names{i},'Clus')
                 line_up = '-.';
@@ -402,6 +404,8 @@ switch plotFormat
         xlabel(ax_UP,[]);
         title(ax_UP,'(A) Uphill transfer (Peak 1)','Units','normalized','position',[0.3 1.05]);
         title(ax_DW,'(B) Downhill transfer (Peak 2)','Units','normalized','position',[0.33 1.05]);
+%         title(ax_UP,'(A) ^{13}CO diagonal peak','Units','normalized','position',[0.25 1.05]);
+%         title(ax_DW,'(B) ^{12}CO diagonal peak','Units','normalized','position',[0.25 1.05]);
         leg_UP.Position(1:2) = [0.85  (0.5-leg_UP.Position(4)/2)];
         annotation(fh,'textbox',[xpos -0.05+leg_UP.Position(4)+leg_UP.Position(2) 0.5 0.05],'String',['\bf{% ' diluent '}'],'FontSize',12,'FontWeight','bold','Units','normalized','EdgeColor','none');
     case 'Horizontal'
@@ -440,7 +444,15 @@ if DoSave == 1
     end
     dlmwrite([scriptdir filesep subdir 'GSB_DOWN.dat'],[[0 ConcPercent'];[t2delays GSB_down.*decay]]);
     dlmwrite([scriptdir filesep subdir 'GSB_UP.dat'],[[0 ConcPercent'];[t2delays GSB_up.*decay]]);
+    for i=1:Nconc
+        GSB_diag12(:,i)  = VolumeData_GSB{i}(:,2);
+        GSB_diag13(:,i)  = VolumeData_GSB{i}(:,1);
+    end
+    dlmwrite([scriptdir filesep subdir 'GSB_diag12.dat'],[[0 ConcPercent'];[t2delays GSB_diag12.*decay]]);
+    dlmwrite([scriptdir filesep subdir 'GSB_diag13.dat'],[[0 ConcPercent'];[t2delays GSB_diag13.*decay]]);
 end
+
+
 
 if DoFit == 0
  return

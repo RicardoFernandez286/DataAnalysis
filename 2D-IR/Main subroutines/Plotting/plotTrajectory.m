@@ -48,7 +48,7 @@ fh.Position(4) = fh.Position(3);
 
 % Make uniform, consistent format
 ax.FontSize     = 12;
-ax.LineWidth    = 1;
+ax.LineWidth    = 0.5;
 ax.TickLength   = [0.015 0.035];
 ax.Visible      = 'On';
 
@@ -112,7 +112,7 @@ ax.Visible      = 'On';
     ax.PlotBoxAspectRatio   = [1 1 1];
     ax.FontSize             = 16;
 
-    title(ax,['Simulated surface, trajectory # ' num2str(WhichTraject,'%i') ' of ' num2str(Nsamples,'%i')]);
+    title(ax,['Simulated surface, trajectory # ' num2str(WhichTraject,'%i') ' of ' num2str(Nsamples,'%i')],'FontSize',14);
     xlabel(ax,['x (' char(197) ')'],'FontWeight','bold');
     ylabel(ax,['y (' char(197) ')'],'FontWeight','bold');
 
