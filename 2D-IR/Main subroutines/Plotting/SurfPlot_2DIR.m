@@ -108,8 +108,9 @@ end
 hold(plotaxis,'off');
 
 % Cut the datasets in half (only half the frequencies are real)
-L                   = round(length(PumpAxis{m,k})/2);
-PROC_2D_DATA{m,k}   = PROC_2D_DATA{m,k}(1:L,:);
+% L                   = round(length(PumpAxis{m,k})/2);
+% L                   = length(PumpAxis{m,k});
+% PROC_2D_DATA{m,k}   = PROC_2D_DATA{m,k}(1:L,:);
 PumpAxis{m,k}       = PumpAxis{m,k}(1:L,:);
 PumpSpectrum        = PumpSpectrum{m,k}(1:L,:);
 

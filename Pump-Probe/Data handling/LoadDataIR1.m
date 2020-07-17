@@ -3,7 +3,7 @@ function dataStruct = LoadDataIR1(dataStruct,SpectrumToDisplay,varargin)
 % Updated for the new AppDesigner GUI.
 %
 % v4.5a / 28.10.2019 / Ricardo Fernández-Terán
-
+% SpectrumToDisplay = 1;
 %% READ from dataStruct
 rootdir         = dataStruct.rootdir;
 datafilename    = dataStruct.datafilename;

@@ -12,8 +12,9 @@ nGR         = 200;
 filt_gR     = 0;
 plotArea    = 0;
 plotCoordN  = 0;
+plotgR_div  = 1;
 % Exponent for plot
-k           = 0; % can be 0 or 5
+k           = 5; % can be 0 or 5
 
 % Isotope shifts
 iso13_shift = 48;
@@ -67,17 +68,22 @@ end
 
 hold(axGR,'on')
 
-plot(axGR,gx,gTot./(gx.^k),'k','DisplayName','Total','LineWidth',2);
-plot(axGR,gx,gAA./(gx.^k),'--','Color','b','DisplayName','12-12','LineWidth',1.5);
-plot(axGR,gx,gBB./(gx.^k),'--','Color','r','DisplayName','13-13','LineWidth',1.5);
-plot(axGR,gx,gCC./(gx.^k),'--','Color','g','DisplayName',[dilName '-' dilName],'LineWidth',1.5);
-plot(axGR,gx,gAB./(gx.^k),'-','Color',colRe12.*colRe13,'DisplayName','12-13','LineWidth',2);
-plot(axGR,gx,gAC./(gx.^k),'--','Color',colRe12.*colRe18,'DisplayName',['12-' dilName],'LineWidth',1);
-plot(axGR,gx,gBC./(gx.^k),'--','Color',colRe13.*colRe18,'DisplayName',['13-' dilName],'LineWidth',1);
+plot(axGR,gx,gTot,'k','DisplayName','Total','LineWidth',2);
+% plot(axGR,gx,gAA./(gx.^k),'--','Color','b','DisplayName','12-12','LineWidth',1.5);
+% plot(axGR,gx,gBB./(gx.^k),'--','Color','r','DisplayName','13-13','LineWidth',1.5);
+% plot(axGR,gx,gCC./(gx.^k),'--','Color','g','DisplayName',[dilName '-' dilName],'LineWidth',1.5);
+% plot(axGR,gx,gAB./(gx.^k),'-','Color',colRe12.*colRe13,'DisplayName','12-13','LineWidth',2);
+% plot(axGR,gx,gAC./(gx.^k),'--','Color',colRe12.*colRe18,'DisplayName',['12-' dilName],'LineWidth',1);
+% plot(axGR,gx,gBC./(gx.^k),'--','Color',colRe13.*colRe18,'DisplayName',['13-' dilName],'LineWidth',1);
 
-yline(axGR,0,'HandleVisibility','off');
-if k==0
-    yline(axGR,1,'HandleVisibility','off');
+yline(axGR,1,'HandleVisibility','off');
+% if k==0
+%     yline(axGR,1,'HandleVisibility','off');
+% end
+
+if plotgR_div
+    yyaxis(axGR,'right');
+    plot(axGR,gx,gTot./(gx.^k),'r','DisplayName','Total','LineWidth',2);
 end
 
 % % Plot all of those with 18
@@ -90,15 +96,18 @@ hold(axGR,'off')
 
 axis(axGR,'tight')
 
-legend(axGR);
-legend('boxoff')
+% legend(axGR);
+% legend('boxoff')
 
 xlabel(axGR,['r* (' char(197) ')'],'FontWeight','bold');
 switch k
     case 0
         ylabel(axGR,'g(r)','FontWeight','bold');
     case 5
+        yyaxis(axGR,'right');
         ylabel(axGR,'g(r)/r^5','FontWeight','bold');
+        yyaxis(axGR,'left');
+        ylabel(axGR,'g(r)','FontWeight','bold');
 end
 
 %%

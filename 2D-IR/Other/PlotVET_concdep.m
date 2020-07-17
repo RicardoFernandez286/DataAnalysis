@@ -18,30 +18,31 @@ switch PlotWhat
 %         subdir      = '\SmallDil_BiggerBox_NOClustering\FitResults';
 %         subdir      = '\SmallDil_BiggerBox_Clustering\FitResults';
 %         subdir      = 'CNBz';
-%         scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\12) VET distance - na\Data\Final Fits\Simulations';
+        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\16) VET distance - na\Data\Final Fits\Simulations';
 %         subdir      = 'Big molecule';
-%         subdir      = 'Small molecule - NO clustering';
+        subdir      = 'Small molecule - NO clustering';
 %         subdir      = 'Small molecule - WITH clustering';
-        scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\12) VET distance - na\Latest Simulations\Final simulations\Development version - cone\For Polaron\Cone_dil\FitResults';
-        subdir = [];
+%         scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\16) VET distance - na\Latest Simulations\Final simulations\Development version - cone\For Polaron\Cone_dil\FitResults';
+%         subdir = [];
     case 'Exp'
-        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\12) VET distance - na\Data\Final Fits\Experiment';
-%         subdir      = 'CNBz - All';
-        subdir      = 'Re18 - All';
+        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\16) VET distance - na\Data\Final Fits\Experiment';
+        subdir      = 'CNBz - All';
+%         subdir      = 'Re18 - All';
+%         subdir = [];
     case 'Pick'
         scriptdir = uigetdir();
         subdir = [];
     case 'Mixed'
-        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\12) VET distance - na\Data\Final Fits\';
+        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\16) VET distance - na\Data\Final Fits\';
         subdir      = 'Mixed\Big';
 end
 plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
 plotFormat  = 'Vertical'; % 'Horizontal' or 'Vertical'
 concType    = '100-%'; % '100-%' or '%'
-diluent     = 'Re(^{13}C^{18}O)'; % 'Re(^{13}C^{18}O)'
-% diluent     = 'CNBz';
+% diluent     = 'Re(^{13}C^{18}O)'; % 'Re(^{13}C^{18}O)'
+diluent     = 'CNBz';
 
-xpos        = 0.8; % 0.8 for Re18; 0.83 for CNBz
+xpos        = 0.83; % 0.8 for Re18; 0.83 for CNBz
 
 % xpos        = 1.04; % 1.04 for Re18; 1.06 for CNBz; 0.1 horizontal
 % xpos        = -0.175;
@@ -66,8 +67,8 @@ VolumeData_ESA  = cell(Nconc,1);
 SSR_fit         = zeros(Nconc,1);
 StepSize        = zeros(Nconc,1);
 delays          = cell(Nconc,1);
-xpeak_fw        = cell(Nconc,1);
-xpeak_bw        = cell(Nconc,1);
+xpeak_UP        = cell(Nconc,1);
+xpeak_DW        = cell(Nconc,1);
 
 % Create figure
 fh              = figure(1);
@@ -149,9 +150,6 @@ for i=1:Nconc
             NormErr(:,[1 3],2)  = fitErr.Vols(:,[1 3],2)./max(abs(fitPar.Vols(:,1,2)));
             NormErr(:,[2 4],1)  = fitErr.Vols(:,[2 4],1)./max(abs(fitPar.Vols(:,2,1)));
             NormErr(:,[2 4],2)  = fitErr.Vols(:,[2 4],2)./max(abs(fitPar.Vols(:,2,2)));
-
-            NormVols(:,[3 4],:) = 10*NormVols(:,[3 4],:);
-            NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:); 
         case 'Sqrt'
             % Normalise by dividing by sqrt(pump*probe)
             for p=1:2 % 1=GSB, 2=ESA ---- VOLUMES
@@ -160,15 +158,15 @@ for i=1:Nconc
                 NormVols(:,3,p) = ((-1)^p)*fitPar.Vols(:,3,p)./sqrt(max(abs(fitPar.Vols(:,1,p))).*max(abs(fitPar.Vols(:,2,p)))); % 13->12 uphill Xpeak
                 NormVols(:,4,p) = ((-1)^p)*fitPar.Vols(:,4,p)./sqrt(max(abs(fitPar.Vols(:,1,p))).*max(abs(fitPar.Vols(:,2,p)))); % 12->13 downhill Xpeak
             end
-            NormVols(:,[3 4],:) = 10*NormVols(:,[3 4],:);
-            
+%             NormVols(:,[3 4],:) = 10*NormVols(:,[3 4],:);
+           
             for p=1:2 % 1=GSB, 2=ESA  ---- ERRORS
                 NormErr(:,1,p)  = ((-1)^p)*fitErr.Vols(:,1,p)./max(abs(fitErr.Vols(:,1,p))); % 13CO diag
                 NormErr(:,2,p)  = ((-1)^p)*fitErr.Vols(:,2,p)./max(abs(fitErr.Vols(:,2,p))); % 12CO diag
                 NormErr(:,3,p)  = ((-1)^p)*fitErr.Vols(:,3,p)./sqrt(max(abs(fitErr.Vols(:,1,p))).*max(abs(fitErr.Vols(:,2,p)))); % 13->12 uphill Xpeak
                 NormErr(:,4,p)  = ((-1)^p)*fitErr.Vols(:,4,p)./sqrt(max(abs(fitErr.Vols(:,1,p))).*max(abs(fitErr.Vols(:,2,p)))); % 12->13 downhill Xpeak
             end
-            NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:);
+%             NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:);                
         case 'Prod'
             % Normalise by dividing by (pump*probe)
             for p=1:2 % 1=GSB, 2=ESA ---- VOLUMES
@@ -177,7 +175,6 @@ for i=1:Nconc
                 NormVols(:,3,p) = ((-1)^p)*fitPar.Vols(:,3,p)./(max(abs(fitPar.Vols(:,1,p))).*max(abs(fitPar.Vols(:,2,p)))); % 13->12 uphill Xpeak
                 NormVols(:,4,p) = ((-1)^p)*fitPar.Vols(:,4,p)./(max(abs(fitPar.Vols(:,1,p))).*max(abs(fitPar.Vols(:,2,p)))); % 12->13 downhill Xpeak
             end
-            NormVols(:,[3 4],:) = 10*NormVols(:,[3 4],:);
             
             for p=1:2 % 1=GSB, 2=ESA  ---- ERRORS
                 NormErr(:,1,p)  = ((-1)^p)*fitErr.Vols(:,1,p)./max(abs(fitErr.Vols(:,1,p))); % 13CO diag
@@ -185,7 +182,6 @@ for i=1:Nconc
                 NormErr(:,3,p)  = ((-1)^p)*fitErr.Vols(:,3,p)./(max(abs(fitErr.Vols(:,1,p))).*max(abs(fitErr.Vols(:,2,p)))); % 13->12 uphill Xpeak
                 NormErr(:,4,p)  = ((-1)^p)*fitErr.Vols(:,4,p)./(max(abs(fitErr.Vols(:,1,p))).*max(abs(fitErr.Vols(:,2,p)))); % 12->13 downhill Xpeak
             end
-            NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:);
         case 'Square'
             % Normalise by dividing by (pump*probe)^2
             for p=1:2 % 1=GSB, 2=ESA ---- VOLUMES
@@ -194,7 +190,6 @@ for i=1:Nconc
                 NormVols(:,3,p) = ((-1)^p)*fitPar.Vols(:,3,p)./(max(abs(fitPar.Vols(:,1,p))).*max(abs(fitPar.Vols(:,2,p)))).^2; % 13->12 uphill Xpeak
                 NormVols(:,4,p) = ((-1)^p)*fitPar.Vols(:,4,p)./(max(abs(fitPar.Vols(:,1,p))).*max(abs(fitPar.Vols(:,2,p)))).^2; % 12->13 downhill Xpeak
             end
-            NormVols(:,[3 4],:) = 10*NormVols(:,[3 4],:);
             
             for p=1:2 % 1=GSB, 2=ESA  ---- ERRORS
                 NormErr(:,1,p)  = ((-1)^p)*fitErr.Vols(:,1,p)./(max(abs(fitErr.Vols(:,1,p)))).^2; % 13CO diag
@@ -202,22 +197,23 @@ for i=1:Nconc
                 NormErr(:,3,p)  = ((-1)^p)*fitErr.Vols(:,3,p)./(max(abs(fitErr.Vols(:,1,p))).*max(abs(fitErr.Vols(:,2,p)))).^2; % 13->12 uphill Xpeak
                 NormErr(:,4,p)  = ((-1)^p)*fitErr.Vols(:,4,p)./(max(abs(fitErr.Vols(:,1,p))).*max(abs(fitErr.Vols(:,2,p)))).^2; % 12->13 downhill Xpeak
             end
-            NormErr(:,[3 4],:)  = 10*NormErr(:,[3 4],:);
     end
+    NormVols    = 100*NormVols; % Now in % population
+    NormErr     = 100*NormErr; % Now in % population
     VolumeData_GSB{i} = NormVols(:,:,1);
     VolumeData_ESA{i} = NormVols(:,:,2);
-    
 
-    
+    if ConcPercent(i) == 20
+        NormVols(:,4,:) = NormVols(:,4,:);
+    end
+
+ %%   
     if PlotAllSim == 1
         plotID = i;
     else
         plotID          = find(ConcPercent(IsExp)==ConcPercent(i),1,'first');
     end
-    delays{i}     = t2delays;
-    xpeak_fw{i}   = NormVols(:,3,2);
-    xpeak_bw{i}   = NormVols(:,4,2);
-    
+   
     if ~IsExp(i)
         if PlotExpOnly == 1
             continue
@@ -226,19 +222,20 @@ for i=1:Nconc
             continue
         end
         a = 1;
-        decay = 1*((1-a)*exp(-t2delays./2.5) + a*exp(-t2delays./22));
+%         decay = 1*((1-a)*exp(-t2delays./2.5) + a*exp(-t2delays./20));
+        decay = exp(-t2delays./20);
 %         decay = ones(length(t2delays),1);
         if DoFit == 0
             if contains(names{i},'Clus')
-                line_up = '-.';
-                line_dw = '-.';
+                line_up = '-';
+                line_dw = '-';
             else
-                line_up = '-.';
-                line_dw = '-.';
+                line_up = '-';
+                line_dw = '-';
             end
         else
-            line_up = '^';
-            line_dw = 'v';
+            line_up = '-';
+            line_dw = '-';
         end
     else
         if PlotSimOnly == 1
@@ -246,40 +243,43 @@ for i=1:Nconc
         end
         decay = ones(length(t2delays),1);
         if DoFit == 0
-            line_up = '^-';
-            line_dw = 'v-';
+            line_up = '-^';
+            line_dw = '-v';
         else
-            line_up = '^';
-            line_dw = 'v';
+            line_up = '-^';
+            line_dw = '-v';
         end
     end
-
+    delays{i}     = t2delays;
+    xpeak_UP{i}   = NormVols(:,3,2).*decay;
+    xpeak_DW{i}   = NormVols(:,4,2).*decay;
+    
     SSR_fit(i)       = SSR;
     StepSize(i)      = output_st.stepsize;
     switch plotWhat
         case 'Diagonal GSB'
-            plot(ax_UP,t2delays,NormVols(:,1,1).*decay,line_up,'MarkerSize',2,'LineWidth',LineWidth,'Color',cmFW(plotID,:),'HandleVisibility','off');
-            plot(ax_DW,t2delays,NormVols(:,2,1).*decay,line_dw,'MarkerSize',2,'LineWidth',LineWidth,'Color',cmBW(plotID,:),'HandleVisibility','off');
+            plot(ax_UP,t2delays,NormVols(:,1,1).*decay,line_up,'MarkerSize',3,'LineWidth',LineWidth,'Color',cmFW(plotID,:),'HandleVisibility','off');
+            plot(ax_DW,t2delays,NormVols(:,2,1).*decay,line_dw,'MarkerSize',3,'LineWidth',LineWidth,'Color',cmBW(plotID,:),'HandleVisibility','off');
         case 'Xpeak GSB'
-            plot(ax_UP,t2delays,NormVols(:,3,1).*decay,line_up,'MarkerSize',2,'LineWidth',LineWidth,'Color',cmFW(plotID,:),'HandleVisibility','off');
-            plot(ax_DW,t2delays,NormVols(:,4,1).*decay,line_dw,'MarkerSize',2,'LineWidth',LineWidth,'Color',cmBW(plotID,:),'HandleVisibility','off');
+            plot(ax_UP,t2delays,NormVols(:,3,1).*decay,line_up,'MarkerSize',3,'LineWidth',LineWidth,'Color',cmFW(plotID,:),'HandleVisibility','off');
+            plot(ax_DW,t2delays,NormVols(:,4,1).*decay,line_dw,'MarkerSize',3,'LineWidth',LineWidth,'Color',cmBW(plotID,:),'HandleVisibility','off');
 %             plot(ax_UP,t2delays,NormVols(:,3,1),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmFW(i,:),'HandleVisibility','off');
 %             plot(ax_DW,t2delays,NormVols(:,4,1),'-','MarkerSize',2,'LineWidth',1.5,'Color',cmBW(i,:),'HandleVisibility','off');
         case 'Diagonal ESA'
-            plot(ax_UP,t2delays,NormVols(:,1,2).*decay,line_up,'MarkerSize',2,'LineWidth',LineWidth,'Color',cmFW(plotID,:),'HandleVisibility','off');
-            plot(ax_DW,t2delays,NormVols(:,2,2).*decay,line_dw,'MarkerSize',2,'LineWidth',LineWidth,'Color',cmBW(plotID,:),'HandleVisibility','off');
+            plot(ax_UP,t2delays,NormVols(:,1,2).*decay,line_up,'MarkerSize',3,'LineWidth',LineWidth,'Color',cmFW(plotID,:),'HandleVisibility','off');
+            plot(ax_DW,t2delays,NormVols(:,2,2).*decay,line_dw,'MarkerSize',3,'LineWidth',LineWidth,'Color',cmBW(plotID,:),'HandleVisibility','off');
         case 'Xpeak ESA'
 %             plot(ax_UP,t2delays,NormVols(:,3,2)./NormVols(:,1,2).*decay,line_up,'MarkerSize',2,'LineWidth',LineWidth,'Color',cmFW(i,:),'HandleVisibility','off');
 %             plot(ax_DW,t2delays,NormVols(:,4,2)./NormVols(:,2,2).*decay,line_dw,'MarkerSize',2,'LineWidth',LineWidth,'Color',cmBW(i,:),'HandleVisibility','off');
-            plot(ax_UP,t2delays,NormVols(:,3,2).*decay,line_up,'MarkerSize',2,'LineWidth',LineWidth,'Color',cmFW(plotID,:),'HandleVisibility','off');
-            plot(ax_DW,t2delays,NormVols(:,4,2).*decay,line_dw,'MarkerSize',2,'LineWidth',LineWidth,'Color',cmBW(plotID,:),'HandleVisibility','off');
+            plot(ax_UP,t2delays,NormVols(:,3,2).*decay,line_up,'MarkerSize',3,'LineWidth',LineWidth,'Color',cmFW(plotID,:),'HandleVisibility','off');
+            plot(ax_DW,t2delays,NormVols(:,4,2).*decay,line_dw,'MarkerSize',3,'LineWidth',LineWidth,'Color',cmBW(plotID,:),'HandleVisibility','off');
             %             pepita(i) = NormVols(15,3,2)+NormVols(14,3,2); % WAS 3 AND 4
         case 'SpecDiff'
-            plot(ax_UP,t2delays,fitPar.C(:,1),line_up,'MarkerSize',2,'LineWidth',LineWidth,'Color',cmFW(plotID,:),'HandleVisibility','off');
-            plot(ax_DW,t2delays,fitPar.C(:,2),line_dw,'MarkerSize',2,'LineWidth',LineWidth,'Color',cmBW(plotID,:),'HandleVisibility','off');
+            plot(ax_UP,t2delays,fitPar.C(:,1),line_up,'MarkerSize',3,'LineWidth',LineWidth,'Color',cmFW(plotID,:),'HandleVisibility','off');
+            plot(ax_DW,t2delays,fitPar.C(:,2),line_dw,'MarkerSize',3,'LineWidth',LineWidth,'Color',cmBW(plotID,:),'HandleVisibility','off');
         case 'Xpeak Diff'
-            plot(ax_UP,t2delays,(NormVols(:,3,1)+NormVols(:,3,2)).*decay,line_up,'MarkerSize',2,'LineWidth',LineWidth,'Color',cmFW(plotID,:),'HandleVisibility','off');
-            plot(ax_DW,t2delays,(NormVols(:,4,1)+NormVols(:,4,2)).*decay,line_dw,'MarkerSize',2,'LineWidth',LineWidth,'Color',cmBW(plotID,:),'HandleVisibility','off');
+            plot(ax_UP,t2delays,(NormVols(:,3,1)+NormVols(:,3,2)).*decay,line_up,'MarkerSize',3,'LineWidth',LineWidth,'Color',cmFW(plotID,:),'HandleVisibility','off');
+            plot(ax_DW,t2delays,(NormVols(:,4,1)+NormVols(:,4,2)).*decay,line_dw,'MarkerSize',3,'LineWidth',LineWidth,'Color',cmBW(plotID,:),'HandleVisibility','off');
     end
     
     switch concType
@@ -328,10 +328,12 @@ xlabel(ax_DW,'t_2 delay (ps)','FontWeight','bold','FontSize',FontSize);
 if contains(plotWhat,'Xpeak') % Xpeaks
     ylim(ax_UP,[-0.05 0.8]);
     ylim(ax_DW,[-0.05 0.4]);
-    ylabel(ax_UP,'Norm. peak volume (\times10)','FontWeight','bold','FontSize',FontSize);
+%     ylabel(ax_UP,'Norm. peak volume (\times10)','FontWeight','bold','FontSize',FontSize);
+    ylabel(ax_UP,'Population (%)','FontWeight','bold','FontSize',FontSize);
     switch plotFormat
         case 'Vertical'
             ylabel(ax_DW,'Norm. peak volume (\times10)','FontWeight','bold','FontSize',FontSize);
+            ylabel(ax_DW,'Population (%)','FontWeight','bold','FontSize',FontSize);
     end
 elseif contains(plotWhat,'SpecDiff') % Spectral diffusion
     ylim(ax_UP,[-0.05 1]);
@@ -344,10 +346,12 @@ elseif contains(plotWhat,'SpecDiff') % Spectral diffusion
 else % Diagonal
     ylim(ax_UP,[-0.05 1]);
     ylim(ax_DW,[-0.05 1]);
-    ylabel(ax_UP,'Normalised peak volume','FontWeight','bold','FontSize',FontSize);
+%     ylabel(ax_UP,'Normalised peak volume','FontWeight','bold','FontSize',FontSize);
+    ylabel(ax_UP,'Population (%)','FontWeight','bold','FontSize',FontSize);
     switch plotFormat
         case 'Vertical'
-            ylabel(ax_DW,'Normalised peak volume','FontWeight','bold','FontSize',FontSize);
+%             ylabel(ax_DW,'Normalised peak volume','FontWeight','bold','FontSize',FontSize);
+            ylabel(ax_DW,'Population (%)','FontWeight','bold','FontSize',FontSize);
     end
 end
 
@@ -423,12 +427,12 @@ ax_DW.TickLength = 1.6*ax_DW.TickLength;
 leg_UP.Position(2) = leg_UP.Position(2)-0.04;
 
 %%%% INTEGRATE THE TIME-DEPENTENT KINETICS
-integral_bw = zeros(Nconc,1);
-integral_fw = zeros(Nconc,1);
+integral_DW = zeros(Nconc,1);
+integral_UP = zeros(Nconc,1);
 
 for i=1:Nconc
-    integral_bw(i) = trapz(delays{i},xpeak_bw{i});
-    integral_fw(i) = trapz(delays{i},xpeak_fw{i});
+    integral_DW(i) = trapz(delays{i},xpeak_DW{i});
+    integral_UP(i) = trapz(delays{i},xpeak_UP{i});
 end
 
 if DoSave == 1
@@ -450,6 +454,12 @@ if DoSave == 1
     end
     dlmwrite([scriptdir filesep subdir 'GSB_diag12.dat'],[[0 ConcPercent'];[t2delays GSB_diag12.*decay]]);
     dlmwrite([scriptdir filesep subdir 'GSB_diag13.dat'],[[0 ConcPercent'];[t2delays GSB_diag13.*decay]]);
+    for i=1:Nconc
+        ESA_diag12(:,i)  = VolumeData_ESA{i}(:,2);
+        ESA_diag12(:,i)  = VolumeData_ESA{i}(:,1);
+    end
+    dlmwrite([scriptdir filesep subdir 'ESA_diag12.dat'],[[0 ConcPercent'];[t2delays ESA_diag12.*decay]]);
+    dlmwrite([scriptdir filesep subdir 'ESA_diag13.dat'],[[0 ConcPercent'];[t2delays ESA_diag13.*decay]]);
 end
 
 

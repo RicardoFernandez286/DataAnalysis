@@ -58,7 +58,7 @@ Interp_method       = 'InterpFT'; % 2D FFT, InterpFT, Mesh, None. Default = Inte
 % Fit_type            = 'Quadratic'; % 'Quadratic' 'None' - Sets the type of fit to calculate the minima along the slices
 
 Interp_order        = 2; % Multiplies Npixels by a factor to interpolate in the probe dimension
-Nfitpoints          = 3;
+Nfitpoints          = 2;
 N_pointsParabola    = round(Interp_order*Nfitpoints); % No. of X points to fit a parabola on each side of the peak: [-x (peak) +x]
 N_points_IvCLS      = 8;
 
@@ -182,6 +182,7 @@ switch specdif_options{specdif_typeindx}
                     cmap= jet(Npeaks);
                     plot(diagnosticAx,probe_segment,data_segment./max(abs(data_segment(:))),'o','MarkerSize',3,'Color',cmap(i,:));
                     plot(diagnosticAx,probe_segment,polyval(coeff,probe_segment)./max(abs(data_segment(:))),'-','LineWidth',2,'Color',cmap(i,:));
+                    pause(0.05);
                 end
             end
             % Fit a line around the minimum according to the intensity cutoff
