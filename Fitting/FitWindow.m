@@ -552,7 +552,7 @@ switch handles.fittype
             % handles.fitfunc = Already a cell array of function handles
             % handles.p_start = Vector w/ initial guess of fitted params.
         % Fitting Options
-        options = statset('MaxIter',2000,...
+        options = statset('MaxIter',20000,...
             'TolFun',1e-10,...
             'TolX',1e-10);
         % Do the fit
@@ -566,6 +566,14 @@ switch handles.fittype
             stop=q*length(handles.Data_x);
             handles.residuals(:,q)=RAWresiduals(start:stop);
         end
+        
+        fitP=handles.fitP;
+        % Get the fitted traces
+        i=1;
+        [ypred(i,:),~] = nlpredci(handles.fitfunc{i},x_cell{i},fitP,RAWresiduals,'covar',Sigma);
+        ypred=ypred';
+        ypred=abs(ypred)./max(abs(ypred(:)));
+        yorig = y_cell{1}; yorig=abs(yorig)./max(abs(yorig(:)));
         % Update status light
 % %         switch exitflag
 % %             case {1;2;3;4} % The fit worked
@@ -574,15 +582,16 @@ switch handles.fittype
 % %                 handles.StatusLight.CData=handles.RedLight;
 % %         end
         
-        fitP=handles.fitP;
+
         % Update handles
         guidata(hObject,handles);
-        
 end
 
 % Update the plot with the fit
 handles = UpdatePlot(handles);
 guidata(hObject,handles);
+
+pepita=1;
 
 if handles.fittype == 1
     %%%%%%%%%%%%%%%%%%%%%%% Calculate statistics

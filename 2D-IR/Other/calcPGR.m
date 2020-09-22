@@ -40,11 +40,12 @@ gpart   = zeros(Nbins,6);
 for f=1:Nframes
     waitbar(f/Nframes,msg,'Calculating pRDF. This may take a while...','WindowStyle','modal');
     
-    if length(unique(Nmolec)) > 1
-        Nmolec_i = Nmolec(f);
-    else
-        Nmolec_i = unique(Nmolec);
-    end
+%     if length(unique(Nmolec)) > 1
+%         Nmolec_i = Nmolec(f);
+%     else
+%         Nmolec_i = unique(Nmolec);
+%     end
+    Nmolec_i = 49;
     rho_i    = Nmolec_i/prod(BoxSizes);
     for itype=1:6
         % Count

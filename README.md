@@ -1,5 +1,5 @@
 # The DataAnalysis GitHub repository
-© 2018-2019, Ricardo J. Fernández-Terán (ricardo.fernandez [at] chem.uzh.ch)
+© 2018-2020, Ricardo J. Fernández-Terán (Ricardo.Fernandez [at] chem.uzh.ch; Ricardo.FernandezTeran [at] gmail.com)
 
 # 1. Description and contents
 This project contains all the files that constitute two separate main graphical user interfaces (GUIs), which are now merged into a single window.
@@ -14,7 +14,7 @@ The second one, **InterfDataAnalysis_GUI** is designed to process, phase, plot a
 # 2. Basic requirements
 The first implementation of the program was done in MATLAB R2016a, but current development will always run in the latest release.
 The current version of the GUI **DOES NOT RUN** MATLAB versions older than R2019a.
-### 2.1 Current MATLAB version: R2019b
+### 2.1 Current MATLAB version: R2020b
 
 Both GUIs need a file, **"GUIoptions.txt"**, to be present in the same folder as the main App (NewGUI.mlapp).
 The file no longer needs to be placed in C: (which was a major drawback of the previous implementation).

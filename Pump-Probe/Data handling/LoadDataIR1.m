@@ -199,8 +199,15 @@ if N_modSpec >= 2
 end
 
 % Timescale is in picoseconds! (nicer to understand)
-% delays = delays/1000;
-dataStruct.timescale = 'ns';
+if log10(delays(1)) >= 3
+    delays = delays/1000;
+    dataStruct.timescale = 'ps';
+else
+    dataStruct.timescale = 'ns';
+end
+
+
+
 
 % Read the plot ranges
 mintime         = -0.5;

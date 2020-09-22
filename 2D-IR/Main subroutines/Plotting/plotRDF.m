@@ -68,11 +68,11 @@ end
 
 hold(axGR,'on')
 
-plot(axGR,gx,gTot,'k','DisplayName','Total','LineWidth',2);
+% plot(axGR,gx,gTot,'k','DisplayName','Total','LineWidth',2);
 % plot(axGR,gx,gAA./(gx.^k),'--','Color','b','DisplayName','12-12','LineWidth',1.5);
 % plot(axGR,gx,gBB./(gx.^k),'--','Color','r','DisplayName','13-13','LineWidth',1.5);
 % plot(axGR,gx,gCC./(gx.^k),'--','Color','g','DisplayName',[dilName '-' dilName],'LineWidth',1.5);
-% plot(axGR,gx,gAB./(gx.^k),'-','Color',colRe12.*colRe13,'DisplayName','12-13','LineWidth',2);
+plot(axGR,gx,gAB,'-','Color',colRe12.*colRe13,'DisplayName','12-13','LineWidth',2);
 % plot(axGR,gx,gAC./(gx.^k),'--','Color',colRe12.*colRe18,'DisplayName',['12-' dilName],'LineWidth',1);
 % plot(axGR,gx,gBC./(gx.^k),'--','Color',colRe13.*colRe18,'DisplayName',['13-' dilName],'LineWidth',1);
 
@@ -83,7 +83,7 @@ yline(axGR,1,'HandleVisibility','off');
 
 if plotgR_div
     yyaxis(axGR,'right');
-    plot(axGR,gx,gTot./(gx.^k),'r','DisplayName','Total','LineWidth',2);
+    plot(axGR,gx,gAB./(gx.^k),'r','DisplayName','Total','LineWidth',2);
 end
 
 % % Plot all of those with 18

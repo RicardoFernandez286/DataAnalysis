@@ -1,11 +1,12 @@
 DoFit   = 0;
-DoSave  = 1;
+DoSave  = 0;
 
 NormType='Sqrt'; % 'Old' 'Sqrt' 'Prod' 'Squared'
 
-PlotWhat='Pick';
+% PlotWhat='Pick';
+% PlotWhat='E';
+PlotWhat='Exp';
 % PlotWhat='Sim';
-% PlotWhat='Exp';
 % PlotWhat='Mixed';
 
 PlotSimOnly = 0;
@@ -13,19 +14,22 @@ PlotExpOnly = 0;
 PlotAllSim  = 1;
 %% Get a list of MAT files
 switch PlotWhat
+    case 'E'
+        scriptdir = 'E:\';
+        subdir = 'FitResults';
     case 'Sim'
-%         scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\11) VET distance - na\Latest Simulations\Final simulations';       
+%         scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\Submitted\11) VET distance - JPC\OLD\Latest Simulations\Final simulations';       
 %         subdir      = '\SmallDil_BiggerBox_NOClustering\FitResults';
 %         subdir      = '\SmallDil_BiggerBox_Clustering\FitResults';
 %         subdir      = 'CNBz';
-        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\16) VET distance - na\Data\Final Fits\Simulations';
-%         subdir      = 'Big molecule';
-        subdir      = 'Small molecule - NO clustering';
+        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\Submitted\18) VET distance - JPC\OLD\Data\Final Fits\Simulations';
+        subdir      = 'Big molecule';
+%         subdir      = 'Small molecule - NO clustering';
 %         subdir      = 'Small molecule - WITH clustering';
-%         scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\16) VET distance - na\Latest Simulations\Final simulations\Development version - cone\For Polaron\Cone_dil\FitResults';
+%         scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\Submitted\18) VET distance - JPC\OLD\Latest Simulations\Final simulations\Development version - cone\For Polaron\Cone_dil\FitResults';
 %         subdir = [];
     case 'Exp'
-        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\16) VET distance - na\Data\Final Fits\Experiment';
+        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\Submitted\18) VET distance - JPC\OLD\Data\Final Fits\Experiment';
         subdir      = 'CNBz - All';
 %         subdir      = 'Re18 - All';
 %         subdir = [];
@@ -33,14 +37,14 @@ switch PlotWhat
         scriptdir = uigetdir();
         subdir = [];
     case 'Mixed'
-        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\16) VET distance - na\Data\Final Fits\';
+        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\Submitted\18) VET distance - JPC\OLD\Data\Final Fits\';
         subdir      = 'Mixed\Big';
 end
 plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
 plotFormat  = 'Vertical'; % 'Horizontal' or 'Vertical'
-concType    = '100-%'; % '100-%' or '%'
+concType    = '%'; % '100-%' or '%'
 % diluent     = 'Re(^{13}C^{18}O)'; % 'Re(^{13}C^{18}O)'
-diluent     = 'CNBz';
+diluent     = 'Re';
 
 xpos        = 0.83; % 0.8 for Re18; 0.83 for CNBz
 
@@ -57,7 +61,7 @@ names       = {filelist.name}';
 names       = flipud(names(contains(names,'.mat')));
 % names       = names(1:end-1);
 Nconc       = length(names);
-dilupos     = 4;
+dilupos     = 3;
 
 % Initialise variables
 ConcPercent     = zeros(Nconc,1);
@@ -201,13 +205,18 @@ for i=1:Nconc
     end
     NormVols    = 100*NormVols; % Now in % population
     NormErr     = 100*NormErr; % Now in % population
-    
-    NormVols(:,3,2) = NormVols(:,3,2)*45/mean(NormVols((end-2):end,3,2));
-    NormVols(:,4,2) = NormVols(:,4,2)*48/mean(NormVols((end-2):end,4,2));
-    
+%     
+%     NormVols(:,3,2) = NormVols(:,3,2)*45/mean(NormVols((end-2):end,3,2));
+%     NormVols(:,4,2) = NormVols(:,4,2)*48/mean(NormVols((end-2):end,4,2));
+%     
     VolumeData_GSB{i} = NormVols(:,:,1);
     VolumeData_ESA{i} = NormVols(:,:,2);
-
+    
+    X0Pos(:,i) = fitPar.X0;
+    AMPRATIO(i,:) = squeeze(fitPar.Amps(1,1:2,2).*sqrt(fitPar.Sx(1:2))'.*sqrt(fitPar.Sy(1:2))');
+    
+    AmpQuot = AMPRATIO(:,2)./AMPRATIO(:,1);
+    
     if ConcPercent(i) == 20
         NormVols(:,4,:) = NormVols(:,4,:);
     end
@@ -228,8 +237,8 @@ for i=1:Nconc
         end
         a = 1;
 %         decay = 1*((1-a)*exp(-t2delays./2.5) + a*exp(-t2delays./20));
-%         decay = exp(-t2delays./20);
-        decay = ones(length(t2delays),1);
+        decay = exp(-t2delays./20);
+%         decay = ones(length(t2delays),1);
         if DoFit == 0
             if contains(names{i},'Clus')
                 line_up = '-';
@@ -370,21 +379,21 @@ end
 axis(ax_UP,'tight');
 axis(ax_DW,'tight');
 
-% xlim(ax_UP,[0 60]);
-% xlim(ax_DW,[0 60]);
+xlim(ax_UP,[0 60]);
+xlim(ax_DW,[0 60]);
 
-xlim(ax_UP,[0 10000]);
-xlim(ax_DW,[0 10000]);
+% xlim(ax_UP,[0 10000]);
+% xlim(ax_DW,[0 10000]);
 
 % xlim(ax_UP,[0 max(t2delays)]);
 % xlim(ax_DW,[0 max(t2delays)]);
 
-ylim(ax_UP,[0 50]);
-ylim(ax_DW,[0 50]);
+ylim(ax_UP,[0 6]);
+ylim(ax_DW,[0 6]);
 
-% Add zero line
-hline_FW = yline(ax_UP,0,'HandleVisibility','off'); hline_FW.Color = [0.5 0.5 0.5];
-hline_BW = yline(ax_DW,0,'HandleVisibility','off'); hline_BW.Color = [0.5 0.5 0.5];
+% % Add zero line
+% hline_FW = yline(ax_UP,0,'HandleVisibility','off'); hline_FW.Color = [0.5 0.5 0.5];
+% hline_BW = yline(ax_DW,0,'HandleVisibility','off'); hline_BW.Color = [0.5 0.5 0.5];
 
 % Legends
 switch plotFormat
@@ -438,17 +447,26 @@ hold(ax_DW,'off');
 % ax_UP.XTick = 0:200:max(t2delays);
 % ax_DW.XTick = 0:200:max(t2delays);
 
-ax_UP.XScale = 'log';
-ax_DW.XScale = 'log';
+ax_UP.XScale = 'lin';
+ax_DW.XScale = 'lin';
 
-ax_UP.XTick = [0.1 1 10 100 1000 10000];
-ax_DW.XTick = [0.1 1 10 100 1000 10000];
+% ax_UP.XTick = [0.1 1 10 100 1000 10000];
+% ax_DW.XTick = [0.1 1 10 100 1000 10000];
 
-ax_UP.TickLength = 1.6*ax_UP.TickLength;
-ax_DW.TickLength = 1.6*ax_DW.TickLength;
+% ax_UP.XTick = [0.1 1 10 100 1000 10000];
+% ax_DW.XTick = [0.1 1 10 100 1000 10000];
+
+
+ax_UP.TickLength = 2*ax_UP.TickLength;
+ax_DW.TickLength = 2*ax_DW.TickLength;
 leg_UP.Position(2) = leg_UP.Position(2)-0.04;
 
-%%%% INTEGRATE THE TIME-DEPENTENT KINETICS
+% FIGURE SIZE
+fh.Units = 'pixels';
+% fh.Position = [275 718 1285 620];
+fh.Position(3) = 614.4*3/4;
+
+%% INTEGRATE THE TIME-DEPENTENT KINETICS
 integral_DW = zeros(Nconc,1);
 integral_UP = zeros(Nconc,1);
 
@@ -457,7 +475,7 @@ for i=1:Nconc
     integral_DW(i) = trapz(delays{i},xpeak_DW{i});
     integral_UP(i) = trapz(delays{i},xpeak_UP{i});
 end
-
+%%
 if DoSave == 1
     for i=1:Nconc
         ESA_down(:,i)    = VolumeData_ESA{i}(:,3);
@@ -485,8 +503,6 @@ if DoSave == 1
     dlmwrite([scriptdir filesep subdir 'ESA_diag13.dat'],[[0 ConcPercent'];[t2delays ESA_diag12.*decay]]);
 end
 
-
-
 if DoFit == 0
  return
 end
@@ -510,8 +526,3 @@ for i=1:Nconc
 end
 
 fitpar = fitpar';
-
-
-% FIGURE SIZE
-fh.Units = 'pixels';
-% fh.Position = [275 718 1285 620];
