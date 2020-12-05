@@ -11,6 +11,22 @@ delays          = data(2:end,1)/1e6; % Delays originally in microseconds, conver
 cmprobe         = data(1,2:end)';
 
 rawsignal       = data(2:end,2:end);
+Ndelays         = length(delays);
+
+%% Interpolate and reduce number of datapoints
+DwF         = 400; % Downscaling factor
+Npoints     = round(Ndelays/DwF);
+NnegPts     = 100;
+InterpMethod= 'spline';
+
+negDelays   = sort(-logspace(log10(min(-delays(delays<= 0))),log10(max(-delays)),NnegPts));
+posDelays   = logspace(log10(min(delays(delays>= 0))),log10(max(delays)),Npoints);
+newDelays   = [negDelays posDelays];
+rawsignal   = interp1(delays,rawsignal,newDelays,InterpMethod,'extrap');
+
+delays      = newDelays';
+
+%% Noise and ranges
 noise           = zeros(size(rawsignal));
 
 % Read the plot ranges
