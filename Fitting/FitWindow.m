@@ -574,6 +574,9 @@ switch handles.fittype
         ypred=ypred';
         ypred=abs(ypred)./max(abs(ypred(:)));
         yorig = y_cell{1}; yorig=abs(yorig)./max(abs(yorig(:)));
+        xaxis=x_cell{i}; 
+        yy=[yorig ypred];
+        pepita=1;
         % Update status light
 % %         switch exitflag
 % %             case {1;2;3;4} % The fit worked

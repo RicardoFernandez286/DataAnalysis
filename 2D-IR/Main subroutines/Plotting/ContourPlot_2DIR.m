@@ -8,10 +8,12 @@ function varargout = ContourPlot_2DIR(plotOptions,dataStruct,plotaxis)
 % Outputs:
 %     (plot)
 %     plotLimits.min/max_cut
-% Ricardo Fernández-Terán / 01.09.2019 / v4.5a
+% Ricardo Fernández-Terán / 04.10.2020 / v4.7b
 
 debug=0;
 cla(plotaxis);
+
+FitContourlineColor=0.5*[1 1 1];
 
 %% DEBUG/MANUAL:
 if debug==1
@@ -446,9 +448,9 @@ if isfield(dataStruct,'FitResults') ~= 0  && ~isempty(dataStruct.FitResults) && 
     end
     
     hold(plotaxis,'on')
-    contour(plotaxis,Xfit,Yfit,Zfit,plot_contours(plot_contours~=0),'LineColor',0.7*[1 1 1],'LineWidth',0.1)
+    contour(plotaxis,Xfit,Yfit,Zfit,plot_contours(plot_contours~=0),'LineColor',FitContourlineColor,'LineWidth',0.1)
     hold(plotaxis,'off')
-    
+
     if plotResidualsFit == 1
     PROC_2D_DATA    = dataStruct.PROC_2D_DATA;
     ProbeAxis       = dataStruct.ProbeAxis;

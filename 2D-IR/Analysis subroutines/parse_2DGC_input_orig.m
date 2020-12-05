@@ -214,24 +214,24 @@ Start_param(S12_pos(isDiagonal))= SY_start(isDiagonal);
 
 UB(x0_pos(isDiagonal)) = X0_start(isDiagonal)+(25/1000);
 UB(y0_pos(isDiagonal)) = X0_start(isDiagonal)+(25/1000);
-UB(Dy_pos)             = 5.5;
-UB(Sx_pos(isDiagonal)) = 15;
-UB(Sy_pos(isDiagonal)) = 15;
-UB(S12_pos(isDiagonal))= 20;
+UB(Dy_pos)             = 100;
+UB(Sx_pos(isDiagonal)) = 25;
+UB(Sy_pos(isDiagonal)) = 25;
+UB(S12_pos(isDiagonal))= 25;
 
 LB(x0_pos(isDiagonal)) = X0_start(isDiagonal)-(25/1000);
 LB(y0_pos(isDiagonal)) = X0_start(isDiagonal)-(25/1000);
-LB(Dy_pos)             = 4.5;
-LB(Sx_pos(isDiagonal)) = 5;
-LB(Sy_pos(isDiagonal)) = 5;
-LB(S12_pos(isDiagonal))= 5;
+LB(Dy_pos)             = 1;
+LB(Sx_pos(isDiagonal)) = 1;
+LB(Sy_pos(isDiagonal)) = 1;
+LB(S12_pos(isDiagonal))= 1;
 
 %%% Cross peaks
 %%%%% PENDING: Explicit definition for intramolecular cross peaks
 
 %%% Time-dependent parameters
 % Spectral diffusion
-Start_param(C_pos(C_pos~=0)) = 0.1;     % Starting C value of 0.5 for all points. Needs improvement.
+Start_param(C_pos(C_pos~=0)) = 0.5;     % Starting C value of 0.5 for all points. Needs improvement.
 UB(C_pos(C_pos~=0))     = 0.99;         % C can only be in the range (-1 1). Considering positive only
 LB(C_pos(C_pos~=0))     = 0;            % C can only be in the range (-1 1). Considering positive only
 
@@ -246,8 +246,8 @@ LB(C_pos(C_pos~=0))     = 0;            % C can only be in the range (-1 1). Con
     % Evaluate the amplitudes of the input data at the position of each peak and use them as initial
     % parameters for the fit
     for m=1:Npeaks
-        Start_param(GSBamp_pos(:,m))  = 0.05*squeeze(ZData(pump_idx(m),probe_idx(m,1),:));   % GSB
-        Start_param(ESAamp_pos(:,m))  = 0.05*squeeze(ZData(pump_idx(m),probe_idx(m,2),:))';  % ESA
+        Start_param(GSBamp_pos(:,m))  = squeeze(ZData(pump_idx(m),probe_idx(m,1),:)); % GSB
+        Start_param(ESAamp_pos(:,m))  = squeeze(ZData(pump_idx(m),probe_idx(m,2),:))'; % ESA
     end
     
     % Make sure no zeros are present
@@ -255,11 +255,11 @@ LB(C_pos(C_pos~=0))     = 0;            % C can only be in the range (-1 1). Con
     zero_ESA = ESAamp_pos(Start_param(ESAamp_pos(:))==0);
     
     if ~isempty(zero_GSB)
-        Start_param(zero_GSB) = Start_param(zero_GSB) - 0.1/100;
+        Start_param(zero_GSB) = Start_param(zero_GSB) - 5/100;
     end
     
     if ~isempty(zero_ESA)
-        Start_param(zero_ESA) = Start_param(zero_ESA) + 0.1/100;
+        Start_param(zero_ESA) = Start_param(zero_ESA) + 5/100;
     end
 
 UB(GSBamp_pos(:))   = 0;            % Bleaches can only be negative

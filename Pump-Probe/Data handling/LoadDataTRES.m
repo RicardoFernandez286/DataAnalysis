@@ -1,9 +1,9 @@
-function handles = LoadDataTRES(handles)
-%% READ from handles
-% Get rootdir and datafilename from handles
-rootdir         = char(handles.CurrDir.String);
-datafilename    = char(handles.datafilename);
+function dataStruct = LoadDataTRES(dataStruct)
+%% READ from dataStruct
+rootdir         = dataStruct.rootdir;
+datafilename    = dataStruct.datafilename;
 
+%% Check that all files exist and read them
 fullName        = [rootdir filesep datafilename];
 
 %% Prepare filenames
@@ -26,51 +26,51 @@ maxwl       = max(cmprobe);
 Ncontours   = 40; % 40 contours by default is OK
 plotranges  = [mintime maxtime minwl maxwl zminmax Ncontours minabs maxabs];
 
-%% WRITE to handles
+%% WRITE to dataStruct
 % Write the main variables
-handles.delays      = delays;
-handles.cmprobe     = cmprobe;
-handles.rawsignal   = rawsignal;
-handles.noise       = noise;
-handles.plotranges  = plotranges;
+dataStruct.delays      = delays;
+dataStruct.cmprobe     = cmprobe;
+dataStruct.rawsignal   = rawsignal;
+dataStruct.noise       = noise;
+dataStruct.plotranges  = plotranges;
 
 % Enable all controls that are greyed out by default
-handles = EnableControls(handles,'TRES');
+dataStruct = EnableControls(dataStruct,'TRES');
 
 % Set default values for certain controls
-set(handles.maxDeltaAbs_text,'String',[minabs maxabs]);
-handles.AddReplace1Dplot.Value = 1;
-handles.linlogtick.Value = 0;
-handles.SVD = 0;
+set(dataStruct.maxDeltaAbs_text,'String',[minabs maxabs]);
+dataStruct.AddReplace1Dplot.Value = 1;
+dataStruct.linlogtick.Value = 0;
+dataStruct.SVD = 0;
 percentwhites = 0;
-handles.percentwhites = percentwhites;
-set(handles.percent_whites,'String',num2str(percentwhites));
+dataStruct.percentwhites = percentwhites;
+set(dataStruct.percent_whites,'String',num2str(percentwhites));
 
 % Show noise statistics
 AvgNoise = NaN;
 MaxNoise = NaN;
 SNR = NaN;
-set(handles.AvgNoise_text,'String',AvgNoise);
-set(handles.MaxNoise_text,'String',MaxNoise);
-set(handles.SNRnumber,'String',SNR);
+set(dataStruct.AvgNoise_text,'String',AvgNoise);
+set(dataStruct.MaxNoise_text,'String',MaxNoise);
+set(dataStruct.SNRnumber,'String',SNR);
 
 % Set defaults for background subtraction subunit
-handles.BkgSubTick.Value = 0;
+dataStruct.BkgSubTick.Value = 0;
     % Show by default the background subtraction limits
     % from the first data point till just before time zero
     k = 1;
-    t = handles.delays(k);
+    t = dataStruct.delays(k);
     while t < -5
         k = k+1;
-        t = handles.delays(k+1);
+        t = dataStruct.delays(k+1);
     end
-    handles.j = 1;
-    handles.k = k;
-    set(handles.mintimeBkg,'String',num2str(handles.delays(1)));
-    set(handles.maxtimeBkg,'String',num2str(handles.delays(k)));
-    % Do the background subtraction and change status in handles.rawcorr
-    handles.bkg = mean(handles.rawsignal(1:k,:));
-    handles.corrdata = handles.rawsignal - handles.bkg;
-    handles.rawcorr = 'RAW';
+    dataStruct.j = 1;
+    dataStruct.k = k;
+    set(dataStruct.mintimeBkg,'String',num2str(dataStruct.delays(1)));
+    set(dataStruct.maxtimeBkg,'String',num2str(dataStruct.delays(k)));
+    % Do the background subtraction and change status in dataStruct.rawcorr
+    dataStruct.bkg = mean(dataStruct.rawsignal(1:k,:));
+    dataStruct.corrdata = dataStruct.rawsignal - dataStruct.bkg;
+    dataStruct.rawcorr = 'RAW';
     
-handles.timescale = 'ns';
+dataStruct.timescale = 'ns';

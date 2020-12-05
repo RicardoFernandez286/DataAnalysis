@@ -4,7 +4,7 @@ function batch2DGC_fit(rootfolder,fitType,varargin)
 % fitType     = 'Test'; % 'Ricardo' or 'Andrea'
 
 %% Build list of (sub)folders, which contain the data
-folderslist = dir(rootfolder);
+folderslist  = dir(rootfolder);
 foldernames = {folderslist.name}';
 foldernames = foldernames([folderslist.isdir]);
 foldernames = foldernames(3:end);
@@ -86,30 +86,18 @@ for i=1:Ndatafiles
     switch fitType
         case 'Ricardo'
             cut_data = 'Re1213 VET';
-			if contains(foldernames{i},'Single','IgnoreCase',true)
-				fitparameters = ...
-				[{'2028'}
-				{'0'   }
-				{'10'  }
-				{'10'   }
-				{'20'   }
-				{'1'   }
-				{'Diag'}];
-			else
-			  %  WAS 1979
-				fitparameters =    ...
-				[{'1987'}    {'2028'}    {'1987' }    {'2028'  }
-				 {'0'   }    {'0'   }    {'2028' }    {'1987'  }
-				 {'10'  }    {'10'  }    {'-1'   }    {'-1'    }
-				 {'8'   }    {'8'   }    {'-1'   }    {'-1'    }
-				 {'8'   }    {'8'   }    {'-1'   }    {'-1'    }
-				 {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
-				 {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
-			end
-            t2_fitrange = [0 max(dataStruct.t2delays)];
+            fitparameters =    ...      
+           [{'1979'}    {'2028'}    {'1979' }    {'2028'  }
+            {'0'   }    {'0'   }    {'2028' }    {'1979'  }
+            {'10'  }    {'10'  }    {'-1'   }    {'-1'    }
+            {'8'   }    {'8'   }    {'-1'   }    {'-1'    }
+            {'8'   }    {'8'   }    {'-1'   }    {'-1'    }
+            {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
+            {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
+            t2_fitrange = [0.1 max(dataStruct.t2delays)];
             equal_SxSy  = 0;
             diffSyfor12 = 1;
-            writepath   = 'E:\FitResults';
+            writepath   = '/home/ricfer/FitResults';
         case 'Andrea'
             cut_data = 'Use probe axis';
             fitparameters = ...

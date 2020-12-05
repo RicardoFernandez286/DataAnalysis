@@ -56,6 +56,7 @@ else
 end
 Nspectra        = dataStruct.Nspectra;
 Ndummies        = dataStruct.Ndummies;
+Nslowmod        = dataStruct.Nslowmod;
 Nbins           = dataStruct.Nbins;
 interferogram	= dataStruct.interferogram;
 signal		    = dataStruct.signal;
@@ -77,7 +78,7 @@ phase_points    = app.I2D_PhaseFitRangeEdit.Value;
 probe_calib     = app.I2D_AutocalibrateprobeaxisCheckBox.Value;
 pumpcorrection  = app.I2D_PumpcorrectionCheckBox.Value;
 
-binzero         = num2cell(-1*ones(Ndelays,Ndatastates*Nspectra*Ndummies));
+binzero         = num2cell(-1*ones(Ndelays,Ndatastates*Nspectra*Ndummies*Nslowmod));
 
 %%% Determine whether the data is transient 2D or not, then read the mode
 if dataStruct.Transient2D == 1
@@ -129,14 +130,14 @@ end
     end
     
 %% Process the data
-for k=1:Nspectra*Ndummies
+for k=1:Nspectra*Ndummies*Nslowmod
 for m=1:Ndelays
     if ShowWaitBar
         % Update the Wait Bar
         progress = progress + 1;
     %     waitbar((progress/(Ndelays*Nspectra*Ndummies*2)+0.5),dataStruct.WaitBar,['Processing data... (' num2str(progress) ' of ' num2str(Ndelays*Nspectra*Ndummies) ')']);
-        dataStruct.WaitBar.Value    = (progress/(Ndelays*Nspectra*Ndummies*2)+0.5);
-        dataStruct.WaitBar.Message  = ['Processing data... (' num2str(progress) ' of ' num2str(Ndelays*Nspectra*Ndummies) ')'];
+        dataStruct.WaitBar.Value    = (progress/(Ndelays*Nspectra*Ndummies*Nslowmod*2)+0.5);
+        dataStruct.WaitBar.Message  = ['Processing data... (' num2str(progress) ' of ' num2str(Ndelays*Nspectra*Ndummies**Nslowmod) ')'];
         if dataStruct.WaitBar.CancelRequested
             delete(dataStruct.WBfigure);
             error('User aborted loading the data!');
@@ -172,8 +173,8 @@ for m=1:Ndelays
         otherwise
             shift_findphase(m,k)        = 10;
     end
-% If binzero is not known (= -1) then try to guess it
-    if binzero{m,k}==-1
+% % If binzero is not known (= -1) then try to guess it
+%     if binzero{m,k}==-1
         % The method will try shifting the interferogram until the point where the phase is flat
         for p=1:200
             bin{m,k}(p)         = p+bininterfmax(m,k)-100;
@@ -185,7 +186,7 @@ for m=1:Ndelays
         coeff{m,k}              = polyfit(bin{m,k},difference{m,k},1);
         % Afterwards, it will find the zero crossing point from the fitted coefficients
         binzero{m,k}            = round(-(coeff{m,k}(2)/coeff{m,k}(1)));
-    end
+%     end
     
 %% Apodise and phase the data
 % Apodise the data by the selected method
@@ -350,7 +351,7 @@ end
 
 % Now do the stuff
 if bkg_sub==1 && m~=1
-    PROC_2D_DATA{m,k}       = (phased_FFTZPsig{m,k}-phased_FFTZPsig{1,1})*SignPump(m,k);
+    PROC_2D_DATA{m,k}       = (phased_FFTZPsig{m,k}-phased_FFTZPsig{1,k})*SignPump(m,k);
 else
     PROC_2D_DATA{m,k}       = phased_FFTZPsig{m,k}*SignPump(m,k);
 end
