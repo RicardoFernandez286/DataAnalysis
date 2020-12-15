@@ -246,8 +246,8 @@ LB(C_pos(C_pos~=0))     = -0.99;        % C can only be in the range (-1 1). Con
     % Evaluate the amplitudes of the input data at the position of each peak and use them as initial
     % parameters for the fit
     for m=1:Npeaks
-        Start_param(GSBamp_pos(:,m))  = 0.05*squeeze(ZData(pump_idx(m),probe_idx(m,1),:));   % GSB
-        Start_param(ESAamp_pos(:,m))  = 0.05*squeeze(ZData(pump_idx(m),probe_idx(m,2),:))';  % ESA
+        Start_param(GSBamp_pos(:,m))  = 0.5*squeeze(ZData(pump_idx(m),probe_idx(m,1),:));   % GSB
+        Start_param(ESAamp_pos(:,m))  = 0.5*squeeze(ZData(pump_idx(m),probe_idx(m,2),:))';  % ESA
     end
     
     % Make sure no zeros are present
@@ -263,9 +263,9 @@ LB(C_pos(C_pos~=0))     = -0.99;        % C can only be in the range (-1 1). Con
     end
 
 UB(GSBamp_pos(:))   = 0;            % Bleaches can only be negative
-UB(ESAamp_pos(:))   = +5;           % ESA can only be positive
+UB(ESAamp_pos(:))   = +10;           % ESA can only be positive
 
-LB(GSBamp_pos(:))   = -5;           % Bleaches can only be negative
+LB(GSBamp_pos(:))   = -10;           % Bleaches can only be negative
 LB(ESAamp_pos(:))   = 0;            % ESA can only be positive
 
 
