@@ -94,7 +94,8 @@ for i=1:Ndatafiles
 				 {'8'   }    {'8'   }    {'8'    }    {'8'     }
 				 {'1'   }    {'1'   }    {'1'    }    {'1'     }
 				 {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
-            t2_fitrange = [0.25 max(dataStruct.t2delays)];
+            %t2_fitrange = [0.25 max(dataStruct.t2delays)];
+			t2_fitrange = [0.25 40];
             equal_SxSy  = 0;
             diffSyfor12 = 1;
             writepath   = '/home/ricfer/FitResults/Solvation/IrHCOP3';
