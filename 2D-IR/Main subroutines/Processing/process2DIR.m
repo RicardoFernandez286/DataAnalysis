@@ -137,7 +137,7 @@ for m=1:Ndelays
         progress = progress + 1;
     %     waitbar((progress/(Ndelays*Nspectra*Ndummies*2)+0.5),dataStruct.WaitBar,['Processing data... (' num2str(progress) ' of ' num2str(Ndelays*Nspectra*Ndummies) ')']);
         dataStruct.WaitBar.Value    = (progress/(Ndelays*Nspectra*Ndummies*Nslowmod*2)+0.5);
-        dataStruct.WaitBar.Message  = ['Processing data... (' num2str(progress) ' of ' num2str(Ndelays*Nspectra*Ndummies**Nslowmod) ')'];
+        dataStruct.WaitBar.Message  = ['Processing data... (' num2str(progress) ' of ' num2str(Ndelays*Nspectra*Ndummies*Nslowmod) ')'];
         if dataStruct.WaitBar.CancelRequested
             delete(dataStruct.WBfigure);
             error('User aborted loading the data!');

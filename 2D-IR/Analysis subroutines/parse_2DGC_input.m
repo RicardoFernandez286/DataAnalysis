@@ -214,14 +214,14 @@ Start_param(S12_pos(isDiagonal))= SY_start(isDiagonal);
 
 UB(x0_pos(isDiagonal)) = X0_start(isDiagonal)+(25/1000);
 UB(y0_pos(isDiagonal)) = X0_start(isDiagonal)+(25/1000);
-UB(Dy_pos)             = 5.5;
-UB(Sx_pos(isDiagonal)) = 15;
-UB(Sy_pos(isDiagonal)) = 15;
-UB(S12_pos(isDiagonal))= 20;
+UB(Dy_pos)             = 80;
+UB(Sx_pos(isDiagonal)) = 50;
+UB(Sy_pos(isDiagonal)) = 50;
+UB(S12_pos(isDiagonal))= 50;
 
 LB(x0_pos(isDiagonal)) = X0_start(isDiagonal)-(25/1000);
 LB(y0_pos(isDiagonal)) = X0_start(isDiagonal)-(25/1000);
-LB(Dy_pos)             = 4.5;
+LB(Dy_pos)             = 5;
 LB(Sx_pos(isDiagonal)) = 5;
 LB(Sy_pos(isDiagonal)) = 5;
 LB(S12_pos(isDiagonal))= 5;
@@ -233,7 +233,7 @@ LB(S12_pos(isDiagonal))= 5;
 % Spectral diffusion
 Start_param(C_pos(C_pos~=0)) = 0.1;     % Starting C value of 0.5 for all points. Needs improvement.
 UB(C_pos(C_pos~=0))     = 0.99;         % C can only be in the range (-1 1). Considering positive only
-LB(C_pos(C_pos~=0))     = 0;            % C can only be in the range (-1 1). Considering positive only
+LB(C_pos(C_pos~=0))     = -0.99;        % C can only be in the range (-1 1). Considering positive only
 
 
 % Amplitudes

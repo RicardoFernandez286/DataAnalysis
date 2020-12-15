@@ -85,31 +85,19 @@ for i=1:Ndatafiles
     %%% Get the (default) fit parameters
     switch fitType
         case 'Ricardo'
-            cut_data = 'Re1213 VET';
-			if contains(foldernames{i},'Single','IgnoreCase',true)
-				fitparameters = ...
-				[{'2028'}
-				{'0'   }
-				{'10'  }
-				{'10'   }
-				{'20'   }
-				{'1'   }
-				{'Diag'}];
-			else
-			  %  WAS 1979
-				fitparameters =    ...
-				[{'1987'}    {'2028'}    {'1987' }    {'2028'  }
-				 {'0'   }    {'0'   }    {'2028' }    {'1987'  }
-				 {'10'  }    {'10'  }    {'-1'   }    {'-1'    }
-				 {'8'   }    {'8'   }    {'-1'   }    {'-1'    }
-				 {'8'   }    {'8'   }    {'-1'   }    {'-1'    }
-				 {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
+            cut_data = 'Use probe axis';
+			fitparameters =    ...
+				[{'1925'}    {'2070'}    {'1925' }    {'2070'  }
+				 {'0'   }    {'0'   }    {'2070' }    {'1925'  }
+				 {'20'  }    {'50'  }    {'30'   }    {'30'    }
+				 {'8'   }    {'8'   }    {'8'    }    {'8'     }
+				 {'8'   }    {'8'   }    {'8'    }    {'8'     }
+				 {'1'   }    {'1'   }    {'1'    }    {'1'     }
 				 {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
-			end
-            t2_fitrange = [0 max(dataStruct.t2delays)];
+            t2_fitrange = [0.25 max(dataStruct.t2delays)];
             equal_SxSy  = 0;
             diffSyfor12 = 1;
-            writepath   = 'E:\FitResults';
+            writepath   = '/home/ricfer/FitResults/Solvation/IrHCOP3';
         case 'Andrea'
             cut_data = 'Use probe axis';
             fitparameters = ...
