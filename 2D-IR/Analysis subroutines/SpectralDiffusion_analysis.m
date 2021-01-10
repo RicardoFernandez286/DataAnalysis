@@ -1,4 +1,4 @@
-function  dataStruct = SpectralDiffusion_analysis(app,dataStruct,varargin)
+function  dataStruct = SpectralDiffusion_analysis(app,dataStruct,Axes,varargin)
 
 % Description: This function dataStruct the spectral diffusion analysis of a
 % series of 2D-IR data as a function of the waiting time
@@ -27,28 +27,36 @@ function  dataStruct = SpectralDiffusion_analysis(app,dataStruct,varargin)
 % Ricardo Fernández-Terán / 15.04.2019 / v2.0a
 
 %% READ from dataStruct
-% Get information from the GUI
-plot_pumpdirection  = app.I2D_PumpAxisOrientation.Value;
-saveTraces          = app.I2D_SavetracesSwitch.Value;
-interactivemode     = app.I2D_InteractivemodeSwitch.Value;
-
-if ~isempty(varargin)
-    Axes        = varargin{1};
-else
-    Axes        = app.TwoDAxes;
-end
-
 % Get the data
 ProbeAxis           = dataStruct.ProbeAxis;
 PumpAxis            = dataStruct.PumpAxis;
 t2delays            = dataStruct.t2delays;
-
-% Count how many delays < 0
-N_negdelays         = length(t2delays(t2delays < 0));
-% Take only positive delays
-t2delays            = t2delays(t2delays>=0);
-% t2delays            = t2delays(1:end-1);
 Ndelays             = length(t2delays);
+
+if ~isempty(varargin)
+    mode        = varargin{1};
+    settings    = varargin{2};
+    saveTraces  = 'off';
+    t2_fitrange = settings.t2_fitrange;
+    
+    t2_lim      = sort(findClosestId2Val(t2delays,t2_fitrange));
+    t2_idx      = t2_lim(1):1:t2_lim(2);
+    Ndelays_anl = length(t2_idx);
+else
+    mode = 'Single';
+    % Get information from the GUI
+    plot_pumpdirection  = app.I2D_PumpAxisOrientation.Value;
+    saveTraces          = app.I2D_SavetracesSwitch.Value;
+    interactivemode     = app.I2D_InteractivemodeSwitch.Value;
+    
+    % Count how many delays < 0
+    N_negdelays         = length(t2delays(t2delays < 0));
+    % Take only positive delays
+    t2delays            = t2delays(t2delays>=0);
+    % t2delays            = t2delays(1:end-1);
+    Ndelays             = length(t2delays);
+end
+
 
 PROC_2D_DATA        = dataStruct.PROC_2D_DATA;
 Npixels             = length(ProbeAxis);
@@ -57,12 +65,12 @@ Npixels             = length(ProbeAxis);
 Interp_method       = 'InterpFT'; % 2D FFT, InterpFT, Mesh, None. Default = InterpFT
 % Fit_type            = 'Quadratic'; % 'Quadratic' 'None' - Sets the type of fit to calculate the minima along the slices
 
-Interp_order        = 2; % Multiplies Npixels by a factor to interpolate in the probe dimension
-Nfitpoints          = 2;
+Interp_order        = 4; % Multiplies Npixels by a factor to interpolate in the probe dimension
+Nfitpoints          = 3;
 N_pointsParabola    = round(Interp_order*Nfitpoints); % No. of X points to fit a parabola on each side of the peak: [-x (peak) +x]
 N_points_IvCLS      = 8;
 
-intensity_threshold = 40/100; % Intensity threshold for the linear fit to get the CLS or IvCLS
+intensity_threshold = 50/100; % Intensity threshold for the linear fit to get the CLS or IvCLS
 textcolor           = 'none'; % 'none' or RGB color
 fit_method          = 'LSQ'; % 'GA' or 'LSQ' for Genetic algorithm or Least-squares
 
@@ -79,29 +87,42 @@ IvCLS_Ydata   = {};
 NLS_Xdata     = {};
 NLS_Ydata     = {};
 
-%% Ask the user which method to use
+%% Ask the user which method to use (if not in 'Batch' mode)
 specdif_options     = {'CLS','IvCLS','NLS','CLS+IvCLS','Gaussian Fit'};
-[specdif_typeindx,doAnalysis] = listdlg('ListString',specdif_options,'OKstring','Continue','SelectionMode','single','ListSize',[150,100],'PromptString','Select analysis type:');
+
+if strcmp(mode,'Batch')
+    doAnalysis       = 1;
+    specdif_typeindx = 1;
+    
+    diagnosticPlot   = 0;
+    fit_method       = 'None';
+    
+    intensity_threshold = settings.intensity_threshold;
+    Interp_method       = settings.Interp_method;
+    interactivemode     = 'Batch';
+else
+    [specdif_typeindx,doAnalysis] = listdlg('ListString',specdif_options,'OKstring','Continue','SelectionMode','single','ListSize',[150,100],'PromptString','Select analysis type:');
+end
 
 if doAnalysis == 0
     return
 end
 
 %% Interpolate the data along the probe axis (interpolation along w1 can be performed by apodisation)
-Interp_Data = cell(Ndelays+N_negdelays,1);
+Interp_Data = cell(Ndelays,1);
 switch Interp_method
     case '2D FFT'
-        for m=1:Ndelays+N_negdelays
+        for m=1:Ndelays
             Interp_Data{m,1}    = real(fft(ifft(PROC_2D_DATA{m,1},2),Npixels.*Interp_order,2));
         end
     case 'InterpFT'
-        for m=1:Ndelays+N_negdelays
+        for m=1:Ndelays
             Interp_Data{m,1}    = interpft(PROC_2D_DATA{m,1},Npixels.*Interp_order,2);
         end
     case 'Mesh'
         % Do something
     case 'None'
-        for m=1:Ndelays+N_negdelays
+        for m=1:Ndelays
             Interp_Data{m,1} = PROC_2D_DATA{m,1};
         end
 end
@@ -130,223 +151,240 @@ switch interactivemode
         RegionPositions_cell    = inputdlg({'Enter the pump regions (Format: min1 max1; min2 max2; ...): ','Enter the probe regions (Format: min1 max1; min2 max2; ...):'},'Define regions to integrate', [1 80]);
         pump_ranges             = str2num(RegionPositions_cell{1}); %#ok<*ST2NM>
         probe_ranges            = str2num(RegionPositions_cell{2});
-        L = size(pump_ranges,1);
-        M = size(probe_ranges,1);
-        if L ~= M
-            warndlg('Number of pump and probe ranges is different!')
-            return
-        end
+    case 'Batch'
+        pump_ranges             = settings.pump_ranges;
+        probe_ranges            = settings.probe_ranges;
 end
 
-% Parse the pump ranges into indexes
-pump_idxrange  = findClosestId2Val(PumpAxis{1,1},pump_ranges);
-probe_idxrange = findClosestId2Val(Interp_ProbeAxis,probe_ranges);
-
-% Prepare figure and axes for the diagnostic plots
-if diagnosticPlot == 1
-    diagnosticFig   = figure;
-    diagnosticAx    = axes('parent',diagnosticFig);
-    cla(diagnosticAx,'reset');
-    hold(diagnosticAx,'on')
+% Check that we have the correct sizes
+L = size(pump_ranges,1);
+M = size(probe_ranges,1);
+if L ~= M
+    warndlg('Number of pump and probe ranges is different!')
+    return
 end
-    
-% Get the data according to the selected method
-switch specdif_options{specdif_typeindx}
-    case 'CLS'
-        % Minima in w3 for each value of w1
-        probe_indexes       = probe_idxrange(1):1:probe_idxrange(end);
-        pump_indexes        = pump_idxrange(1):1:pump_idxrange(end);
-        Npeaks              = length(pump_indexes);
-        min_values          = zeros(Npeaks,Ndelays);
-        SpecDif_ind         = zeros(Ndelays+N_negdelays,1);
-        pump_cut            = cell(Ndelays+N_negdelays);
-        CLS_Xdata           = cell(Ndelays+N_negdelays);
-        CLS_Ydata           = cell(Ndelays+N_negdelays);
-        for m=(1+N_negdelays):(Ndelays+N_negdelays)
-            % Get the data around the minimum
-            [peak_val,peak_pos] = min(Interp_Data{m,1}(pump_indexes,probe_indexes),[],2);
-            peak_pos            = peak_pos + probe_idxrange(1);
-            % Fit a quadratic polynomial within N points around the minimum 
-            %   and find the analytical vertex of the parabola
-            if diagnosticPlot == 1
-                cla(diagnosticAx,'reset'); hold(diagnosticAx,'on'); 
-            end
-            for i=1:Npeaks
-                start_probe     = max(peak_pos(i)-N_pointsParabola,1);
-                end_probe       = min(peak_pos(i)+N_pointsParabola,length(Interp_ProbeAxis));
-                probe_segment   = Interp_ProbeAxis(start_probe:end_probe);
-                data_segment    = Interp_Data{m,1}(pump_indexes(i),start_probe:end_probe);
-                coeff           = polyfit(probe_segment,data_segment,2);
-                min_values(i,m) = -coeff(2)/(2*coeff(1));
+
+SpecDif_ind_all = zeros(Ndelays,L);
+
+for q=1:L
+    % Parse the pump ranges into indexes
+    pump_idxrange   = findClosestId2Val(PumpAxis{1,1},pump_ranges(q,:));
+    probe_idxrange  = findClosestId2Val(Interp_ProbeAxis,probe_ranges(q,:));
+
+    % Prepare figure and axes for the diagnostic plots
+    if diagnosticPlot == 1
+        diagnosticFig   = figure;
+        diagnosticAx    = axes('parent',diagnosticFig);
+        cla(diagnosticAx,'reset');
+        hold(diagnosticAx,'on')
+    end
+
+    % Get the data according to the selected method
+    switch specdif_options{specdif_typeindx}
+        case 'CLS'
+            % Minima in w3 for each value of w1
+            probe_indexes       = probe_idxrange(1):1:probe_idxrange(end);
+            pump_indexes        = pump_idxrange(1):1:pump_idxrange(end);
+            Npeaks              = length(pump_indexes);
+            min_values          = zeros(Npeaks,Ndelays);
+            SpecDif_ind         = zeros(length(t2delays),1);
+            pump_cut            = cell(Ndelays);
+            CLS_Xdata           = cell(Ndelays);
+            CLS_Ydata           = cell(Ndelays);
+            for m=t2_idx
+                % Get the data around the minimum
+                [peak_val,peak_pos] = min(Interp_Data{m,1}(pump_indexes,probe_indexes),[],2);
+                peak_pos            = peak_pos + probe_idxrange(1);
+                % Fit a quadratic polynomial within N points around the minimum 
+                %   and find the analytical vertex of the parabola
                 if diagnosticPlot == 1
-                    cmap= jet(Npeaks);
-                    plot(diagnosticAx,probe_segment,data_segment./max(abs(data_segment(:))),'o','MarkerSize',3,'Color',cmap(i,:));
-                    plot(diagnosticAx,probe_segment,polyval(coeff,probe_segment)./max(abs(data_segment(:))),'-','LineWidth',2,'Color',cmap(i,:));
-                    pause(0.05);
+                    cla(diagnosticAx,'reset'); hold(diagnosticAx,'on'); 
                 end
+                for i=1:Npeaks
+                    start_probe     = max(peak_pos(i)-N_pointsParabola,1);
+                    end_probe       = min(peak_pos(i)+N_pointsParabola,length(Interp_ProbeAxis));
+                    probe_segment   = Interp_ProbeAxis(start_probe:end_probe);
+                    data_segment    = Interp_Data{m,1}(pump_indexes(i),start_probe:end_probe);
+                    coeff           = polyfit(probe_segment,data_segment,2);
+                    min_values(i,m) = -coeff(2)/(2*coeff(1));
+                    if diagnosticPlot == 1
+                        cmap= jet(Npeaks);
+                        plot(diagnosticAx,probe_segment,data_segment./max(abs(data_segment(:))),'o','MarkerSize',3,'Color',cmap(i,:));
+                        plot(diagnosticAx,probe_segment,polyval(coeff,probe_segment)./max(abs(data_segment(:))),'-','LineWidth',2,'Color',cmap(i,:));
+                        pause(0.05);
+                    end
+                end
+                % Fit a line around the minimum according to the intensity cutoff
+                peak_val            = peak_val/max(abs(peak_val));
+                above_threshold     = abs(peak_val) >= max(abs(peak_val)).*intensity_threshold;
+                pump_cut{m}         = pump_indexes(above_threshold);
+                mdl                 = fit(PumpAxis{1,1}(pump_cut{m}),min_values(above_threshold,m),'poly1','Robust','Bisquare');
+                CLS_coeff           = coeffvalues(mdl);
+                SpecDif_ind(m)      = CLS_coeff(1);
+                % Save the spectral diffusion data
+                CLS_Xdata{m}        = PumpAxis{1,1}(pump_cut{m});
+                CLS_Ydata{m}        = min_values(above_threshold,:);
             end
-            % Fit a line around the minimum according to the intensity cutoff
-            peak_val            = peak_val/max(abs(peak_val));
-            above_threshold     = abs(peak_val) >= max(abs(peak_val)).*intensity_threshold;
-            pump_cut{m}         = pump_indexes(above_threshold);
-            mdl                 = fit(PumpAxis{1,1}(pump_cut{m}),min_values(above_threshold,m),'poly1','Robust','Bisquare');
-            CLS_coeff           = coeffvalues(mdl);
-            SpecDif_ind(m)      = CLS_coeff(1);
-            % Save the spectral diffusion data
-            CLS_Xdata{m}      = PumpAxis{1,1}(pump_cut{m});
-            CLS_Ydata{m}      = min_values(above_threshold,:);
-        end
-        SpecDif_name = 'CLS';
-        % Save CLS to file
-        if strcmp(saveTraces,'On')
-            csvwrite([char(dataStruct.rootdir) filesep char(dataStruct.datafilename) '_CLS.csv'],[dataStruct.t2delays,SpecDif_ind])
-        end
-        
-    case 'IvCLS'
-        % Minima in w1 for each value of w3
-        probe_indexes       = probe_idxrange(1):1:probe_idxrange(end);
-        pump_indexes        = pump_idxrange(1):1:pump_idxrange(end);
-        Npeaks              = length(probe_indexes);
-        min_values          = zeros(Npeaks,Ndelays);
-        SpecDif_ind         = zeros(Ndelays+N_negdelays,1);
-        probe_cut           = cell(Ndelays+N_negdelays);
-        IvCLS_Xdata         = cell(Ndelays+N_negdelays);
-        IvCLS_Ydata         = cell(Ndelays+N_negdelays);
-        for m=(1+N_negdelays):(Ndelays+N_negdelays)
-            % Get the data around the minimum
-            [peak_val,peak_pos] = min(Interp_Data{m,1}(pump_indexes,probe_indexes),[],1);
-            peak_pos            = peak_pos + pump_idxrange(1);
-            % Fit a quadratic polynomial within 2 points around the minimum 
-            %   and find the analytical vertex of the parabola
-            if diagnosticPlot == 1
-                cla(diagnosticAx,'reset'); hold(diagnosticAx,'on'); 
+            SpecDif_name = 'CLS';
+            % Save CLS to file
+            if strcmp(saveTraces,'On')
+                csvwrite([char(dataStruct.rootdir) filesep char(dataStruct.datafilename) '_CLS.csv'],[dataStruct.t2delays,SpecDif_ind])
             end
-            for i=1:Npeaks
-                pump_segment    = PumpAxis{1,1}(peak_pos(i)-N_points_IvCLS:peak_pos(i)+N_points_IvCLS);
-                data_segment    = Interp_Data{m,1}(peak_pos(i)-N_points_IvCLS:peak_pos(i)+N_points_IvCLS,probe_indexes(i));
-                coeff           = polyfit(pump_segment,data_segment,2);
-                min_values(i,m) = -coeff(2)/(2*coeff(1));
+
+        case 'IvCLS'
+            % Minima in w1 for each value of w3
+            probe_indexes       = probe_idxrange(1):1:probe_idxrange(end);
+            pump_indexes        = pump_idxrange(1):1:pump_idxrange(end);
+            Npeaks              = length(probe_indexes);
+            min_values          = zeros(Npeaks,Ndelays);
+            SpecDif_ind         = zeros(Ndelays,1);
+            probe_cut           = cell(Ndelays);
+            IvCLS_Xdata         = cell(Ndelays);
+            IvCLS_Ydata         = cell(Ndelays);
+            for m=t2_idx
+                % Get the data around the minimum
+                [peak_val,peak_pos] = min(Interp_Data{m,1}(pump_indexes,probe_indexes),[],1);
+                peak_pos            = peak_pos + pump_idxrange(1);
+                % Fit a quadratic polynomial within 2 points around the minimum 
+                %   and find the analytical vertex of the parabola
                 if diagnosticPlot == 1
-                    cmap= jet(Npeaks);
-                    plot(diagnosticAx,pump_segment,data_segment./max(abs(data_segment(:))),'o','MarkerSize',3,'Color',cmap(i,:));
-                    plot(diagnosticAx,pump_segment,polyval(coeff,pump_segment)./max(abs(data_segment(:))),'-','LineWidth',2,'Color',cmap(i,:));
+                    cla(diagnosticAx,'reset'); hold(diagnosticAx,'on'); 
                 end
+                for i=1:Npeaks
+                    pump_segment    = PumpAxis{1,1}(peak_pos(i)-N_points_IvCLS:peak_pos(i)+N_points_IvCLS);
+                    data_segment    = Interp_Data{m,1}(peak_pos(i)-N_points_IvCLS:peak_pos(i)+N_points_IvCLS,probe_indexes(i));
+                    coeff           = polyfit(pump_segment,data_segment,2);
+                    min_values(i,m) = -coeff(2)/(2*coeff(1));
+                    if diagnosticPlot == 1
+                        cmap= jet(Npeaks);
+                        plot(diagnosticAx,pump_segment,data_segment./max(abs(data_segment(:))),'o','MarkerSize',3,'Color',cmap(i,:));
+                        plot(diagnosticAx,pump_segment,polyval(coeff,pump_segment)./max(abs(data_segment(:))),'-','LineWidth',2,'Color',cmap(i,:));
+                    end
+                end
+                % Fit a line around the minimum according to the intensity cutoff
+                peak_val            = peak_val/max(abs(peak_val));
+                above_threshold     = abs(peak_val) >= max(abs(peak_val)).*intensity_threshold;
+                probe_cut{m}        = probe_indexes(above_threshold);
+                mdl                 = fit(min_values(above_threshold,m),Interp_ProbeAxis(probe_cut{m})','poly1','Robust','Bisquare');
+                IvCLS_coeff         = coeffvalues(mdl);
+                SpecDif_ind(m)      = 1./IvCLS_coeff(1);
+                % Save the spectral diffusion data
+                IvCLS_Xdata{m}      = min_values(above_threshold,:);
+                IvCLS_Ydata{m}      = Interp_ProbeAxis(probe_cut{m});
             end
-            % Fit a line around the minimum according to the intensity cutoff
-            peak_val            = peak_val/max(abs(peak_val));
-            above_threshold     = abs(peak_val) >= max(abs(peak_val)).*intensity_threshold;
-            probe_cut{m}        = probe_indexes(above_threshold);
-            mdl                 = fit(min_values(above_threshold,m),Interp_ProbeAxis(probe_cut{m})','poly1','Robust','Bisquare');
-            IvCLS_coeff         = coeffvalues(mdl);
-            SpecDif_ind(m)      = 1./IvCLS_coeff(1);
-            % Save the spectral diffusion data
-            IvCLS_Xdata{m}      = min_values(above_threshold,:);
-            IvCLS_Ydata{m}      = Interp_ProbeAxis(probe_cut{m});
-        end
-        SpecDif_name    = 'IvCLS';
-        % Save IvCLS to file
-        if strcmp(saveTraces,'On')
-            csvwrite([char(dataStruct.rootdir) filesep char(dataStruct.datafilename) '_IvCLS.csv'],[dataStruct.t2delays,SpecDif_ind])
-        end
-        
-    case 'NLS'
-        %%% Not yet implemented.
-        
-    case 'CLS+IvCLS'
-        % IvCLS
-        % Minima in w1 for each value of w3
-        probe_indexes       = probe_idxrange(1):1:probe_idxrange(end);
-        pump_indexes        = pump_idxrange(1):1:pump_idxrange(end);
-        Npeaks              = length(probe_indexes);
-        min_values          = zeros(Npeaks,Ndelays);
-        IvCLS_value         = zeros(Ndelays+N_negdelays,1);
-        probe_cut           = cell(Ndelays+N_negdelays);
-        IvCLS_Xdata         = cell(Ndelays+N_negdelays);
-        IvCLS_Ydata         = cell(Ndelays+N_negdelays);
-        for m=(1+N_negdelays):(Ndelays+N_negdelays)
-            % Get the data around the minimum
-            [peak_val,peak_pos] = min(Interp_Data{m,1}(pump_indexes,probe_indexes),[],1);
-            peak_pos            = peak_pos + pump_idxrange(1);
-            % Fit a quadratic polynomial within 2 points around the minimum 
-            %   and find the analytical vertex of the parabola
-            if diagnosticPlot == 1
-                cla(diagnosticAx,'reset'); hold(diagnosticAx,'on'); 
+            SpecDif_name    = 'IvCLS';
+            % Save IvCLS to file
+            if strcmp(saveTraces,'On')
+                csvwrite([char(dataStruct.rootdir) filesep char(dataStruct.datafilename) '_IvCLS.csv'],[dataStruct.t2delays,SpecDif_ind])
             end
-            for i=1:Npeaks
-                pump_segment    = PumpAxis{1,1}(peak_pos(i)-N_points_IvCLS:peak_pos(i)+N_points_IvCLS);
-                data_segment    = Interp_Data{m,1}(peak_pos(i)-N_points_IvCLS:peak_pos(i)+N_points_IvCLS,probe_indexes(i));
-                coeff           = polyfit(pump_segment,data_segment,2);
-                min_values(i,m) = -coeff(2)/(2*coeff(1));
+
+        case 'NLS'
+            %%% Not yet implemented.
+
+        case 'CLS+IvCLS'
+            % IvCLS
+            % Minima in w1 for each value of w3
+            probe_indexes       = probe_idxrange(1):1:probe_idxrange(end);
+            pump_indexes        = pump_idxrange(1):1:pump_idxrange(end);
+            Npeaks              = length(probe_indexes);
+            min_values          = zeros(Npeaks,Ndelays);
+            IvCLS_value         = zeros(Ndelays,1);
+            probe_cut           = cell(Ndelays);
+            IvCLS_Xdata         = cell(Ndelays);
+            IvCLS_Ydata         = cell(Ndelays);
+            for m=t2_idx
+                % Get the data around the minimum
+                [peak_val,peak_pos] = min(Interp_Data{m,1}(pump_indexes,probe_indexes),[],1);
+                peak_pos            = peak_pos + pump_idxrange(1);
+                % Fit a quadratic polynomial within 2 points around the minimum 
+                %   and find the analytical vertex of the parabola
                 if diagnosticPlot == 1
-                    cmap= jet(Npeaks);
-                    plot(diagnosticAx,pump_segment,data_segment./max(abs(data_segment(:))),'o','MarkerSize',3,'Color',cmap(i,:));
-                    plot(diagnosticAx,pump_segment,polyval(coeff,pump_segment)./max(abs(data_segment(:))),'-','LineWidth',2,'Color',cmap(i,:));
+                    cla(diagnosticAx,'reset'); hold(diagnosticAx,'on'); 
                 end
+                for i=1:Npeaks
+                    pump_segment    = PumpAxis{1,1}(peak_pos(i)-N_points_IvCLS:peak_pos(i)+N_points_IvCLS);
+                    data_segment    = Interp_Data{m,1}(peak_pos(i)-N_points_IvCLS:peak_pos(i)+N_points_IvCLS,probe_indexes(i));
+                    coeff           = polyfit(pump_segment,data_segment,2);
+                    min_values(i,m) = -coeff(2)/(2*coeff(1));
+                    if diagnosticPlot == 1
+                        cmap= jet(Npeaks);
+                        plot(diagnosticAx,pump_segment,data_segment./max(abs(data_segment(:))),'o','MarkerSize',3,'Color',cmap(i,:));
+                        plot(diagnosticAx,pump_segment,polyval(coeff,pump_segment)./max(abs(data_segment(:))),'-','LineWidth',2,'Color',cmap(i,:));
+                    end
+                end
+                % Fit a line around the minimum according to the intensity cutoff
+                peak_val            = peak_val/max(abs(peak_val));
+                above_threshold     = abs(peak_val) >= max(abs(peak_val)).*intensity_threshold;
+                probe_cut{m}        = probe_indexes(above_threshold);
+                mdl                 = fit(min_values(above_threshold,m),Interp_ProbeAxis(probe_cut{m})','poly1','Robust','Bisquare');
+                IvCLS_coeff         = coeffvalues(mdl);
+                IvCLS_value(m)      = 1./IvCLS_coeff(1);
+                % Save the spectral diffusion data
+                IvCLS_Xdata{m}      = min_values(above_threshold,:);
+                IvCLS_Ydata{m}      = Interp_ProbeAxis(probe_cut{m});
             end
-            % Fit a line around the minimum according to the intensity cutoff
-            peak_val            = peak_val/max(abs(peak_val));
-            above_threshold     = abs(peak_val) >= max(abs(peak_val)).*intensity_threshold;
-            probe_cut{m}        = probe_indexes(above_threshold);
-            mdl                 = fit(min_values(above_threshold,m),Interp_ProbeAxis(probe_cut{m})','poly1','Robust','Bisquare');
-            IvCLS_coeff         = coeffvalues(mdl);
-            IvCLS_value(m)      = 1./IvCLS_coeff(1);
-            % Save the spectral diffusion data
-            IvCLS_Xdata{m}      = min_values(above_threshold,:);
-            IvCLS_Ydata{m}      = Interp_ProbeAxis(probe_cut{m});
-        end
-        
-        % CLS
-        % Minima in w3 for each value of w1
-        probe_indexes       = probe_idxrange(1):1:probe_idxrange(end);
-        pump_indexes        = pump_idxrange(1):1:pump_idxrange(end);
-        Npeaks              = length(pump_indexes);
-        min_values          = zeros(Npeaks,Ndelays);
-        CLS_value           = zeros(Ndelays+N_negdelays,1);
-        pump_cut            = cell(Ndelays+N_negdelays);
-        CLS_Xdata           = cell(Ndelays+N_negdelays);
-        CLS_Ydata           = cell(Ndelays+N_negdelays);
-        for m=(1+N_negdelays):(Ndelays+N_negdelays)
-            % Get the data around the minimum
-            [peak_val,peak_pos] = min(Interp_Data{m,1}(pump_indexes,probe_indexes),[],2);
-            peak_pos            = peak_pos + probe_idxrange(1);
-            % Fit a quadratic polynomial within N points around the minimum 
-            %   and find the analytical vertex of the parabola
-            if diagnosticPlot == 1
-                cla(diagnosticAx,'reset'); hold(diagnosticAx,'on'); 
-            end
-            for i=1:Npeaks
-                probe_segment   = Interp_ProbeAxis(peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola);
-                data_segment    = Interp_Data{m,1}(pump_indexes(i),peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola);
-                coeff           = polyfit(probe_segment,data_segment,2);
-                min_values(i,m) = -coeff(2)/(2*coeff(1));
+
+            % CLS
+            % Minima in w3 for each value of w1
+            probe_indexes       = probe_idxrange(1):1:probe_idxrange(end);
+            pump_indexes        = pump_idxrange(1):1:pump_idxrange(end);
+            Npeaks              = length(pump_indexes);
+            min_values          = zeros(Npeaks,Ndelays);
+            CLS_value           = zeros(Ndelays,1);
+            pump_cut            = cell(Ndelays);
+            CLS_Xdata           = cell(Ndelays);
+            CLS_Ydata           = cell(Ndelays);
+            for m=t2_idx
+                % Get the data around the minimum
+                [peak_val,peak_pos] = min(Interp_Data{m,1}(pump_indexes,probe_indexes),[],2);
+                peak_pos            = peak_pos + probe_idxrange(1);
+                % Fit a quadratic polynomial within N points around the minimum 
+                %   and find the analytical vertex of the parabola
                 if diagnosticPlot == 1
-                    cmap= jet(Npeaks);
-                    plot(diagnosticAx,probe_segment,data_segment./max(abs(data_segment(:))),'o','MarkerSize',3,'Color',cmap(i,:));
-                    plot(diagnosticAx,probe_segment,polyval(coeff,probe_segment)./max(abs(data_segment(:))),'-','LineWidth',2,'Color',cmap(i,:));
+                    cla(diagnosticAx,'reset'); hold(diagnosticAx,'on'); 
                 end
+                for i=1:Npeaks
+                    probe_segment   = Interp_ProbeAxis(peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola);
+                    data_segment    = Interp_Data{m,1}(pump_indexes(i),peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola);
+                    coeff           = polyfit(probe_segment,data_segment,2);
+                    min_values(i,m) = -coeff(2)/(2*coeff(1));
+                    if diagnosticPlot == 1
+                        cmap= jet(Npeaks);
+                        plot(diagnosticAx,probe_segment,data_segment./max(abs(data_segment(:))),'o','MarkerSize',3,'Color',cmap(i,:));
+                        plot(diagnosticAx,probe_segment,polyval(coeff,probe_segment)./max(abs(data_segment(:))),'-','LineWidth',2,'Color',cmap(i,:));
+                    end
+                end
+                % Fit a line around the minimum according to the intensity cutoff
+                peak_val            = peak_val/max(abs(peak_val));
+                above_threshold     = abs(peak_val) >= max(abs(peak_val)).*intensity_threshold;
+                pump_cut{m}         = pump_indexes(above_threshold);
+                mdl                 = fit(PumpAxis{1,1}(pump_cut{m}),min_values(above_threshold,m),'poly1','Robust','Bisquare');
+                CLS_coeff           = coeffvalues(mdl);
+                CLS_value(m)        = CLS_coeff(1);
+                % Save the spectral diffusion data
+                CLS_Xdata{m}        = PumpAxis{1,1}(pump_cut{m});
+                CLS_Ydata{m}        = min_values(above_threshold,:);
             end
-            % Fit a line around the minimum according to the intensity cutoff
-            peak_val            = peak_val/max(abs(peak_val));
-            above_threshold     = abs(peak_val) >= max(abs(peak_val)).*intensity_threshold;
-            pump_cut{m}         = pump_indexes(above_threshold);
-            mdl                 = fit(PumpAxis{1,1}(pump_cut{m}),min_values(above_threshold,m),'poly1','Robust','Bisquare');
-            CLS_coeff           = coeffvalues(mdl);
-            CLS_value(m)        = CLS_coeff(1);
-            % Save the spectral diffusion data
-            CLS_Xdata{m}        = PumpAxis{1,1}(pump_cut{m});
-            CLS_Ydata{m}        = min_values(above_threshold,:);
-        end
-        SpecDif_name = 'CLS';
-        
-        % Save CLS and IvCLS to file
-        if strcmp(saveTraces,'On')
-            csvwrite([char(dataStruct.rootdir) filesep char(dataStruct.datafilename) '_IvCLS.csv'],[dataStruct.t2delays,IvCLS_value])
-            csvwrite([char(dataStruct.rootdir) filesep char(dataStruct.datafilename) '_CLS.csv'],[dataStruct.t2delays,CLS_value])
-        end
+            SpecDif_name = 'CLS';
+
+            % Save CLS and IvCLS to file
+            if strcmp(saveTraces,'On')
+                csvwrite([char(dataStruct.rootdir) filesep char(dataStruct.datafilename) '_IvCLS.csv'],[dataStruct.t2delays,IvCLS_value])
+                csvwrite([char(dataStruct.rootdir) filesep char(dataStruct.datafilename) '_CLS.csv'],[dataStruct.t2delays,CLS_value])
+            end
+    end
+
+    SpecDif_ind_all(:,q) = SpecDif_ind;
 end
 
 if diagnosticPlot == 1
     hold(diagnosticAx,'off')
+end
+
+if strcmp(mode,'Batch')
+    dataStruct.SpecDif_ind_all = SpecDif_ind_all(t2_idx,:);
+    dataStruct.AnalysedDelays  = t2delays(t2_idx);
+    return
 end
 
 %% Fit and plot the spectral diffusion kinetics

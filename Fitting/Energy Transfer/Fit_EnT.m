@@ -1,4 +1,4 @@
-function fitted_param = Fit_EnT(time,FW_data,BW_data,start_params,LB,UB,ShowOutput,DoFit,varargin)
+function [fitted_param,varargout] = Fit_EnT(time,FW_data,BW_data,start_params,LB,UB,ShowOutput,DoFit,varargin)
 % Fitting function used to fit forward<->backward energy transfer problems
 % Input:
 %    time = vector with the time steps in ps
@@ -66,7 +66,7 @@ function valuesALL = eval_fitfuncALL(P,t)
     aB_val  = double(aB_func(P(1),P(2),P(3),P(4),P(5),t));
     B_val   = double(B_func(P(1),P(2),P(3),P(4),P(5),t));
     bA_val  = double(bA_func(P(1),P(2),P(3),P(4),P(5),t));
-    valuesALL = [A_val,10.*aB_val,B_val,10.*bA_val];
+    valuesALL = [A_val,aB_val,B_val,bA_val];
 end
 
 %% Define the global optimisation routines (GA, particle swarm, etc.)
@@ -142,6 +142,9 @@ end
 else
     plot_param = start_params;
 end
+
+
+varargout{1} = eval_fitfuncALL(plot_param,time);
 
 if ShowOutput == 0
     return
