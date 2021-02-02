@@ -49,12 +49,13 @@ else
     saveTraces          = app.I2D_SavetracesSwitch.Value;
     interactivemode     = app.I2D_InteractivemodeSwitch.Value;
     
-    % Count how many delays < 0
-    N_negdelays         = length(t2delays(t2delays < 0));
-    % Take only positive delays
-    t2delays            = t2delays(t2delays>=0);
-    % t2delays            = t2delays(1:end-1);
+%     % Count how many delays < 0
+%     N_negdelays         = length(t2delays(t2delays < 0));
+%     % Take only positive delays
+%     t2delays            = t2delays(t2delays>=0);
+%     % t2delays            = t2delays(1:end-1);
     Ndelays             = length(t2delays);
+    t2_idx              = 1:Ndelays;
 end
 
 

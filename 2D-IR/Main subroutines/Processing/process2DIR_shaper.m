@@ -1,4 +1,4 @@
-function dataStruct = process2DIR(app,dataStruct,ReProcess,varargin)
+function dataStruct = process2DIR_shaper(app,dataStruct,ReProcess,varargin)
 % Description: This function apodizes, zeropads and phases 2D IR data
 %
 % Usage: dataStruct = process2DIR(dataStruct)
@@ -49,11 +49,9 @@ cmprobe         = dataStruct.cmprobe;
 t1delays        = dataStruct.t1delays;
 datatype        = dataStruct.datatype;
 Ndelays         = dataStruct.Ndelays;
-if strcmp(datatype,'Raw')
-    Ndatastates = dataStruct.Ndatastates;
-else
-    Ndatastates = 1;
-end
+
+Ndatastates     = 1;
+
 Nspectra        = dataStruct.Nspectra;
 Ndummies        = dataStruct.Ndummies;
 Nslowmod        = dataStruct.Nslowmod;
@@ -78,8 +76,6 @@ phase_points    = app.I2D_PhaseFitRangeEdit.Value;
 probe_calib     = app.I2D_AutocalibrateprobeaxisCheckBox.Value;
 pumpcorrection  = app.I2D_PumpcorrectionCheckBox.Value;
 
-binzero         = num2cell(-1*ones(Ndelays,Ndatastates*Nspectra*Ndummies*Nslowmod));
-
 %%% Determine whether the data is transient 2D or not, then read the mode
 if dataStruct.Transient2D == 1
     Transient2D         = 1;
@@ -101,10 +97,18 @@ if probe_calib == 0
     end
 end    
 
+% If there is an w0 file in the current ROOTDIR, use it to set the rotating frame frequency.
+% Otherwise, plot relative to w0
+if exist([rootdir filesep 'w0.csv'],'file') == 2
+	w0 = readmatrix([rootdir filesep 'w0.csv']);
+else
+    w0 = 0;
+end
+
 % Hardcoded settings
-    filter_type     = 'Median';
+    filter_type     = 'Mean';
     filter_points   = 10;
-    zeropad_npoints = 10;
+    zeropad_npoints = 1;
     apodize_gaussian= 0;
     apodize_Gcoeff  = 2/3; % Percentage of the Nbins for the decay of the Gaussian
     probe_fitorder  = 2;
@@ -117,9 +121,10 @@ end
     
 %% Preprocess the data
 % Initialise variables
-    FFTinterferogram={}; binspecmax=[]; bininterfmax=[];
+    FFTinterferogram={};
     bin=[]; difference={}; coeff={}; scanrange={};
     progress = 0;
+    
     
     % Create wait bar if it doesn't exist (when reprocessing data / applying changes)
     if ReProcess == 1 && ShowWaitBar
@@ -152,42 +157,12 @@ for m=1:Ndelays
                 signal{m,k}         = signal{m,k}-mean(signal{m,k},1);
                 signal{m,k}         = signal{m,k}-medfilt1(signal{m,k},filter_points);
             case 'Mean'
-                interferogram{m,k}  = -(interferogram{m,k}-mean(interferogram{m,k}));
                 signal{m,k}         = signal{m,k}-mean(signal{m,k},1);
         end
     end
-    FFTinterferogram{m,k}       = fft(interferogram{m,k});
-    Nbins                       = length(interferogram{m,k});
 
-%% Find BinZero before apodisation
-% Find BinSpecMax and BinInterfMax
-    [~,bininterfmax(m,k)]       = max(interferogram{m,k});
-    [~,binspecmax(m,k)]         = max(abs(FFTinterferogram{m,k}(20:floor(length(FFTinterferogram{m,k})/2))));
-    binspecmax(m,k)             = binspecmax(m,k) + 20;
-    Resolution(m,k)             = 1/(Nbins*c_0*HeNe);
-    switch phase_fitmethod
-        case 'Shift wavenumbers'
-            shift_findphase(m,k)        = round(phase_wavenum/Resolution(m,k));
-        case 'Shift bins'
-            shift_findphase(m,k)        = phase_shiftbins;
-        otherwise
-            shift_findphase(m,k)        = 10;
-    end
-% % If binzero is not known (= -1) then try to guess it
-%     if binzero{m,k}==-1
-        % The method will try shifting the interferogram until the point where the phase is flat
-        for p=1:200
-            bin{m,k}(p)         = p+bininterfmax(m,k)-100;
-            % Unwrap the phases to remove discontinuities greater than 2*pi
-            tempPhase{m,k}      = unwrap(angle(fft(circshift(interferogram{m,k},-bin{m,k}(p)))));
-            difference{m,k}(p)  = (tempPhase{m,k}(binspecmax(m,k)+shift_findphase(m,k)))-(tempPhase{m,k}(binspecmax(m,k)-shift_findphase(m,k)));
-        end
-        % Then, it will fit a straight line that tells how much the slope is changing
-        coeff{m,k}              = polyfit(bin{m,k},difference{m,k},1);
-        % Afterwards, it will find the zero crossing point from the fitted coefficients
-        binzero{m,k}            = round(-(coeff{m,k}(2)/coeff{m,k}(1)));
-%     end
-    
+binzero{m,k} = 1; % Because we are using the shaper
+binspecmax(m,k) = 1;    
 %% Apodise and phase the data
 % Apodise the data by the selected method
     % Cosine
@@ -227,8 +202,9 @@ for m=1:Ndelays
     end
     
 % Calculate the pump frequency axis from interferogram by using HeNe counting
-    Resolution(m,k)             = 1/(N_FTpoints{m,k}*HeNe*c_0);
-    PumpAxis{m,k}               = ((1:1:N_FTpoints{m,k})-1)'.*Resolution(m,k);
+    dt1 = unique(diff(t1delays{m,k}(:,2)));
+    Resolution(m,k)             = 1/(N_FTpoints{m,k}*dt1*c_0);
+    PumpAxis{m,k}               = ((1:1:N_FTpoints{m,k})-1)'.*Resolution(m,k)+w0;
     
 %% Zeropad the data
 % Get the points for zeropadding
@@ -251,40 +227,23 @@ end
         
 %% Calculate and fit the phase        
 % Shift the interferogram to BinZero and get the phase
-    phased_ZPint{m,k}           = circshift(zeropad_interf{m,k},-(binzero{m,k}));
-    phased_ZPsig{m,k}           = circshift(zeropad_signal{m,k},-(binzero{m,k}),1);
-       
+%     phased_ZPint{m,k}           = circshift(zeropad_interf{m,k},-(binzero{m,k}));
+%     phased_ZPsig{m,k}           = circshift(zeropad_signal{m,k},-(binzero{m,k}),1);
+
+    phased_ZPint{m,k}           = zeropad_interf{m,k};
+    phased_ZPsig{m,k}           = zeropad_signal{m,k};
+    
     absFFT_ZPint{m,k}           = abs(fft(phased_ZPint{m,k}));
-    [~,binspecmax(m,k)]         = max(absFFT_ZPint{m,k}(100:floor(length(absFFT_ZPint{m,k})/2)));
-    binspecmax(m,k)             = binspecmax(m,k) + 100;
     
 % Calculate the FFT and phase
     FFT_ZPint{m,k}              = fft(phased_ZPint{m,k});
     FFT_ZPsig{m,k}              = fft(phased_ZPsig{m,k});
     
-    ZP_phase{m,k}               = unwrap(angle(FFT_ZPint{m,k}));
+    ZP_phase{m,k}               = zeros(size(phased_ZPint{m,k}));
     
-% Fit the phase to the whole interferogram
-    shift_fitphase(m,k)         = round(phase_points/Resolution(m,k));
-    points{m,k}                 = transpose((binspecmax(m,k)-shift_fitphase(m,k)):1:(binspecmax(m,k)+shift_fitphase(m,k)));
-    
-    switch phase_method
-        case 'Constant'
-            fittedPhase{m,k}    = ones(length(ZP_phase{m,k}),1)*mean(ZP_phase{m,k}(points{m,k}));
-            phase_coeff{m,k}    = mean(ZP_phase{m,k}(points{m,k}));
-        case 'Linear'
-            phase_coeff{m,k}    = polyfit(points{m,k},ZP_phase{m,k}(points{m,k}),1);
-            fittedPhase{m,k}    = transpose(polyval(phase_coeff{m,k},1:1:N_FTpoints{m,k}));
-        case 'Quadratic'
-            phase_coeff{m,k}    = polyfit(points{m,k},ZP_phase{m,k}(points{m,k}),2);
-            fittedPhase{m,k}    = transpose(polyval(phase_coeff{m,k},1:1:N_FTpoints{m,k}));
-        case 'Cubic'
-            phase_coeff{m,k}    = polyfit(points{m,k},ZP_phase{m,k}(points{m,k}),3);
-            fittedPhase{m,k}    = transpose(polyval(phase_coeff{m,k},1:1:N_FTpoints{m,k}));
-        case 'No fit'
-            fittedPhase{m,k}    = ZP_phase{m,k};
-            phase_coeff{m,k}    = NaN;
-    end
+% The phase is a flat zero because of th shaper
+    fittedPhase{m,k}    = ZP_phase{m,k};
+    phase_coeff{m,k}    = NaN;
 
 % Phase the data (MCT data + interferogram)
     phasingterm{m,k}            = exp(-1i*fittedPhase{m,k});
@@ -299,52 +258,59 @@ else
     magnitude_FFTsig{m,k}       = abs(FFT_ZPsig{m,k});
 end
     
-%% PROBE AXIS CALIBRATION USING SCATTERING - LINEAR FIT OF THE MAXIMA ALONG THE DIAGONAL
-if m==1 && k==1
-      % Get a list of the maxima of the interferogram (N_FTpoints/50 around the spectral max) 
-      %%%! TO DO: needs to be redefined in terms of cm-1
-        P                       = floor(N_FTpoints{m,k}/50);
-        fitrange                = (binspecmax(m,k)-P):(binspecmax(m,k)+P);
-        Npixels                 = size(magnitude_FFTsig{m,k},2);
-        pixels                  = transpose(1:1:Npixels);
-        % Get the maxima for probe calibration    
-        magFFT                  = abs(FFT_ZPsig{m,k});
-        [~,maxindex]            = max(magFFT(fitrange,:));
-        scattering_maxima       = PumpAxis{m,k}(fitrange(maxindex));
-%        % Do the fit [OLD WAY]
-%         freq_coeff              = polyfit(pixels,scattering_maxima,probe_fitorder);
-%         freq_fit                = transpose(polyval(freq_coeff,pixels));
-        
-        % Do the fit [NEW WAY - ROBUST]
-        switch probe_fitorder
-            case 1
-                model       = 'poly1';
-            case 2
-                model       = 'poly2';
-        end
-        warning('off','curvefit:fit:iterationLimitReached');
-        mdl                     = fit(pixels,scattering_maxima,model,'Robust','Bisquare');
-        freq_fit                = mdl(pixels);
-      % Decide which kind of probe axis to use. It will anyway store all of them
-        switch probe_calib
-            case 1
-            % Check if the Probe Axis makes sense, otherwise use either the stored one
-                if issorted(freq_fit)
-                    ProbeAxis       = freq_fit;
-                else
-                    ProbeAxis       = cmprobe;
-                end
-            case 0
-                ProbeAxis       = cmprobe;
-            case 2
-                ProbeAxis       = saved_probe;
-        end
-      
+% %% PROBE AXIS CALIBRATION USING SCATTERING - LINEAR FIT OF THE MAXIMA ALONG THE DIAGONAL
+% if m==1 && k==1
+%       % Get a list of the maxima of the interferogram (N_FTpoints/50 around the spectral max) 
+%       %%%! TO DO: needs to be redefined in terms of cm-1
+%         P                       = floor(N_FTpoints{m,k}/50);
+%         fitrange                = (binspecmax(m,k)-P):(binspecmax(m,k)+P);
+%         Npixels                 = size(magnitude_FFTsig{m,k},2);
+%         pixels                  = transpose(1:1:Npixels);
+%         % Get the maxima for probe calibration    
+%         magFFT                  = abs(FFT_ZPsig{m,k});
+%         [~,maxindex]            = max(magFFT(fitrange,:));
+%         scattering_maxima       = PumpAxis{m,k}(fitrange(maxindex));
+% %        % Do the fit [OLD WAY]
+% %         freq_coeff              = polyfit(pixels,scattering_maxima,probe_fitorder);
+% %         freq_fit                = transpose(polyval(freq_coeff,pixels));
+%         
+%         % Do the fit [NEW WAY - ROBUST]
+%         switch probe_fitorder
+%             case 1
+%                 model       = 'poly1';
+%             case 2
+%                 model       = 'poly2';
+%         end
+%         warning('off','curvefit:fit:iterationLimitReached');
+%         mdl                     = fit(pixels,scattering_maxima,model,'Robust','Bisquare');
+%         freq_fit                = mdl(pixels);
+%       % Decide which kind of probe axis to use. It will anyway store all of them
+%         switch probe_calib
+%             case 1
+%             % Check if the Probe Axis makes sense, otherwise use either the stored one
+%                 if issorted(freq_fit)
+%                     ProbeAxis       = freq_fit;
+%                 else
+%                     ProbeAxis       = cmprobe;
+%                 end
+%             case 0
+%                 ProbeAxis       = cmprobe;
+%             case 2
+%                 ProbeAxis       = saved_probe;
+%         end
+%       
+% end
+
+switch probe_calib
+    case 0
+        ProbeAxis       = cmprobe;
+    case 2
+        ProbeAxis       = saved_probe;
 end
 %% Subtract the scattering background (if enabled) and correct the sign of the signals
 % If DEBUG is OFF, don't consider the sign of the pump  
 if debug==0
-    SignPump(m,k)=1;
+    SignPump(m,k)=-1;
 elseif debug==1 % If debug is ON, consider the sign of the pump
     SignPump(m,k)=sign(real(phased_FFTZPint{m,k}(binspecmax(m,k))));
 end
@@ -398,11 +364,11 @@ elseif strcmp(dummy,'diff')
 %     warndlg('Plotting dummy 2 - dummy 1');
 end
 
-% interferogram   = 
+
 %% WRITE to dataStruct
     dataStruct.ProbeAxis           = ProbeAxis;
-    dataStruct.freq_fit            = freq_fit;
-    dataStruct.scattering_maxima   = scattering_maxima;
+    dataStruct.freq_fit            = [];
+    dataStruct.scattering_maxima   = [];
     dataStruct.PumpAxis            = PumpAxis;
     
     dataStruct.t1delays            = t1delays;
@@ -412,9 +378,9 @@ end
     dataStruct.apodize_function    = apodize_function;
     dataStruct.FFT_ZPsig           = FFT_ZPsig;
     dataStruct.phased_FFTZPsig     = phased_FFTZPsig;
-	dataStruct.phased_FFTZPint		= phased_FFTZPint;
-    dataStruct.fittedPhase			= fittedPhase;
-    dataStruct.phasepoints         = points;
+	dataStruct.phased_FFTZPint     = phased_FFTZPint;
+    dataStruct.fittedPhase         = fittedPhase;
+    dataStruct.phasepoints         = [];
     dataStruct.ZP_phase            = ZP_phase;
     dataStruct.phase_coeff         = phase_coeff;
     dataStruct.apo_interferogram   = apo_interferogram;
