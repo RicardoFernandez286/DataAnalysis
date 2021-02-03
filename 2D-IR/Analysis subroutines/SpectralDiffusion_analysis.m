@@ -49,13 +49,12 @@ else
     saveTraces          = app.I2D_SavetracesSwitch.Value;
     interactivemode     = app.I2D_InteractivemodeSwitch.Value;
     
-%     % Count how many delays < 0
-%     N_negdelays         = length(t2delays(t2delays < 0));
-%     % Take only positive delays
-%     t2delays            = t2delays(t2delays>=0);
-%     % t2delays            = t2delays(1:end-1);
-    Ndelays             = length(t2delays);
-    t2_idx              = 1:Ndelays;
+    fitrange = inputdlg('Input t2 range to fit (format: start,end)','Select t2 range',[1 50]);
+    t2_fitrange = str2num(fitrange{:});
+    
+    t2_lim      = sort(findClosestId2Val(t2delays,t2_fitrange));
+    t2_idx      = t2_lim(1):1:t2_lim(2);
+    Ndelays_anl = length(t2_idx);
 end
 
 
@@ -409,8 +408,7 @@ end
 %% Make the plots and fit the data
 % Reload the t2 delays for plotting and fitting
 t2delays = dataStruct.t2delays;
-t2limit  = max(t2delays);
-t2delays = t2delays(t2delays<=t2limit);
+% t2delays = t2delays(t2_idx);
 
 switch specdif_options{specdif_typeindx}
     case 'CLS+IvCLS'
@@ -426,8 +424,8 @@ switch specdif_options{specdif_typeindx}
                     'OptimalityTolerance',1e-15,...
                     'FunctionTolerance',1e-15,...
                     'StepTolerance',1e-15);
-        [CLS_param,~,residuals_CLS,~,~,~,jacobian_CLSfit] = lsqcurvefit(FFCF_func,start_param,t2delays(t2delays>=0),CLS_value(t2delays>=0),LB,UB,options);
-        [IvCLS_param,~,residuals_IvCLS,~,~,~,jacobian_IvCLSfit] = lsqcurvefit(FFCF_func,start_param,t2delays(t2delays>=0),IvCLS_value(t2delays>=0),LB,UB,options);
+        [CLS_param,~,residuals_CLS,~,~,~,jacobian_CLSfit] = lsqcurvefit(FFCF_func,start_param,t2delays(t2_idx),CLS_value(t2_idx),LB,UB,options);
+        [IvCLS_param,~,residuals_IvCLS,~,~,~,jacobian_IvCLSfit] = lsqcurvefit(FFCF_func,start_param,t2delays(t2_idx),IvCLS_value(t2_idx),LB,UB,options);
         fittedCLS_CI    = nlparci(CLS_param,residuals_CLS,'jacobian',jacobian_CLSfit);
         fittedCLS_err   = (fittedCLS_CI(:,2) - fittedCLS_CI(:,1))/2;
         fittedIvCLS_CI  = nlparci(IvCLS_param,residuals_IvCLS,'jacobian',jacobian_IvCLSfit);
@@ -545,7 +543,7 @@ switch specdif_options{specdif_typeindx}
                             'OptimalityTolerance',1e-15,...
                             'FunctionTolerance',1e-15,...
                             'StepTolerance',1e-15);
-                [fitted_param,~,residuals,~,~,~,jacobian_fit] = lsqcurvefit(FFCF_func,start_param,t2delays(t2delays>=0),SpecDif_ind(t2delays>=0),LB,UB,options);
+                [fitted_param,~,residuals,~,~,~,jacobian_fit] = lsqcurvefit(FFCF_func,start_param,t2delays(t2_idx),SpecDif_ind(t2_idx),LB,UB,options);
                 fitted_CI   = nlparci(fitted_param,residuals,'jacobian',jacobian_fit);
                 fitted_err  = (fitted_CI(:,2) - fitted_CI(:,1))/2;
             case 'GA'
