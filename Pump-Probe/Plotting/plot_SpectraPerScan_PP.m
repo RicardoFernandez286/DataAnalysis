@@ -75,7 +75,7 @@ switch app.PP_DataFormat.Value
         ending          = '_sp0_sm0_du0_';
         Nscans          = dataStruct.Nscans;
         RawDelays       = csvread([app.rootdir filesep datafilename filesep datafilename '_delays.csv']);
-        ScanData        = zeros(length(unique(RawDelays)),Nscans);
+        ScanData        = zeros(Nscans,length(dataStruct.cmprobe));
         for i=1:Nscans
             ScanNr              = strcat(tempdir,filesep,datafilename,'_signal',ending,num2str(i-1),'.csv');
             ScanNrch            = char(ScanNr);
