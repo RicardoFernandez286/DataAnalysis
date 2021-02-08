@@ -26,7 +26,7 @@ function dataStruct = process2DIR_shaper(app,dataStruct,ReProcess,varargin)
 %     The calculation routines were updated accordingly in MESS and now the chopper signal and all
 %     datastates should be calculated properly.
 %
-% Ricardo Fern�ndez-Ter�n / 28.08.2018 / v4.0a
+% Ricardo Fern�ndez-Ter�n / 02.02.2021 / v1.0a
 
 %% Choose between debug/manual mode and normal mode
 debug=0;

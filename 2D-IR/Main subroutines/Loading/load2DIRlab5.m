@@ -22,7 +22,7 @@ function  dataStruct = load2DIRlab5(dataStruct,varargin)
 %     interferogram     (Cell array)
 %     signal			(Cell array)
 %
-% Ricardo Fernandez-Teran / 18.08.2019 / v1.0a
+% Ricardo Fernandez-Teran / 02.02.2021 / v1.0a
 
 %% DEBUG
 % datafilename = 'data2D_avg';
