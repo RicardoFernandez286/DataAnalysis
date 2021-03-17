@@ -1,10 +1,14 @@
+clear all;
 % scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\20) M-H solvation - na\Data\CLS';
 % subdir      = 'IrHCOP3';
 
-scriptdir = 'E:\Masterarbeit\Data\Lab 4\IrHP3\CLS';
-subdir = [];
+% scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\20) M-H solvation - na\Data\CLS';
+% subdir = 'IrHCOP3_old';
 
-filelist    = dir([scriptdir filesep subdir]);
+rootdir = 'E:\Masterarbeit\Data\Lab 4\IrHP3';
+subdir  = 'CLS';
+
+filelist    = dir([rootdir filesep subdir]);
 
 doFit = 1;
 
@@ -40,7 +44,7 @@ solventNames    = solventNames(idx);
 
 %% Read the data
 for i=1:Nsolvents
-    data        = readmatrix([scriptdir filesep subdir filesep names{i}]);
+    data        = readmatrix([rootdir filesep subdir filesep names{i}]);
 
     t2delays{i} = data(:,1);
     Ncols       = size(data,2)-1;
@@ -57,11 +61,11 @@ end
 fitfun = @(P,t)P(1).*exp(-t./P(2)) + P(3);
 
 start_param = [0.8 3 0.1; 0.6 3 0.2];
-UB_all      = [1   10 1;  1   10  1];
+UB_all      = [1   15 1;  1   15  1];
 LB_all      = [0  0.25 0; 0  0.25 0];  
 
-t2start_fit = [0.25 0.25]; 
-t2end_fit   = [25 15];
+t2start_fit = [0. 0.]; 
+t2end_fit   = [25 10];
 
 %% Plot the data
 cmap = othercolor('Mrainbow',Nsolvents);
@@ -96,12 +100,13 @@ for q=1:Ncols
     
             plot(ax,xdata,ydata,'o','Color',cmap(i,:),'DisplayName',solventNames(i),'LineWidth',2,'handlevisibility','off');
             
-            [fitted_param(i,:,q),resnorm,residuals,exitflag,output,lambda,jacobian_fit] = lsqcurvefit(fitfun,fitPar0,xdata,ydata,LB,UB,options);
-            ci = nlparci(fitted_param(i,:,q),residuals,'jacobian',jacobian_fit);
-            fitted_err(i,:,q) = ci(:,2) - ci(:,1);
+            [Fit_Par(i,:,q),resnorm,residuals,exitflag,output,lambda,jacobian_fit] = lsqcurvefit(fitfun,fitPar0,xdata,ydata,LB,UB,options);
+            ci = nlparci(Fit_Par(i,:,q),residuals,'jacobian',jacobian_fit);
+            Fit_Err(i,:,q) = ci(:,2) - ci(:,1);
             
-            yFit = fitfun(fitted_param(i,:,q),xdata);
-            plot(ax,xdata,yFit,'-','Color',cmap(i,:),'DisplayName',solventNames(i),'LineWidth',2);
+            xinterp = linspace(min(xdata),max(xdata),1000);
+            yFit = fitfun(Fit_Par(i,:,q),xinterp);
+            plot(ax,xinterp,yFit,'-','Color',cmap(i,:),'DisplayName',solventNames(i),'LineWidth',2);
         else
             plot(ax,t2delays{i},SpecDiff{i}(:,q),'o-','Color',cmap(i,:),'DisplayName',solventNames(i),'LineWidth',2);
         end
@@ -111,5 +116,55 @@ for q=1:Ncols
     ylim(ax,[0 1.1]);
     yline(ax,1,'handlevisibility','off');
     box(ax,'on');
+    ax.FontSize=18;
     legend(ax,'show');
+    legend(ax,'NumColumns',3);
+    legend(ax,'fontsize',12);
+    ylabel(ax,'Centerline Slope (CLS)','FontWeight','bold');
+    xlabel(ax,'Population Delay (t_{2}, ps)','FontWeight','bold');
+end
+
+
+%% Plot the fit parameters across solvents
+fh3 = figure(3);
+clf(fh3);
+ax2 = axes('parent',fh3);
+
+parplot = 1;  % 1 = A1, 2 = tau, 3 = A0
+% y_string = 'A_{0} / CLS Offset';
+y_string = 'A_{1} / CLS Amplitude';
+errbar = 0;
+
+hold(ax2,'on');
+if errbar == 1
+    errorbar(ax2,theta,squeeze(Fit_Par(:,parplot,1))',squeeze(Fit_Err(:,parplot,1))','o-','Linewidth',1.5,'Color','b','DisplayName','\nu_{1}')
+    errorbar(ax2,theta,squeeze(Fit_Par(:,parplot,2))',squeeze(Fit_Err(:,parplot,2))','o-','Linewidth',1.5,'Color','r','DisplayName','\nu_{2}')
+else
+    plot(ax2,theta,squeeze(Fit_Par(:,parplot,1))','sq-','Linewidth',1.5,'Color','b','MarkerSize',8,'DisplayName','\nu_{1}')
+    plot(ax2,theta,squeeze(Fit_Par(:,parplot,2))','o -','Linewidth',1.5,'Color','r','MarkerSize',8,'DisplayName','\nu_{2}')
+end
+
+hold(ax2,'off');
+legend(ax2,'show');
+legend(ax2,'location','northwest');
+% legend(ax2,'orientation','horizontal');
+box(ax2,'on');
+xlabel(ax2,'Solvent Acidity/Basicity, \theta = \alpha-\beta','FontWeight','bold');
+ylabel(ax2,y_string,'FontWeight','bold');
+ax2.FontSize = 18;
+xline(ax2,0,'Handlevisibility','off');
+
+%% Resize figures
+fh1 = figure(1);
+fh2 = figure(2);
+for fig=[fh1,fh2,fh3]
+    fig.Units = 'pixels';
+    fig.Color = 'w';
+end
+
+fh1.Position(3:4) = [640 400];
+fh2.Position(3:4) = fh1.Position(3:4);
+fh3.Position(3:4) = fh1.Position(3:4);
+for fig=[fh1,fh2,fh3]
+    fig.Units = 'normalized';
 end

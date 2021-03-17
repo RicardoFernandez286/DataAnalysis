@@ -65,7 +65,7 @@ Npixels             = length(ProbeAxis);
 Interp_method       = 'InterpFT'; % 2D FFT, InterpFT, Mesh, None. Default = InterpFT
 % Fit_type            = 'Quadratic'; % 'Quadratic' 'None' - Sets the type of fit to calculate the minima along the slices
 
-Interp_order        = 4; % Multiplies Npixels by a factor to interpolate in the probe dimension
+Interp_order        = 5; % Multiplies Npixels by a factor to interpolate in the probe dimension
 Nfitpoints          = 3;
 N_pointsParabola    = round(Interp_order*Nfitpoints); % No. of X points to fit a parabola on each side of the peak: [-x (peak) +x]
 N_points_IvCLS      = 8;

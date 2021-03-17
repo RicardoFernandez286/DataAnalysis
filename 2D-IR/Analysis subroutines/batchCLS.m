@@ -34,12 +34,8 @@ end
 if Ndatafiles == 0
     disp([datestr(now,-1) ': Nothing to do here! Bye :)']);
 %     exit
+    return
 end
-
-%% Start parallel pool (if none exists)
-% if isempty(gcp('nocreate'))
-%    parpool;
-% end
 
 %% Loop through the folders: Load, process and analyse all the spectra
 for i=1:Ndatafiles
@@ -119,17 +115,19 @@ settings.t2_fitrange            = t2_fitrange;
     end
 
     %%% Do the spectral diffusion analysis
-%     try
+    try
         disp([datestr(now,-1) ': ' 'Starting CLS analysis of ' foldernames{i} ' ...']);
         dataStruct      = SpectralDiffusion_analysis(app,dataStruct,[],'Batch',settings);
         dataOUT         = [dataStruct.AnalysedDelays dataStruct.SpecDif_ind_all];
         outFileName     = [writepath filesep foldernames{i} '_CLS.csv'];
+        if exist(writepath,'dir') == 0; mkdir(writepath); end
         writematrix(dataOUT,outFileName);
+        disp([datestr(now,-1) ': Analysis of dataset  ' foldernames{i} '  is  [DONE]']);
         ALLdata(:,:,i)  = dataOUT;
-%     catch
-%         disp([datestr(now,-1) ': ' 'Error analysing ' foldernames{i} ' ...']);
-%         continue
-%     end
+    catch
+        disp([datestr(now,-1) ': ' 'Error analysing ' foldernames{i} ' ...']);
+        continue
+    end
 end
 
 disp([datestr(now,-1) ': ' 'Everything done!']);

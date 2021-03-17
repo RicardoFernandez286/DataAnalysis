@@ -10,8 +10,8 @@ WhatPlot='IrHCOP3';
 %% Get a list of MAT files
 switch WhatPlot
     case 'IrHCOP3'
-%         scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\20) M-H solvation - na\FitResults';
-        scriptdir   = 'E:\Masterarbeit\Data\Lab 4\IrHP3\CLS';
+        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\20) M-H solvation - na\Data\FitResults';
+%         scriptdir   = 'E:\Masterarbeit\Data\Lab 4\IrHP3\CLS';
         subdir      = 'IrHCOP3';
 end
 
@@ -363,8 +363,8 @@ hold(ax_UP,'on');
 hold(ax_DW,'on');
 
 for i=1:Nconc
-    plot(ax_UP,t2delays,Fit_Curves(:,1,i),'Color',cmFW(i,:),'LineWidth',LineWidth,'HandleVisibility','off');
-    plot(ax_DW,t2delays,Fit_Curves(:,2,i),'Color',cmBW(i,:),'LineWidth',LineWidth,'HandleVisibility','off');
+    plot(ax_UP,t2delays,Fit_Curves(:,1,i),'-','Color',cmFW(i,:),'LineWidth',LineWidth,'HandleVisibility','off');
+    plot(ax_DW,t2delays,Fit_Curves(:,2,i),'-','Color',cmBW(i,:),'LineWidth',LineWidth,'HandleVisibility','off');
 end
 
 hold(ax_UP,'off');
@@ -411,11 +411,16 @@ else
     hold(ax2,'on');
 %         errorbar(ax2,theta,squeeze(Fit_Par(1,3,:))',squeeze(Fit_Err(1,3,:))','o','Color','b')
 %         errorbar(ax2,theta,squeeze(Fit_Par(2,3,:))',squeeze(Fit_Err(2,3,:))','o','Color','r')
-        plot(ax2,theta,squeeze(Fit_Par(1,3,:))','-','Color','b')
-        plot(ax2,theta,squeeze(Fit_Par(2,3,:))','-','Color','r')
+        plot(ax2,theta,squeeze(Fit_Par(1,3,:))','o-','Color','b','DisplayName','\nu_{1}')
+        plot(ax2,theta,squeeze(Fit_Par(2,3,:))','o-','Color','r','DisplayName','\nu_{2}')
     hold(ax2,'off');
+    legend(ax2,'show');
+    box(ax2,'on');
+    xlabel(ax2,'Solvent Acidity/Basicity, \theta = \alpha-\beta','FontWeight','bold');
+    ylabel(ax2,'A_{0} / CLS Offset','FontWeight','bold');
+    ax2.FontSize = 18;
 end
-xline(ax2,0);
+xline(ax2,0,'HandleVisibility','off');
 %%%%%%% EOF
 
 function [fitted_param,fitted_curves,fitted_err] = FitDoubleExp(time,VolumeData,fitPar0,LB,UB,Nexp)   
