@@ -8,13 +8,15 @@ function varargout = ContourPlot_2DIR(plotOptions,dataStruct,plotaxis)
 % Outputs:
 %     (plot)
 %     plotLimits.min/max_cut
-% Ricardo Fernández-Terán / 04.10.2020 / v4.7b
+% Ricardo Fernández-Terán / 23.03.2021 / v4.9c
 
 debug=0;
 cla(plotaxis);
 
-FitContourlineColor=0.5*[1 1 1];
-
+FitContourlineColor = 0.5*[1 1 1];
+LineColor           = 0.4*[1 1 1];
+% FontSize = 14;
+FontSize = 21;
 %% DEBUG/MANUAL:
 if debug==1
     Ncontours=50;
@@ -370,12 +372,12 @@ if Transient2D
     UV_delay_ps = num2str(UV_delay_ps,'%.3g');
     
     text(plotaxis,0.05,0.925,['t_{2} = ' t2_delay_ps ' ' timescale '; t_{UV} = ' UV_delay_ps ' ' UVtimescale],...
-        'Units','normalized','FontSize',12,'FontWeight','bold','BackgroundColor',textBGcolor,'FontSize',14);
+        'Units','normalized','FontSize',12,'FontWeight','bold','BackgroundColor',textBGcolor,'FontSize',FontSize);
 
 % If NOT transient 2D
 else
     text(plotaxis,0.05,0.925,['t_{2} = ' t2_delay_ps ' ' timescale],...
-        'Units','normalized','FontSize',12,'FontWeight','bold','BackgroundColor',textBGcolor,'FontSize',14);
+        'Units','normalized','FontSize',12,'FontWeight','bold','BackgroundColor',textBGcolor,'FontSize',FontSize);
 end
 
 %% Show the level lines every nth level, starting from zero
@@ -395,14 +397,14 @@ if plot_showcontours == 1
             negCont         = decim(linspace(min_cut,0,round((Ncontours+1)/2)),plot_skiplevels,'max');
             posCont         = decim(linspace(0,max_cut,round((Ncontours+1)/2)),plot_skiplevels,'max');
             contourlines    = [negCont; posCont];
+%             contourlines    = tanh([negCont; posCont]./max(abs([min_cut max_cut]))).*max(abs([min_cut max_cut]));
         else
             negCont         = linspace(min_cut,0,round((Ncontours+1)/2))';
             posCont         = linspace(0,max_cut,round((Ncontours+1)/2))';
             contourlines    = [negCont; posCont];
+%             contourlines    = tanh([negCont; posCont]./max(abs([min_cut max_cut]))).*max(abs([min_cut max_cut]));
         end
     end
-    
-    LineColor       = 0.4*[1 1 1];
     
     hold(plotaxis,'on')
         contour(plotaxis,X,Y,Z,contourlines,'LineColor',LineColor,'LineStyle',ContourLineStyle,'LineWidth',0.05);

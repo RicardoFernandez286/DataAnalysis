@@ -5,19 +5,27 @@ clear all;
 % scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\20) M-H solvation - na\Data\CLS';
 % subdir = 'IrHCOP3_old';
 
+% rootdir = 'E:\Masterarbeit\Data\Lab 4\VC-H2 high frequency';
+% rootdir = 'E:\Masterarbeit\Data\Lab 4\VC-H2';
 rootdir = 'E:\Masterarbeit\Data\Lab 4\IrHP3';
+
 subdir  = 'CLS';
 
-filelist    = dir([rootdir filesep subdir]);
+filelist = dir([rootdir filesep subdir]);
 
 doFit = 1;
+errbar = 0;
+
+parplot = 1;  % 1 = A1, 2 = tau, 3 = A0
+y_string = 'A_{0} / CLS Offset';
+% y_string = 'A_{1} / CLS Amplitude';
 
 %% Parse the names into concentrations and make a list
 names       = {filelist.name}';
 names       = flipud(names(contains(names,'.csv')));
 % names       = names(1:end-1);
 Nsolvents   = length(names);
-solventPos  = 3:5;
+solventPos  = 2:5;
 
 % Initialise variables
 Solvent         = strings(Nsolvents,1);
@@ -49,6 +57,9 @@ for i=1:Nsolvents
     t2delays{i} = data(:,1);
     Ncols       = size(data,2)-1;
 
+%     Amix        = [0.81 0.19; 0.3 0.7];
+%     SpecDiff{i} = (Amix\data(:,2:end)')';
+   
     SpecDiff{i} = data(:,2:end);
     
 %     t2plot = 10;
@@ -65,7 +76,7 @@ UB_all      = [1   15 1;  1   15  1];
 LB_all      = [0  0.25 0; 0  0.25 0];  
 
 t2start_fit = [0. 0.]; 
-t2end_fit   = [25 10];
+t2end_fit   = [25 15];
 
 %% Plot the data
 cmap = othercolor('Mrainbow',Nsolvents);
@@ -124,16 +135,10 @@ for q=1:Ncols
     xlabel(ax,'Population Delay (t_{2}, ps)','FontWeight','bold');
 end
 
-
 %% Plot the fit parameters across solvents
 fh3 = figure(3);
 clf(fh3);
 ax2 = axes('parent',fh3);
-
-parplot = 1;  % 1 = A1, 2 = tau, 3 = A0
-% y_string = 'A_{0} / CLS Offset';
-y_string = 'A_{1} / CLS Amplitude';
-errbar = 0;
 
 hold(ax2,'on');
 if errbar == 1
@@ -154,6 +159,9 @@ ylabel(ax2,y_string,'FontWeight','bold');
 ax2.FontSize = 18;
 xline(ax2,0,'Handlevisibility','off');
 
+%% Export
+parplot=1;
+[theta,squeeze(Fit_Par(:,parplot,1)),squeeze(Fit_Par(:,parplot,2))]
 %% Resize figures
 fh1 = figure(1);
 fh2 = figure(2);

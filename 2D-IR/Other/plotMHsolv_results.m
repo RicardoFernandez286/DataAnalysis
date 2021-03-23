@@ -6,17 +6,19 @@ DoSave  = 0;
 NormType='Sqrt'; % 'Old' 'Sqrt' 'Prod' 'Squared'
 
 WhatPlot='IrHCOP3';
+WhatPlot='VC-H2.LF';
 
 %% Get a list of MAT files
+scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\20) M-H solvation - na\Data\FitResults';
 switch WhatPlot
-    case 'IrHCOP3'
-        scriptdir   = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\20) M-H solvation - na\Data\FitResults';
-%         scriptdir   = 'E:\Masterarbeit\Data\Lab 4\IrHP3\CLS';
+    case 'IrHCOP3'   
         subdir      = 'IrHCOP3';
+    case 'VC-H2.LF'
+        subdir      = 'VC-H2';
 end
 
-% plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
-plotWhat    = 'Diagonal ESA'; % Xpeak or Diagonal + GSB/ESA
+plotWhat    = 'Xpeak ESA'; % Xpeak or Diagonal + GSB/ESA
+% plotWhat    = 'Diagonal ESA'; % Xpeak or Diagonal + GSB/ESA
 % plotWhat    = 'SpecDiff';
 plotFormat  = 'Vertical'; % 'Horizontal' or 'Vertical'
 
@@ -376,8 +378,8 @@ ax2 = axes('parent',fh2);
 
 if C_t == 0
     hold(ax2,'on');
-        errorbar(ax2,theta,squeeze(Fit_Par(1,2,:))',squeeze(Fit_Err(1,2,:))','o','Color','b')
-        errorbar(ax2,theta,squeeze(Fit_Par(2,2,:))',squeeze(Fit_Err(2,2,:))','o','Color','r')
+        errorbar(ax2,theta,squeeze(Fit_Par(1,2,:))',0*squeeze(Fit_Err(1,2,:))','o','Color','b')
+        errorbar(ax2,theta,squeeze(Fit_Par(2,2,:))',0*squeeze(Fit_Err(2,2,:))','o','Color','r')
     hold(ax2,'off');
 
     m = mean(squeeze(Fit_Par(1,2,:)));
@@ -439,6 +441,7 @@ function [fitted_param,fitted_curves,fitted_err] = FitDoubleExp(time,VolumeData,
             shift  = 2;
     end
     
+    fitPar0(fitPar0==0) = eps;
     options = optimoptions('lsqcurvefit',...
             'MaxFunctionEvaluations',1000,...
             'MaxIterations',1000,...

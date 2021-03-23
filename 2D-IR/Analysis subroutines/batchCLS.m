@@ -86,9 +86,16 @@ intensity_threshold = 50/100;
 Interp_method       = 'InterpFT';
 
 %%%%% FOR IrHCOP3
-pump_ranges         = [1900 1950; 2050 2100]; % Each row is a range
-probe_ranges        = [1900 1950; 2050 2100]; % Each row is a range
+% pump_ranges         = [1900 1950; 2050 2100]; % Each row is a range
+% probe_ranges        = [1900 1950; 2050 2100]; % Each row is a range
 
+%%%%% FOR VC-H2 low freq
+% pump_ranges         = [1970 2020; 2070 2120]; % Each row is a range
+% probe_ranges        = [1970 2010; 2070 2120]; % Each row is a range
+
+%%%%% FOR VC-H2 high freq
+pump_ranges         = [2070 2120; 2170 2260]; % Each row is a range
+probe_ranges        = [2070 2120; 2180 2260]; % Each row is a range
 
 
 %% Write settings to structure
