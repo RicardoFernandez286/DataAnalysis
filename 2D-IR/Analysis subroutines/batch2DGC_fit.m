@@ -87,18 +87,25 @@ for i=1:Ndatafiles
         case 'Ricardo'
             cut_data = 'Use probe axis';
 			fitparameters =    ...
-				[{'1998'}    {'2098'}    {'1998' }    {'2098' }    {'1967'}    {'2018'}
-				 {'0'   }    {'0'   }    {'2098' }    {'1998' }    {'0'   }    {'0'   }
-				 {'25'  }    {'24'  }    {'26'   }    {'24'   }    {'20'  }    {'31'  }
-				 {'12'  }    {'17'  }    {'12'   }    {'17'   }    {'12'  }    {'12'  }
-				 {'8'   }    {'15'  }    {'15'   }    {'8'    }    {'9'   }    {'9'   }
-				 {'1'   }    {'1'   }    {'1'    }    {'1'    }    {'1'   }    {'1'   }
-				 {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}    {'Diag'}    {'Diag'}];
+% 				[{'1998'}    {'2098'}    {'1998' }    {'2098' }    {'1967'}    {'2018'}
+% 				 {'0'   }    {'0'   }    {'2098' }    {'1998' }    {'0'   }    {'0'   }
+% 				 {'25'  }    {'24'  }    {'26'   }    {'24'   }    {'20'  }    {'31'  }
+% 				 {'12'  }    {'17'  }    {'12'   }    {'17'   }    {'12'  }    {'12'  }
+% 				 {'8'   }    {'15'  }    {'15'   }    {'8'    }    {'9'   }    {'9'   }
+% 				 {'1'   }    {'1'   }    {'1'    }    {'1'    }    {'1'   }    {'1'   }
+% 				 {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}    {'Diag'}    {'Diag'}];
+				[{'2210'}
+				 {'0'   }
+				 {'80'  }
+				 {'12'  }
+				 {'8'   }
+				 {'1'   }
+				 {'Diag'}];
             %t2_fitrange = [0.25 max(dataStruct.t2delays)];
 			t2_fitrange = [0.25 40];
             equal_SxSy  = 0;
             diffSyfor12 = 1;
-            writepath   = '/home/ricfer/FitResults/Solvation/VCH2-LF';
+            writepath   = '/home/ricfer/FitResults/Solvation/VCH2-HF';
         otherwise
             cut_data    = 'Use probe axis';
             fitparameters =    ...      
