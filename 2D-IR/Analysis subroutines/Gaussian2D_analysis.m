@@ -95,6 +95,9 @@ switch cut_data
             probe_range = [1950 2060];
             pump_range  = [1955 2060];
         end
+    case 'VCH2-HF'
+        probe_range = [2070 2300];
+        pump_range  = [2165 2300];
 end
 
 % Get the indices

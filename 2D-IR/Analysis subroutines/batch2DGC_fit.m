@@ -85,7 +85,8 @@ for i=1:Ndatafiles
     %%% Get the (default) fit parameters
     switch fitType
         case 'Ricardo'
-            cut_data = 'Use probe axis';
+%             cut_data = 'Use probe axis';
+            cut_data = 'VCH2-HF';
 			fitparameters =    ...
 % 				[{'1998'}    {'2098'}    {'1998' }    {'2098' }    {'1967'}    {'2018'}
 % 				 {'0'   }    {'0'   }    {'2098' }    {'1998' }    {'0'   }    {'0'   }
