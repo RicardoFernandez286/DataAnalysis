@@ -87,32 +87,18 @@ for i=1:Ndatafiles
         case 'Ricardo'
             cut_data = 'Use probe axis';
 			fitparameters =    ...
-				[{'1925'}    {'2070'}    {'1925' }    {'2070'  }
-				 {'0'   }    {'0'   }    {'2070' }    {'1925'  }
-				 {'20'  }    {'50'  }    {'30'   }    {'30'    }
-				 {'8'   }    {'8'   }    {'8'    }    {'8'     }
-				 {'8'   }    {'8'   }    {'8'    }    {'8'     }
-				 {'1'   }    {'1'   }    {'1'    }    {'1'     }
-				 {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
+				[{'1998'}    {'2098'}    {'1998' }    {'2098' }    {'2018'}
+				 {'0'   }    {'0'   }    {'2098' }    {'1998' }    {'0'   }
+				 {'25'  }    {'24'  }    {'26'   }    {'24'   }    {'31'  }
+				 {'12'  }    {'17'  }    {'12'   }    {'17'   }    {'12'  }
+				 {'8'   }    {'15'  }    {'15'   }    {'8'    }    {'9'   }
+				 {'1'   }    {'1'   }    {'1'    }    {'1'    }    {'1'   }
+				 {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}    {'Diag'}];
             %t2_fitrange = [0.25 max(dataStruct.t2delays)];
 			t2_fitrange = [0.25 40];
             equal_SxSy  = 0;
             diffSyfor12 = 1;
-            writepath   = '/home/ricfer/FitResults/Solvation/IrHCOP3';
-        case 'Andrea'
-            cut_data = 'Use probe axis';
-            fitparameters = ...
-           [{'1980'}    {'2060'}    {'1980' }    {'2060'  }
-            {'0'   }    {'0'   }    {'2060' }    {'1980'  }
-            {'15'  }    {'15'  }    {'-1'   }    {'-1'    }
-            {'12'  }    {'12'  }    {'-1'   }    {'-1'    }
-            {'12'  }    {'12'  }    {'-1'   }    {'-1'    }
-            {'1'   }    {'1'   }    {'0h'   }    {'0h'    }
-            {'Diag'}    {'Diag'}    {'Xpeak'}    {'Xpeak'}];
-            t2_fitrange = [0.5 max(dataStruct.t2delays)];
-            equal_SxSy  = 1;
-            diffSyfor12 = 0;
-            writepath   = '/home/apasti/FitResults';
+            writepath   = '/home/ricfer/FitResults/Solvation/VCH2-LF';
         otherwise
             cut_data    = 'Use probe axis';
             fitparameters =    ...      
