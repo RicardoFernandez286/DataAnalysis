@@ -86,6 +86,8 @@ if debug==0
     % Read the selection
     m = popdelay;
     k = 1;
+    
+    cut=2;
 
     % Determine if spectral diffusion analysis have been performed or not and whether to plot them
     if plotOptions.ShowSpecDiff && dataStruct.SpecDiff
@@ -132,10 +134,13 @@ PumpAxis{m,k}       = PumpAxis{m,k}(1:L,:);
 PumpSpectrum        = PumpSpectrum{m,k}(1:L,:);
 
 % Cut the datasets along the pump direction (if selected)
-if cut == 1
-    cut_method = 'Axis';
-else
-    cut_method = 'Intensity';
+switch cut
+    case 1
+        cut_method = 'Axis';
+    case 0
+        cut_method = 'Intensity';
+    case 2
+        cut_method = 'Uncalibrated';
 end
 
 switch cut_method
@@ -146,6 +151,13 @@ switch cut_method
     case 'Axis'
         minindex        = findClosestId2Val(PumpAxis{m,k},min(ProbeAxis))-1;
         maxindex        = findClosestId2Val(PumpAxis{m,k},max(ProbeAxis))+1;
+        probelim        = 1:length(ProbeAxis);
+    case 'Uncalibrated'
+        minindex        = 1;
+        maxindex        = length(PumpAxis{m,k});
+%         probelim        = 150:210;
+        probelim    = 50:170;
+%         probelim        = 1:length(ProbeAxis);
 end
 
 if dataStruct.isSimulation == 1
@@ -155,16 +167,16 @@ end
 
 switch plot_limittype
     case 'Local'
-        maxabs=max(max(PROC_2D_DATA{m,k}(minindex:maxindex,:)));
-        minabs=min(min(PROC_2D_DATA{m,k}(minindex:maxindex,:)));
+        maxabs=max(max(PROC_2D_DATA{m,k}(minindex:maxindex,probelim)));
+        minabs=min(min(PROC_2D_DATA{m,k}(minindex:maxindex,probelim)));
     case 'Global'
         maxabs=max(max(PROC_2D_DATA{m,k}));
         minabs=min(min(PROC_2D_DATA{m,k}));
 end
 
 % Trim the data
-proc2Ddata          = PROC_2D_DATA{m,k}(minindex:maxindex,:);
-PumpAxis{m,k}       = PumpAxis{m,k}(minindex:maxindex,:);
+proc2Ddata          = PROC_2D_DATA{m,k}(minindex:maxindex,probelim);
+PumpAxis{m,k}       = PumpAxis{m,k}(minindex:maxindex);
 
 % Get overall maxmimum of positive and negative deltaAbs
 maxDabs = max([abs(minabs),abs(maxabs)]);
@@ -197,7 +209,7 @@ end
 switch plot_pumpdirection    
 case 'Vertical' % Old way
         % Save XYZ
-        X = ProbeAxis;
+        X = ProbeAxis(probelim);
         Y = PumpAxis{m,k};
         Z = proc2Ddata;
         % Interpolate the data
@@ -215,7 +227,7 @@ case 'Vertical' % Old way
 case 'Horizontal' % New way
       % Save XYZ
         X = PumpAxis{m,k};
-        Y = ProbeAxis;
+        Y = ProbeAxis(probelim);
         Z = transpose(proc2Ddata);
         % Interpolate the data
         if interpolate == 1

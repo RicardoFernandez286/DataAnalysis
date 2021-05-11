@@ -5,9 +5,12 @@ clear all;
 % scriptdir = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\20) M-H solvation - na\Data\CLS';
 % subdir = 'IrHCOP3_old';
 
-% rootdir = 'E:\Masterarbeit\Data\Lab 4\VC-H2 high frequency';
+rootdir = 'E:\Masterarbeit\Data\Lab 4\VC-H2 high frequency';
 % rootdir = 'E:\Masterarbeit\Data\Lab 4\VC-H2';
-rootdir = 'E:\Masterarbeit\Data\Lab 4\IrHP3';
+% rootdir = 'E:\Masterarbeit\Data\Lab 4\IrHP3';
+
+figdir  = 'D:\Ricardo Data\switchdrive\Ph.D. UZH\MANUSCRIPTS\20) M-H solvation - na\Manuscript\Figures\MATLAB';
+complexname = 'VCH2';
 
 subdir  = 'CLS';
 
@@ -16,9 +19,9 @@ filelist = dir([rootdir filesep subdir]);
 doFit = 1;
 errbar = 0;
 
-parplot = 1;  % 1 = A1, 2 = tau, 3 = A0
-y_string = 'A_{0} / CLS Offset';
-% y_string = 'A_{1} / CLS Amplitude';
+PlotScale=3; % 3=theta, 4=ET30, 5=Viscosity
+% parplot = 3;  % 1 = A1, 2 = tau, 3 = A0
+
 
 %% Parse the names into concentrations and make a list
 names       = {filelist.name}';
@@ -42,7 +45,7 @@ solventNames = string;
 for i=1:Nsolvents
     fn_parts{i}     = strsplit(names{i},'_');
     svt_ID          = matches(solvents.Names(:,2),fn_parts{i}(solventPos),'IgnoreCase',true);
-    theta(i,1)      = solvents.KT(svt_ID,3);
+    theta(i,1)      = solvents.KT(svt_ID,PlotScale);
     solventNames(i) = solvents.Names(svt_ID);
 end
 
@@ -118,6 +121,8 @@ for q=1:Ncols
             xinterp = linspace(min(xdata),max(xdata),1000);
             yFit = fitfun(Fit_Par(i,:,q),xinterp);
             plot(ax,xinterp,yFit,'-','Color',cmap(i,:),'DisplayName',solventNames(i),'LineWidth',2);
+            
+            title(ax,['\nu_{' num2str(q+1) '}']);
         else
             plot(ax,t2delays{i},SpecDiff{i}(:,q),'o-','Color',cmap(i,:),'DisplayName',solventNames(i),'LineWidth',2);
         end
@@ -129,50 +134,91 @@ for q=1:Ncols
     box(ax,'on');
     ax.FontSize=18;
     legend(ax,'show');
+%     legend(ax,'location','best');
     legend(ax,'NumColumns',3);
     legend(ax,'fontsize',12);
     ylabel(ax,'Centerline Slope (CLS)','FontWeight','bold');
     xlabel(ax,'Population Delay (t_{2}, ps)','FontWeight','bold');
+    xlim(ax,[0,25]);
 end
-
-%% Plot the fit parameters across solvents
-fh3 = figure(3);
-clf(fh3);
-ax2 = axes('parent',fh3);
-
-hold(ax2,'on');
-if errbar == 1
-    errorbar(ax2,theta,squeeze(Fit_Par(:,parplot,1))',squeeze(Fit_Err(:,parplot,1))','o-','Linewidth',1.5,'Color','b','DisplayName','\nu_{1}')
-    errorbar(ax2,theta,squeeze(Fit_Par(:,parplot,2))',squeeze(Fit_Err(:,parplot,2))','o-','Linewidth',1.5,'Color','r','DisplayName','\nu_{2}')
-else
-    plot(ax2,theta,squeeze(Fit_Par(:,parplot,1))','sq-','Linewidth',1.5,'Color','b','MarkerSize',8,'DisplayName','\nu_{1}')
-    plot(ax2,theta,squeeze(Fit_Par(:,parplot,2))','o -','Linewidth',1.5,'Color','r','MarkerSize',8,'DisplayName','\nu_{2}')
-end
-
-hold(ax2,'off');
-legend(ax2,'show');
-legend(ax2,'location','northwest');
-% legend(ax2,'orientation','horizontal');
-box(ax2,'on');
-xlabel(ax2,'Solvent Acidity/Basicity, \theta = \alpha-\beta','FontWeight','bold');
-ylabel(ax2,y_string,'FontWeight','bold');
-ax2.FontSize = 18;
-xline(ax2,0,'Handlevisibility','off');
-
-%% Export
-parplot=1;
-[theta,squeeze(Fit_Par(:,parplot,1)),squeeze(Fit_Par(:,parplot,2))]
 %% Resize figures
 fh1 = figure(1);
 fh2 = figure(2);
-for fig=[fh1,fh2,fh3]
+for fig=[fh1,fh2]
     fig.Units = 'pixels';
     fig.Color = 'w';
 end
-
 fh1.Position(3:4) = [640 400];
-fh2.Position(3:4) = fh1.Position(3:4);
-fh3.Position(3:4) = fh1.Position(3:4);
-for fig=[fh1,fh2,fh3]
-    fig.Units = 'normalized';
+
+for fig=[fh1,fh2]
+    fig.Position(3:4) = fh1.Position(3:4);
 end
+
+%% Plot the fit parameters across solvents
+for p=1:3
+    parplot=p;
+    % Parse axes labels
+    switch parplot
+        case 1
+            y_string = 'A_{1} / CLS Amplitude';
+            fig_suf = 'A1';
+        case 2
+            y_string = '\tau_{C} (ps)';
+            fig_suf = 'tauC';
+        case 3
+            y_string = 'A_{0} / CLS Offset';
+            fig_suf = 'A0';
+    end
+
+    switch PlotScale
+        case 3
+            x_string = 'Solvent Acidity/Basicity, \theta = \alpha-\beta';
+            fig_pref = 'theta';
+        case 4
+            x_string = 'E_{T}(30) Polarity';
+            fig_pref = 'ET30';
+        case 5
+            x_string = '\eta (mPa s)';
+            fig_pref = 'visc';
+    end
+
+    fh3(p) = figure(2+p);
+    fh3(p).Color = 'w';
+    clf(fh3(p));
+    ax2 = axes('parent',fh3(p));
+
+    hold(ax2,'on');
+    if errbar == 1
+        errorbar(ax2,theta,squeeze(Fit_Par(:,parplot,1))',squeeze(Fit_Err(:,parplot,1))','o-','Linewidth',1.5,'Color','b','DisplayName','\nu_{2}')
+        errorbar(ax2,theta,squeeze(Fit_Par(:,parplot,2))',squeeze(Fit_Err(:,parplot,2))','o-','Linewidth',1.5,'Color','r','DisplayName','\nu_{3}')
+    else
+        plot(ax2,theta,squeeze(Fit_Par(:,parplot,1))','sq-','Linewidth',1.5,'Color','b','MarkerSize',8,'DisplayName','\nu_{2}')
+        plot(ax2,theta,squeeze(Fit_Par(:,parplot,2))','o -','Linewidth',1.5,'Color','r','MarkerSize',8,'DisplayName','\nu_{3}')
+    end
+
+    hold(ax2,'off');
+    legend(ax2,'show');
+    legend(ax2,'location','best');
+    % legend(ax2,'orientation','horizontal');
+    box(ax2,'on');
+    xlabel(ax2,x_string,'FontWeight','bold');
+    ylabel(ax2,y_string,'FontWeight','bold');
+    ax2.FontSize = 18;
+    axis(ax2,'tight');
+
+    if PlotScale==3
+        xline(ax2,0,'Handlevisibility','off');
+    end
+    title(ax2,fig_suf);
+    
+    fh3(p).Position(3:4) = fh1.Position(3:4);
+    fh3(p).Units = 'pixels';
+    fh3(p).Color = 'w';
+    fh3(p).Position(3:4) = fh1.Position(3:4);
+    fh3(p).Units = 'normalized';
+    
+    exportgraphics(fh3(p),[figdir filesep complexname '_CLS_' fig_pref '_' fig_suf '.eps'])
+end
+
+%% Export
+[theta,squeeze(Fit_Par(:,parplot,1)),squeeze(Fit_Par(:,parplot,2))]
