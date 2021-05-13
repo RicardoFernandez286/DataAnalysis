@@ -87,7 +87,7 @@ if debug==0
     m = popdelay;
     k = 1;
     
-    cut=2;
+    cut=1;
 
     % Determine if spectral diffusion analysis have been performed or not and whether to plot them
     if plotOptions.ShowSpecDiff && dataStruct.SpecDiff

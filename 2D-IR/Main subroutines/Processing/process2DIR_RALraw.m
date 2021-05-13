@@ -1,4 +1,4 @@
-function dataStruct = process2DIR_UoS(app,dataStruct,ReProcess,varargin)
+function dataStruct = process2DIR_RALraw(app,dataStruct,ReProcess,varargin)
 % Description:  This function apodizes, zeropads and phases 2D IR data
 %               from the setup at the University of Sheffield
 %
@@ -210,7 +210,7 @@ binspecmax(m,k) = 1;
         N_FTpoints{m,k}         = 2^nextpow2(N_FTpoints{m,k});
     end
     
-% Calculate the pump frequency axis from interferogram
+% Calculate the pump frequency axis from interferogram by using HeNe counting
     dt1 = unique(diff(t1delays{m,k}));
     Resolution(m,k)             = 1/(N_FTpoints{m,k}*dt1*c_0);
     PumpAxis{m,k}               = ((1:1:N_FTpoints{m,k})-1)'.*Resolution(m,k)+w0;

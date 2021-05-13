@@ -73,8 +73,11 @@ bins      = (1:Nbins)';
 dt1       = 14; % fs; may change
 w0        = 1670; % need to figure this in a better way
 
-cmprobe   = (1:Npixels)';  % (?)
-
+% if exist([filename '.2D'],'file') ~= 0
+%     cmprobe = 
+% else
+%     cmprobe   = (1:Npixels)';  % (?)
+% end
 
 signal          = cell(Ndelays,1);
 t1delays        = cell(Ndelays,1);
