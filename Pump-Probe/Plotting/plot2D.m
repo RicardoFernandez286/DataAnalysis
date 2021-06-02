@@ -33,6 +33,8 @@ symcolrange         = app.PP_SymmetricColourScale.Value;
 LineStyle           = app.PP_ContourFormat.Value;
 plot_colourscheme   = app.PP_ColourScheme.Value;
 
+DataFormat          = app.PP_DataFormat.Value;
+DetSwitch           = app.PP_ProbeDetSwitch.Value;
 
 linlog_time         = dataStruct.linlog;
 

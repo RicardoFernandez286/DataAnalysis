@@ -104,26 +104,34 @@ end
 % then  : from positive to positive
 % last  : from negative to negative
 
-if (cmin_input < 0)  &&  (cmax_input > 0) 
-    if abs(cmin_input) < cmax_input     
+
+
+if (cmin_input < 0)  &&  (cmax_input > 0)  
+        
+    if abs(cmin_input) < cmax_input 
+         
         % |--------|---------|--------------------|    
       % -cmax      cmin       0                  cmax         [cmin,cmax]
+ 
        start_point = max(round((cmin_input+cmax_input)/2/cmax_input*n_total),1);
-       newmap = squeeze(newmap_all(start_point:n_total,:));       
-    elseif abs(cmin_input) >= cmax_input        
+       newmap = squeeze(newmap_all(start_point:n_total,:));
+       
+    elseif abs(cmin_input) >= cmax_input
+        
          % |------------------|------|--------------|    
-       %  cmin                0     cmax          -cmin         [cmin,cmax]          
+       %  cmin                0     cmax          -cmin         [cmin,cmax]   
+       
        end_point = max(round((cmax_input-cmin_input)/2/abs(cmin_input)*n_total),1);
        newmap = squeeze(newmap_all(1:end_point,:));
     end
-    
+       
 elseif cmin_input >= 0
+
        if lims(1) < 0 
            disp('caution:')
            disp('there are still values smaller than 0, but cmin is larger than 0.')
            disp('some area will be in red color while it should be in blue color')
        end
-       
         % |-----------------|-------|-------------|    
       % -cmax               0      cmin          cmax         [cmin,cmax]
  
@@ -131,7 +139,6 @@ elseif cmin_input >= 0
        newmap = squeeze(newmap_all(start_point:n_total,:));
 
 elseif cmax_input <= 0
-
        if lims(2) > 0 
            disp('caution:')
            disp('there are still values larger than 0, but cmax is smaller than 0.')
@@ -140,7 +147,6 @@ elseif cmax_input <= 0
        
          % |------------|------|--------------------|    
        %  cmin         cmax    0                  -cmin         [cmin,cmax]      
-
        end_point = max(round((cmax_input-cmin_input)/2/abs(cmin_input)*n_total),1);
        newmap = squeeze(newmap_all(1:end_point,:));
 end
