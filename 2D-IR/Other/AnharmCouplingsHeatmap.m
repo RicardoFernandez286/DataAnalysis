@@ -1,4 +1,4 @@
-function AnharmCouplingsHeatmap
+% function AnharmCouplingsHeatmap
 
 Nmodes = 4;
 ModeLabels = ["A'(2)" "A''" "A'(1)" "C{\equiv}C"];
@@ -13,6 +13,18 @@ LineStyle = 'solid'; % 'solid' | 'dashed' | 'dotted' | 'dashdot' |'none'
 PlotW1W3  = 1; % 0 = energy ordering, 1 = 2D-IR like
 plotTriang= -1; % 0 = plot everything; 1 = upper; -1 = lower;
 hideDiag  = 0;
+
+% freqs = [...
+% 2002.62
+% 2102.86
+% 2226.10
+% 3986.05
+% 4151.60
+% 4365.49
+% 4078.34
+% 4228.40
+% 4327.87
+% ];
 
 %% Frequency input
 switch molec
@@ -213,4 +225,88 @@ h_map.Units = originalUnits;
 % fh.Units = originalUnits_fig; 
 % h_map.Units = originalUnits_ax;
 
+
+%% Plot a simulated 2D-IR spectrum with arbitrary lineshapes and intensities
+MinWL   = (min(H1(:)))/2-40;
+MaxWL   = (max(H1(:)))/2+30;
+Npoints = 256;
+
+x       = linspace(MinWL,MaxWL,Npoints);
+y       = x;
+[X,Y]   = meshgrid(x,y);
+
+Z = zeros(size(X));
+
+sx   = 8;
+sy   = sx;
+c1   = 0;
+int  = [1 1 1 1];
+
+for i=1:Nmodes
+    for j=1:Nmodes
+        x1 = fund(i);
+        x3 = fund(j);
+        Anh = H1-H2;
+        a1 = Anh(i,j);
+        ESA1 = (int(i)*int(j)).^2;
+        GSB1 = -ESA1;
+        % Calculate the peaks
+        ZGSB    = G2Dc(X,Y,x1,x3,sx,sy,c1,GSB1/sqrt(1-c1));
+        ZESA    = G2Dc(X,Y,x1,x3-a1,sx,sy,c1,ESA1/sqrt(1-c1));
+
+        Z = Z + (ZGSB + ZESA)';
+    end
 end
+
+fh = figure(2);
+fh.Color = 'w';
+clf(fh)
+ax1 = axes('parent',fh);
+
+PP_x    = '\omega_{1} (cm^{-1})';
+PP_y    = '\omega_{3} (cm^{-1})';
+percentScale = 100;
+Ncontours = 40;
+plot_skip = 4;
+showContours = 1;
+
+max_cut         = percentScale/100*max(abs(Z(:)));
+min_cut         = -max_cut;
+plot_contours   = linspace(min_cut,max_cut,Ncontours+1);
+plot_contours   = plot_contours(1:end-1);
+
+% negCont         = decim(linspace(min_cut,0,round((Ncontours+1)/2)),plot_skip,'mean');
+% posCont         = decim(linspace(0,max_cut,round((Ncontours+1)/2)),plot_skip,'mean');
+% plot_outlines   = [negCont; posCont];
+plot_outlines   = linspace(min_cut,max_cut,round(Ncontours/plot_skip));
+
+% Plot
+cla(ax1);
+
+contourf(ax1,X,Y,Z',plot_contours,'LineColor','none','LineStyle','-','LineWidth',0.1);
+hold(ax1,'on')
+if showContours == 1
+    contour(ax1,X,Y,Z',plot_outlines,'LineColor',[0 0 0],'LineStyle','-','LineWidth',0.1);
+end
+hold(ax1,'off')
+
+cmap    = darkb2r(min_cut,max_cut,Ncontours,2);
+colormap(ax1,cmap);
+caxis(ax1,[min_cut,max_cut]);
+
+diagline = refline(ax1,1,0);
+diagline.Color = [0 0 0];
+diagline.LineWidth = 1;
+
+xlabel(ax1,PP_x,'FontWeight','bold','FontSize',14);
+ylabel(ax1,PP_y,'FontWeight','bold','FontSize',14);
+
+ax1.PlotBoxAspectRatio     = [1 1 1];
+ax1.DataAspectRatio        = [1 1 1];
+ax1.DataAspectRatioMode    = 'manual';
+ax1.PlotBoxAspectRatioMode = 'manual';
+ax1.Layer                  = 'top';
+ax1.FontSize               = 18;
+box(ax1,'on');
+fh.Position(3:4) = [643 551];
+colorbar;
