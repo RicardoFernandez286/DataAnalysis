@@ -1,9 +1,11 @@
 % function AnharmCouplingsHeatmap
 
-Nmodes = 4;
-ModeLabels = ["A'(2)" "A''" "A'(1)" "C{\equiv}C"];
 
-molec = 'NMe2';
+% ModeLabels = ["A'(2)" "A''" "A'(1)" "C{\equiv}C"];
+
+ModeLabels = ["{\nu}_{CO}(a)" "{\nu}_{CO}(s)" "A'(2)" "A''" "A'(1)"];
+
+molec = 'ReRU';
 cmapID = 'Blues5';
 NanCol  = 1*[1 1 1];
 LineCol = 1*[1 1 1];
@@ -14,17 +16,11 @@ PlotW1W3  = 1; % 0 = energy ordering, 1 = 2D-IR like
 plotTriang= -1; % 0 = plot everything; 1 = upper; -1 = lower;
 hideDiag  = 0;
 
-% freqs = [...
-% 2002.62
-% 2102.86
-% 2226.10
-% 3986.05
-% 4151.60
-% 4365.49
-% 4078.34
-% 4228.40
-% 4327.87
-% ];
+
+percentScale = 100;
+Ncontours = 40;
+plot_skip = 4;
+showContours = 1;
 
 %% Frequency input
 switch molec
@@ -46,6 +42,13 @@ freqs = [...
 4261.84
 ];
 
+int  = [...
+1439.5889
+1436.1726
+1212.1873
+122.7781
+];
+
     case 'Ph'
 freqs = [...
 1922.71
@@ -63,9 +66,69 @@ freqs = [...
 4199.89
 4303.99
 ];
-end
 
+    case 'NMe2-T1'
+        freqs=[...
+            1904.58
+1927.56
+2024.02
+2100.90
+3795.51
+3844.15
+4039.95
+4185.72
+3825.27
+3915.69
+4005.27
+3933.46
+4028.09
+4123.34
+];
+
+int  = [...
+1460.2766
+1279.7679
+1967.8287
+5476.4387    
+];
+
+    case 'ReRU'
+freqs =[...
+    1660.14
+1661.56
+1940.99
+1947.29
+2053.89
+3304.25
+3317.88
+3870.27
+3883.92
+4099.92
+3308.18
+3601.10
+3607.45
+3713.98
+3602.49
+3608.84
+3715.38
+3879.82
+3979.38
+3983.84
+];
+
+int = [...
+    60.9175
+64.8048
+1396.2346
+1039.9669
+916.8006
+];
+
+end
 %% Sort the data into the one and two exciton blocks
+Nf = length(freqs);
+Nmodes = 0.5*(sqrt(9+8*Nf)-3);
+
 NH2 = Nmodes + nchoosek(Nmodes,2);
 ExpectedN = Nmodes + NH2;
 
@@ -225,10 +288,13 @@ h_map.Units = originalUnits;
 % fh.Units = originalUnits_fig; 
 % h_map.Units = originalUnits_ax;
 
-
 %% Plot a simulated 2D-IR spectrum with arbitrary lineshapes and intensities
 MinWL   = (min(H1(:)))/2-40;
 MaxWL   = (max(H1(:)))/2+30;
+
+% MinWL = 1850;
+% MaxWL = 2150;
+
 Npoints = 256;
 
 x       = linspace(MinWL,MaxWL,Npoints);
@@ -237,10 +303,10 @@ y       = x;
 
 Z = zeros(size(X));
 
-sx   = 8;
+sx   = 5;
 sy   = sx;
 c1   = 0;
-int  = [1 1 1 1];
+
 
 for i=1:Nmodes
     for j=1:Nmodes
@@ -248,7 +314,7 @@ for i=1:Nmodes
         x3 = fund(j);
         Anh = H1-H2;
         a1 = Anh(i,j);
-        ESA1 = (int(i)*int(j)).^2;
+        ESA1 = sqrt(int(i)*int(j));
         GSB1 = -ESA1;
         % Calculate the peaks
         ZGSB    = G2Dc(X,Y,x1,x3,sx,sy,c1,GSB1/sqrt(1-c1));
@@ -258,6 +324,7 @@ for i=1:Nmodes
     end
 end
 
+%% 
 fh = figure(2);
 fh.Color = 'w';
 clf(fh)
@@ -265,10 +332,6 @@ ax1 = axes('parent',fh);
 
 PP_x    = '\omega_{1} (cm^{-1})';
 PP_y    = '\omega_{3} (cm^{-1})';
-percentScale = 100;
-Ncontours = 40;
-plot_skip = 4;
-showContours = 1;
 
 max_cut         = percentScale/100*max(abs(Z(:)));
 min_cut         = -max_cut;
