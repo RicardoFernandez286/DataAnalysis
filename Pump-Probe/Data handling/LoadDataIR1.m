@@ -206,9 +206,6 @@ else
     dataStruct.timescale = 'ns';
 end
 
-
-
-
 % Read the plot ranges
 mintime         = -0.5;
 maxtime         = max(delays);
@@ -219,7 +216,7 @@ zminmax         = round(max([abs(minabs) abs(maxabs)]),3);
 minwl           = min(cmprobe);
 maxwl           = max(cmprobe);
 Ncontours       = 40;
-plotranges      = [mintime maxtime minwl maxwl minabs maxabs];
+plotranges      = [mintime maxtime minwl maxwl minabs maxabs Ncontours];
 
 % Remove duplicate delays and average the data for repeated delays (new universal method - old way)
 % [delays,~,idx]  = unique(delays,'stable');
