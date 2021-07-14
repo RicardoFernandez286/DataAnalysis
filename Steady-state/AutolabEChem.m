@@ -16,7 +16,7 @@ DataType    = 'Nova';   % Options: 'EC-lab' or 'Ivium'
 SortScanRate = 1;
 
 %% Plotting options
-WhichScan   = 1;
+WhichScan   = 2;
 LineWidth   = 1.5;
 
 %% Get the directory and a list of .txt files to load and plot
