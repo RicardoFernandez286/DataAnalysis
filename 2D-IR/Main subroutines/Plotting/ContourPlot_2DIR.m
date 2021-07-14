@@ -155,8 +155,8 @@ switch cut_method
     case 'Uncalibrated'
         minindex        = 1;
         maxindex        = length(PumpAxis{m,k});
-%         probelim        = 150:210;
-        probelim    = 50:170;
+        probelim        = 1:192;
+%         probelim    = 96+[20:70];
 %         probelim        = 1:length(ProbeAxis);
 end
 

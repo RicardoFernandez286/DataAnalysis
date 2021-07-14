@@ -69,14 +69,16 @@ Npixels   = size(rawdata,2);
 Nbins     = round(size(rawdata,1)./Ndelays);
 bins      = (1:Nbins)';
 
+[t2delays,t2idx]  = sort(t2delays);
+
 % Variable variables (!!)
-dt1       = 14; % fs; may change
-w0        = 1670; % need to figure this in a better way
+dt1       = 22; % fs; may change
+w0        = 0; % need to figure this in a better way
 
 % if exist([filename '.2D'],'file') ~= 0
-%     cmprobe = 
+%     cmprobe     = (1:Npixels)';
 % else
-%     cmprobe   = (1:Npixels)';  % (?)
+    cmprobe     = (1:Npixels)';  % (?)
 % end
 
 signal          = cell(Ndelays,1);
@@ -86,9 +88,11 @@ dummy_Onescell  = cell(Ndelays,1);
 for i=1:Ndelays
     dummy_cell{i,1}     = 0;
     dummy_Onescell{i,1} = ones(Nbins,1);
-    signal{i,1}         = rawdata((Nbins*(i-1)+1):(Nbins*i),:);
+    signal_temp{i,1}    = log10(rawdata((Nbins*(i-1)+1):(Nbins*i),:)+1); % convert to mOD
     t1delays{i,1}       = bins.*dt1;
 end
+
+signal = signal_temp(t2idx);
 
 %% WRITE to dataStruct (Load)
     dataStruct.isSimulation  = 0;
