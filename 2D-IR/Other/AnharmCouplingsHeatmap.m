@@ -5,7 +5,7 @@
 
 ModeLabels = ["{\nu}_{CO}(a)" "{\nu}_{CO}(s)" "A'(2)" "A''" "A'(1)"];
 
-molec = 'ReRU';
+molec = 'sfelkgh';
 cmapID = 'Blues5';
 NanCol  = 1*[1 1 1];
 LineCol = 1*[1 1 1];
@@ -16,11 +16,40 @@ PlotW1W3  = 1; % 0 = energy ordering, 1 = 2D-IR like
 plotTriang= -1; % 0 = plot everything; 1 = upper; -1 = lower;
 hideDiag  = 0;
 
+sx   = 7.5;
+sy   = sx;
+c1   = 0;
 
 percentScale = 100;
 Ncontours = 40;
 plot_skip = 4;
 showContours = 1;
+
+
+freqs = [...
+1776.72
+1903.92
+1902.90
+1936.53
+2027.77
+3515.70
+3795.71
+3793.77
+3862.97
+4048.42
+3681.87
+3680.72
+3707.48
+3803.53
+3799.11
+3837.37
+3919.72
+3836.19
+3918.67
+3950.54
+];
+
+int = ones(size(freqs));
 
 %% Frequency input
 switch molec
@@ -302,11 +331,6 @@ y       = x;
 [X,Y]   = meshgrid(x,y);
 
 Z = zeros(size(X));
-
-sx   = 5;
-sy   = sx;
-c1   = 0;
-
 
 for i=1:Nmodes
     for j=1:Nmodes
