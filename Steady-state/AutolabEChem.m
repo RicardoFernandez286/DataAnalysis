@@ -8,15 +8,18 @@
 % - Other major improvements
 
 %% Change the input units here
-inI_units   = 'A';      % Options: 'mA', 'microA' or 'A'
+inI_units   = 'A';      % Options: 'mA', 'microA' or 'A
 inE_units   = 'V';      % Options: 'mV' or 'V'
 DataType    = 'Nova';   % Options: 'EC-lab' or 'Ivium'
 
+outI_units  = 'microA';
+outE_units  = 'mV';
+
 %% Sort by scan rate?
-SortScanRate = 1;
+SortScanRate = 0;
 
 %% Plotting options
-WhichScan   = 2;
+WhichScan   = 1:3;
 LineWidth   = 1.5;
 
 %% Get the directory and a list of .txt files to load and plot
@@ -67,11 +70,21 @@ end
 % Change units
 switch inI_units
     case 'microA'
-        outI_factor = 1e-3;
+        outI_factor = 1e-6;
     case 'mA'
-        outI_factor = 1;
+        outI_factor = 1e-3;
     case 'A'
+        outI_factor = 1;
+end
+
+switch outI_units
+    case 'microA'
+        outI_factor = 1e6;
+        outI_units = '{\mu}A';
+    case 'mA'
         outI_factor = 1e3;
+    case 'A'
+        outI_factor = 1;
 end
 
 switch inE_units
@@ -80,8 +93,6 @@ switch inE_units
     case 'V'
         outE_factor = 1000;
 end
-
-outI_units  = 'mA';   % set the legend of the current axis
 
 if ~isempty(ref_pot_name)
     outE_units  = ['mV vs. ' ref_pot_name];     % set the legend of the potential axis (reference comes later)
@@ -133,13 +144,21 @@ switch DataType
         for i=1:Nfiles
             % Read from file
             data        = readmatrix([rootdir filesep filenames{filenames_idx(i)}],'NumHeaderLines',1);
-            data(:,1)   = data(:,2)*outE_factor - ref_pot_mV;
-            data(:,2)   = data(:,3)*outI_factor;
-            % Sort into {[E x I]} vs scan number
-            Nscans(i)   = max(data(:,4)); 
-            for j=1:Nscans
-                AllData{i,j}    = data(data(:,4)==j,1:2);
+            if contains(filenames{filenames_idx(i)},'DPV','ignorecase',1)
+                data(:,1)   = data(:,4)*outE_factor - ref_pot_mV;
+                data(:,2)   = data(:,3)*outI_factor;
+                Nscans(i)   = 1;
+                AllData{i,1}= data(:,1:2);
+            else
+                data(:,1)   = data(:,2)*outE_factor - ref_pot_mV;
+                data(:,2)   = smooth(data(:,3)*outI_factor);
+                % Sort into {[E x I]} vs scan number
+                Nscans(i)   = max(data(:,4)); 
+                for j=1:Nscans
+                    AllData{i,j}    = data(data(:,4)==j,1:2);
+                end
             end
+
             % Get a caption string
             [~,caption{i},~]    = fileparts(filenames{filenames_idx(i)});
         end
@@ -187,7 +206,12 @@ ax.Position = [0.07 0.1475 0.75 0.8];
 box(ax,'on');
 ax.FontSize = 14;
 xlabel(ax,['Potential (' outE_units ')'],'FontWeight','bold');
-ylabel(ax,['Current (' outI_units ')'],'FontWeight','bold');
+
+if contains(filenames{filenames_idx(i)},'DPV','ignorecase',1)
+    ylabel(ax,['{\delta}i (' outI_units ')'],'FontWeight','bold');
+else
+    ylabel(ax,['Current (' outI_units ')'],'FontWeight','bold');
+end
 axis(ax,'tight');
 
 % Add XY lines
@@ -204,9 +228,12 @@ if SortScanRate == 1
 %         drawnow;
     end
 else
+    cmap = colormap(ax);
     for i=1:Nfiles
-        plotScan = min(Nscans(i),WhichScan);
-        plot(AllData{i,plotScan}(:,1),AllData{i,plotScan}(:,2),'DisplayName',caption{i},'LineWidth',LineWidth)
+        for j=1:(min([Nscans(i),length(WhichScan)]))
+            plotScan = min(Nscans(i),WhichScan(j));
+            plot(AllData{i,plotScan}(:,1),AllData{i,plotScan}(:,2),'DisplayName',caption{i},'Color',cmap(i,:),'LineWidth',LineWidth)
+        end
     end
 end
 hold(ax,'off');
