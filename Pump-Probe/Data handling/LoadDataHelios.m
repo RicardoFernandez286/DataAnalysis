@@ -38,7 +38,7 @@ if Nscans >= 1
         tempWL          = tempdata(1,2:end);
         tempWL          = tempWL(1:end-NaNidx);
         tempscandata    = tempdata(2:end,2:(end-NaNidx));
-        scandata(:,:,s) = fillmissing(tempscandata, 'linear');
+        scandata(:,:,s) = fillmissing(tempscandata, 'linear')*1000;
     end
     noise               = std(scandata,0,3);
 else
