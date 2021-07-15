@@ -81,7 +81,7 @@ end
 %% WRITE to dataStruct (Load)
     dataStruct.isSimulation  = 0;
     dataStruct.isShaper      = 1;
-    dataStruct.cmprobe       = cmprobe;
+    dataStruct.cmprobe       = cmprobe';
     dataStruct.bins          = bins;
     dataStruct.t2delays      = t2delays./1000; % in ps!
     dataStruct.Ndelays       = Ndelays;
@@ -95,36 +95,6 @@ end
     dataStruct.Nscans        = 1;
     dataStruct.datatype      = 'TimeFreq';
     dataStruct.interferogram = dummy_Onescell;
-return
-%% WRITE to dataStruct (Process 2D-IR)
-    dataStruct.ProbeAxis           = W3;
-    dataStruct.freq_fit            = [];
-    dataStruct.scattering_maxima   = [];
-    dataStruct.PumpAxis            = PumpAxis;
-    
-    dataStruct.t1delays            = t1delays;
-    
-    dataStruct.binzero             = dummy_cell;
-    dataStruct.binspecmax          = ones(Ndelays,1);
-    dataStruct.apodize_function    = dummy_Onescell;
-    dataStruct.FFT_ZPsig           = [];
-    dataStruct.phased_FFTZPsig     = dummy_Onescell;
-	dataStruct.phased_FFTZPint     = dummy_Onescell;
-    dataStruct.fittedPhase         = dummy_Onescell;
-    dataStruct.phasepoints         = dummy_Onescell;
-    dataStruct.ZP_phase            = dummy_cell;
-    dataStruct.phase_coeff         = dummy_cell;
-    dataStruct.apo_interferogram   = [];
-    dataStruct.apo_signal          = [];
-    dataStruct.signal              = [];
-    dataStruct.PROC_2D_DATA        = PROC_2D_DATA;
-    dataStruct.SpecDiff            = 0;
-    
-% Clear 2DGC fit results
-dataStruct.FitResults    = [];
-dataStruct.t2_startFit   = [];
-dataStruct.FitInput      = [];
-
 else
     error('Not a valid 2D-IR dataset: empty folder or corrupt data')
 end
