@@ -61,11 +61,11 @@ handles.YellowLight=handles.Preview.UserData;
 handles.GreenLight=handles.SaveButton.UserData;
 
 % Read the data (XYY form assumed)
-handles.fittype = varargin{6};          % Double [1=Fit traces, 2=Fit SVD]
-handles.Data_x = varargin{1};           % 1 x m Array
-handles.Data_y = varargin{2};           % m x n Array
-handles.YLabel = varargin{4};           % Char
-handles.timescale = varargin{5};        % Char
+handles.fittype     = varargin{6};  % Double [1=Fit traces, 2=Fit SVD]
+handles.Data_x      = varargin{1};  % 1 x m Array
+handles.Data_y      = varargin{2};  % m x n Array
+handles.YLabel      = varargin{4};  % Char
+handles.timescale   = varargin{5};  % Char
 
 switch handles.fittype
     case 1
@@ -930,9 +930,9 @@ switch handles.FitDone
             end
             fitted_data   = double(plotfunc(p_values,timeaxis));
             if handles.fittype==2
-                dp(FitNo) = plot(handles.dataAxes,handles.Data_x,handles.Data_y(:,FitNo),'o','color',cmap(FitNo,:),'LineWidth',0.025);
-                fp(FitNo) = plot(handles.dataAxes,timeaxis,fitted_data,'-','LineWidth',2,'color',cmap(FitNo,:),'DisplayName',['SVD Component ' num2str(FitNo)]);
-                rp(FitNo) = plot(handles.resAxes,handles.Data_x,(handles.Data_y(:,FitNo) - plotfunc(p_values,handles.Data_x)),'-o','color',cmap(FitNo,:));
+                dp(FitNo) = plot(handles.dataAxes,handles.Data_x,handles.Data_y(:,FitNo),'o','color',brighten(cmap(FitNo,:),+0.5),'LineWidth',0.025);
+                fp(FitNo) = plot(handles.dataAxes,timeaxis,fitted_data,'-','LineWidth',2,'color',brighten(cmap(FitNo,:),-0.5),'DisplayName',['SVD Component ' num2str(FitNo)]);
+                rp(FitNo) = plot(handles.resAxes,handles.Data_x,(handles.Data_y(:,FitNo) - plotfunc(p_values,handles.Data_x)),'-','color',brighten(cmap(FitNo,:),+0.5));
             else
                 plot(handles.dataAxes,handles.Data_x,handles.Data_y(:,handles.SelectTraces.Value),'o','color',[0.2 0.2 1])               
                 plot(handles.dataAxes,timeaxis,fitted_data,'-','LineWidth',2,'color','b')

@@ -16,10 +16,10 @@ outI_units  = 'microA';
 outE_units  = 'mV';
 
 %% Sort by scan rate?
-SortScanRate = 0;
+SortScanRate = 1;
 
 %% Plotting options
-WhichScan   = 1:3;
+WhichScan   = 2;
 LineWidth   = 1.5;
 
 %% Get the directory and a list of .txt files to load and plot
@@ -232,7 +232,11 @@ else
     for i=1:Nfiles
         for j=1:(min([Nscans(i),length(WhichScan)]))
             plotScan = min(Nscans(i),WhichScan(j));
-            plot(AllData{i,plotScan}(:,1),AllData{i,plotScan}(:,2),'DisplayName',caption{i},'Color',cmap(i,:),'LineWidth',LineWidth)
+            if j==1
+                plot(AllData{i,plotScan}(:,1),AllData{i,plotScan}(:,2),'DisplayName',caption{i},'Color',cmap(i,:),'LineWidth',LineWidth)
+            else
+                plot(AllData{i,plotScan}(:,1),AllData{i,plotScan}(:,2),'DisplayName',caption{i},'Color',cmap(i,:),'LineWidth',LineWidth,'HandleVisibility','off')
+            end
         end
     end
 end

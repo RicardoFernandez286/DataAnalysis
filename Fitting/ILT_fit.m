@@ -1,18 +1,18 @@
-% function [Tau,LTspec] = ILT_fit(time,probeWL,Zdata,Noise)
+function [Tau,LTspec] = ILT_fit(time,probeWL,Zdata,Noise)
 % Inverse Laplace Transform (Regularised by maximum entropy method)
 % Preliminary version (0.9b)
 % 31.07.2020 / Ricardo Fernández-Terán
 %
 
 plotWL      = 20;
-test        = 1;
+test        = 0;
 
 %% Hardcoded Settings
 n10         = 15;                       % No. time constants per decade
 tau_min     = 0.1;                      % Shortest time constant
 tau_max     = 1e5;                      % Longest time constant
 % weight      = mean(abs(Noise(:)));      % Weight of the entropy contribution
-weight = 1e-10;
+weight = 1e-3;
 % weight = 1.4709;
 
 
@@ -144,4 +144,4 @@ S    = sum(sqrt(x.^2+4*m.^2) - x.*log((sqrt(x.^2+4*m.^2)+x)./(2.*m)) - 2.*m,'all
 out  = RMSD./Lambda - S;
 end
 
-% end
+end

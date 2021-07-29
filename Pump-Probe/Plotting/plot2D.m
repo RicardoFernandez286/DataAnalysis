@@ -67,11 +67,19 @@ if sum(Zdata(:),'omitnan') == 0
     return
 end
 
-if plot_filledcontours == 1
-    contourf(where,X,Y,Z,plot_contours,'LineStyle','-','LineColor','flat');
+if numel(Zdata) <= 2048*10
+    if plot_filledcontours == 1
+        contourf(where,X,Y,Z,plot_contours,'LineStyle','-','LineColor','flat');
+    else
+        contour(where,X,Y,Z,plot_contours,'LineStyle','-','LineColor','flat');
+    end
 else
-    contour(where,X,Y,Z,plot_contours,'LineStyle','-','LineColor','flat');
-end
+    if plot_filledcontours == 1
+        pcolor(where,X,Y,Z);
+    else
+        pcolor(where,X,Y,Z);
+    end
+end    
 
 %% Make the plot format nice:
 
