@@ -63,7 +63,7 @@ if sum(Zdata(:),'omitnan') == 0
 end
 
 if plot_filledcontours == 1
-    surf(where,X,Y,Z,'LineStyle','-','EdgeColor',0.4*[1 1 1],'FaceAlpha',0.8);
+    surf(where,X,Y,Z,'LineStyle','-','EdgeColor','flat','FaceAlpha',0.8);
 else
     mesh(where,X,Y,Z,'LineStyle','-','EdgeColor','flat');
 end
@@ -71,7 +71,7 @@ end
 % Show the plane of zero DeltaAbs
 ZeroPlane   = zeros(length(Y),length(X));
 hold(where,'on');
-surf(where,X,Y,ZeroPlane,'FaceAlpha',0.5,'FaceColor','w','EdgeColor','none');
+surf(where,X,Y,ZeroPlane,'FaceAlpha',0.8,'FaceColor',0.85*[1 1 1],'EdgeColor','none');
 hold(where,'off');
 
 %% Make the plot format nice:
