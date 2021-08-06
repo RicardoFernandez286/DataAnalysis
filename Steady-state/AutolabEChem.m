@@ -6,11 +6,13 @@
 % - Added compatibility with Ivium data (XY XY XY XY format). Can discriminate in the case E I Q was saved instead of XY XY XY
 % - Updated potential referencing and unit conversion
 % - Other major improvements
+% If you want to have a Latex-type legend
+% run:  legend('interpreter','tex') after the figure is done
 
 %% Change the input units here
 inI_units   = 'A';      % Options: 'mA', 'microA' or 'A
 inE_units   = 'V';      % Options: 'mV' or 'V'
-DataType    = 'Nova';   % Options: 'EC-lab' or 'Ivium'
+DataType    = 'Nova'; % Options: 'Nova' or 'Kittie'
 
 outI_units  = 'microA';
 outE_units  = 'mV';
@@ -19,7 +21,7 @@ outE_units  = 'mV';
 SortScanRate = 0;
 
 %% Plotting options
-WhichScan   = 1:3;
+WhichScan   = 2;
 LineWidth   = 1.5;
 
 %% Get the directory and a list of .txt files to load and plot
@@ -31,7 +33,12 @@ end
 
 filelist    = dir(rootdir);
 filenames   = {filelist.name}';
-filenames   = filenames(contains(filenames,'.dat','IgnoreCase',true));
+switch DataType
+    case 'Nova'
+        filenames   = filenames(contains(filenames,'.dat','IgnoreCase',true));
+    case 'Kittie'
+        filenames   = filenames(contains(filenames,'.xlsx','IgnoreCase',true));
+end
 [filenames_idx,filesSelected] = listdlg('ListString',filenames,'SelectionMode','multiple','ListSize',[400,300],'PromptString','Select files to plot and load:');
 
 if filesSelected == 0
@@ -56,7 +63,7 @@ switch ref_type
         ref_pot_mV      = str2num(ref_pot{1})+str2double(ref_pot{2});
         ref_pot_name    = 'Fc/Fc^+';
     case 'None/Other'
-        ref_pot         = inputdlg({'Reference couple half-potential (mV):';'Reference couple name:'},'Define potential scale',[1,50],{'0';'Fc/Fc^+'});
+        ref_pot         = inputdlg({'Reference couple half-potential (mV):';'Reference couple name:'},'Define potential scale',[1,50],{'0';'Ag/Ag^+'});
         if(isempty(ref_pot))
             return
         end
@@ -108,38 +115,6 @@ AllData     = cell(Nfiles,1);
 caption     = cell(Nfiles,1);
 
 switch DataType
-    case 'Ivium'
-        for i=1:Nfiles
-            % Read from file
-            data        = readmatrix([rootdir filesep filenames{filenames_idx(i)}],'NumHeaderLines',1);
-            % Remove NaN columns
-            data        = data(:,any(~isnan(data), 1));
-            % Sort into {[E x I]} vs scan number
-            Nscans(i)   = floor(size(data,2)/2); 
-            
-            % Sort into {[E x I]} vs scan number
-            for j=1:Nscans(i)
-                data(:,2*j-1)   = data(:,2*j-1)*outE_factor - ref_pot_mV;
-                data(:,2*j)     = data(:,2*j)*outI_factor;
-                AllData{i,j}    = data(:,(2*j-1):2*j);
-            end
-            % Get a caption string
-            [~,caption{i},~]    = fileparts(filenames{filenames_idx(i)});
-        end
-    case 'EC-lab'
-        for i=1:Nfiles
-            % Read from file
-            data        = readmatrix([rootdir filesep filenames{filenames_idx(i)}],'NumHeaderLines',1);
-            data(:,1)   = data(:,1)*outE_factor - ref_pot_mV;
-            data(:,2)   = data(:,2)*outI_factor;
-            % Sort into {[E x I]} vs scan number
-            Nscans(i)   = max(data(:,3)); 
-            for j=1:Nscans
-                AllData{i,j}    = data(data(:,3)==j,1:2);
-            end
-            % Get a caption string
-            [~,caption{i},~]    = fileparts(filenames{filenames_idx(i)});
-        end
     case 'Nova'
         for i=1:Nfiles
             % Read from file
@@ -154,7 +129,7 @@ switch DataType
                 data(:,2)   = smooth(data(:,3)*outI_factor);
                 % Sort into {[E x I]} vs scan number
                 Nscans(i)   = max(data(:,4)); 
-                for j=1:Nscans
+                for j=1:Nscans(i)
                     AllData{i,j}    = data(data(:,4)==j,1:2);
                 end
             end
@@ -162,6 +137,28 @@ switch DataType
             % Get a caption string
             [~,caption{i},~]    = fileparts(filenames{filenames_idx(i)});
         end
+    case 'Kittie'
+        for i=1:Nfiles
+            % Read from file
+            data        = readmatrix([rootdir filesep filenames{filenames_idx(i)}],'NumHeaderLines',1);
+            if contains(filenames{filenames_idx(i)},'DPV','ignorecase',1)
+                data(:,1)   = data(:,4)*outE_factor - ref_pot_mV;
+                data(:,2)   = data(:,3)*outI_factor;
+                Nscans(i)   = 1;
+                AllData{i,1}= data(:,1:2);
+            else
+                data(:,1)   = data(:,4)*outE_factor - ref_pot_mV;
+                data(:,2)   = data(:,3)*outI_factor;
+                % Sort into {[E x I]} vs scan number
+                Nscans(i)   = max(data(:,5)); 
+                for j=1:Nscans(i)
+                    AllData{i,j}    = data(data(:,5)==j,1:2);
+                end
+            end
+
+            % Get a caption string
+            [~,caption{i},~]    = fileparts(filenames{filenames_idx(i)});
+        end        
 end
 
 %% Sort scan rate dependence
@@ -228,7 +225,7 @@ if SortScanRate == 1
 %         drawnow;
     end
 else
-    cmap = colormap(ax);
+    cmap = lines;
     for i=1:Nfiles
         for j=1:(min([Nscans(i),length(WhichScan)]))
             plotScan = min(Nscans(i),WhichScan(j));
