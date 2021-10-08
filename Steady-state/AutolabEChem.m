@@ -21,7 +21,7 @@ outE_units  = 'mV';
 SortScanRate = 1;
 
 %% Plotting options
-WhichScan   = 2;
+WhichScan   = 1;
 LineWidth   = 1.5;
 
 %% Get the directory and a list of .txt files to load and plot
@@ -121,6 +121,11 @@ switch DataType
             data        = readmatrix([rootdir filesep filenames{filenames_idx(i)}],'NumHeaderLines',1);
             if contains(filenames{filenames_idx(i)},'DPV','ignorecase',1)
                 data(:,1)   = data(:,4)*outE_factor - ref_pot_mV;
+                data(:,2)   = data(:,3)*outI_factor;
+                Nscans(i)   = 1;
+                AllData{i,1}= data(:,1:2);
+            elseif contains(filenames{filenames_idx(i)},'OYV','ignorecase',1)
+                data(:,1)   = data(:,2)*outE_factor - ref_pot_mV;
                 data(:,2)   = data(:,3)*outI_factor;
                 Nscans(i)   = 1;
                 AllData{i,1}= data(:,1:2);

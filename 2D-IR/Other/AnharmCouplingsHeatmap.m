@@ -1,9 +1,10 @@
 % function AnharmCouplingsHeatmap
 
-
+ModeLabels = ["A'(2)" "A''" "A'(1)"];
 % ModeLabels = ["A'(2)" "A''" "A'(1)" "C{\equiv}C"];
+% ModeLabels = ["A'(2)" "A''" "A'(1)" "N_{3}"];
 
-ModeLabels = ["{\nu}_{CO}(a)" "{\nu}_{CO}(s)" "A'(2)" "A''" "A'(1)"];
+% ModeLabels = ["{\nu}_{CO}(a)" "{\nu}_{CO}(s)" "A'(2)" "A''" "A'(1)"];
 
 molec = 'sfelkgh';
 cmapID = 'Blues5';
@@ -22,34 +23,27 @@ c1   = 0;
 
 percentScale = 100;
 Ncontours = 40;
-plot_skip = 4;
+plot_skip = 2;
 showContours = 1;
-
+contCol = [0.5 0.5 0.5];
 
 freqs = [...
-1776.72
-1903.92
-1902.90
-1936.53
-2027.77
-3515.70
-3795.71
-3793.77
-3862.97
-4048.42
-3681.87
-3680.72
-3707.48
-3803.53
-3799.11
-3837.37
-3919.72
-3836.19
-3918.67
-3950.54
+1923.13
+1963.59
+2052.32
+3828.91
+3915.27
+4095.80
+3883.54
+3965.40
+3994.74
 ];
 
-int = ones(size(freqs));
+int = [...
+1077.0810
+1276.7712
+1550.4466
+];
 
 %% Frequency input
 switch molec
@@ -180,6 +174,7 @@ H2 = triu(H2.',1) + tril(H2);
 
 anh = H1-H2;
 
+% anh(abs(anh)<0.04)=0;
 %% Plot and beautify
 fh = figure(1);
 fh.Color='w';
@@ -348,14 +343,19 @@ for i=1:Nmodes
     end
 end
 
+Z = Z./max(abs(Z(:)));
+
 %% 
 fh = figure(2);
 fh.Color = 'w';
 clf(fh)
 ax1 = axes('parent',fh);
 
-PP_x    = '\omega_{1} (cm^{-1})';
-PP_y    = '\omega_{3} (cm^{-1})';
+% PP_x    = '\omega_{1} (cm^{-1})';
+% PP_y    = '\omega_{3} (cm^{-1})';
+
+PP_y    = 'Pump Frequency (cm^{-1})';
+PP_x    = 'Probe Frequency (cm^{-1})';
 
 max_cut         = percentScale/100*max(abs(Z(:)));
 min_cut         = -max_cut;
@@ -370,10 +370,10 @@ plot_outlines   = linspace(min_cut,max_cut,round(Ncontours/plot_skip));
 % Plot
 cla(ax1);
 
-contourf(ax1,X,Y,Z',plot_contours,'LineColor','none','LineStyle','-','LineWidth',0.1);
+contourf(ax1,Y,X,Z',plot_contours,'LineColor','none','LineStyle','-','LineWidth',0.1);
 hold(ax1,'on')
 if showContours == 1
-    contour(ax1,X,Y,Z',plot_outlines,'LineColor',[0 0 0],'LineStyle','-','LineWidth',0.1);
+    contour(ax1,Y,X,Z',plot_outlines,'LineColor',contCol,'LineStyle','-','LineWidth',0.1);
 end
 hold(ax1,'off')
 
