@@ -1,6 +1,6 @@
-% function EChem()
-% CURRENT VERSION: v1.1a
-% 04.12.2019 / Ricardo Fernandez-Teran
+% function AutolabEChem()
+% CURRENT VERSION: v2.1b
+% 19.08.2021 / Ricardo Fernandez-Teran
 % Changelog:
 % - Added automatic peak detection and possibility to correct errors, as well as automated Randles-Sevcik and Trumpet plots.
 % - Added compatibility with Ivium data (XY XY XY XY format). Can discriminate in the case E I Q was saved instead of XY XY XY
@@ -12,7 +12,7 @@
 %% Change the input units here
 inI_units   = 'A';      % Options: 'mA', 'microA' or 'A
 inE_units   = 'V';      % Options: 'mV' or 'V'
-DataType    = 'Nova'; % Options: 'Nova' or 'Kittie'
+DataType    = 'Nova';   % Options: 'Nova', 'Kittie' or 'Sam'
 
 outI_units  = 'microA';
 outE_units  = 'mV';
@@ -24,6 +24,7 @@ SortScanRate = 1;
 WhichScan   = 1;
 LineWidth   = 1.5;
 
+%%%%%% DO NOT MODIFY ANYTHING BELOW THIS LINE
 %% Get the directory and a list of .txt files to load and plot
 rootdir     = uigetdir;
 
@@ -38,6 +39,8 @@ switch DataType
         filenames   = filenames(contains(filenames,'.dat','IgnoreCase',true));
     case 'Kittie'
         filenames   = filenames(contains(filenames,'.xlsx','IgnoreCase',true));
+    case 'Sam'
+        filenames   = filenames(contains(filenames,'.xls','IgnoreCase',true));
 end
 [filenames_idx,filesSelected] = listdlg('ListString',filenames,'SelectionMode','multiple','ListSize',[400,300],'PromptString','Select files to plot and load:');
 
@@ -163,16 +166,53 @@ switch DataType
 
             % Get a caption string
             [~,caption{i},~]    = fileparts(filenames{filenames_idx(i)});
-        end        
+        end 
+    case 'Sam'
+        for i=1:Nfiles
+            % Read from file
+            warning('off','MATLAB:table:ModifiedAndSavedVarnames');
+            data        = table2array(readtable([rootdir filesep filenames{filenames_idx(i)}],'FileType','delimitedtext'));
+            if contains(filenames{filenames_idx(i)},'DPV','ignorecase',1)
+                data(:,1)   = data(:,4)*outE_factor - ref_pot_mV;
+                data(:,2)   = data(:,3)*outI_factor;
+                Nscans(i)   = 1;
+                AllData{i,1}= data(:,1:2);
+            else
+                data(:,1)   = data(:,6)*outE_factor - ref_pot_mV;
+                data(:,2)   = data(:,3)*outI_factor;
+                % Sort into {[E x I]} vs scan number
+                Nscans(i)   = max(data(:,4)); 
+                for j=1:Nscans(i)
+                    AllData{i,j}    = data(data(:,4)==j,1:2);
+                end
+            end
+
+            % Get a caption string
+            [~,caption{i},~]    = fileparts(filenames{filenames_idx(i)});
+        end
 end
 
 %% Sort scan rate dependence
 if SortScanRate == 1
     ScanRates_num       = zeros(Nfiles,1);
     for i=1:Nfiles
-        spltCaption = strsplit(caption{i},'_');
-        ScanRates_st{i} = spltCaption{end-1};
-        ScanRates_num(i)= str2double(ScanRates_st{i});
+        switch DataType
+            case 'Sam'
+                spltCaption = strsplit(caption{i},{' ','-'});
+                ScanRates_st{i} = spltCaption{end};
+                ScanRates_st{i} = strrep(ScanRates_st{i},',','.');
+                ScanRates_num(i)= str2double(ScanRates_st{i});
+                if length(spltCaption) > 2
+                    ScanRates_st{i} = spltCaption{end-1};
+                    ScanRates_st{i} = strrep(ScanRates_st{i},',','.');
+                    ScanRates_num(i)= str2double(ScanRates_st{i});
+                end
+            otherwise
+                spltCaption = strsplit(caption{i},'_');
+                ScanRates_st{i} = spltCaption{end-1};
+                ScanRates_num(i)= str2double(ScanRates_st{i});
+        end
+
         if ScanRates_num(i) < 1
             caption{i}      = [num2str(ScanRates_num(i)*1000) ' mV/s'];
         else
