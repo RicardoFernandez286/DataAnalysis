@@ -385,20 +385,6 @@ if Transient2D
     PROC_2D_DATA    = PROCDATA;
 end
 
-%% Dummies processing
-if isnumeric(dummy)
-    PROC_2D_DATA        = PROC_2D_DATA(:,dummy);
-%     warndlg(['Plotting dummy ' num2str(dummy)]);
-elseif strcmp(dummy,'diff')
-    dummydiff           = min(dummydiff,Ndummies);
-    for i=1:Ndelays
-        PROCDATA{i,1}   = PROC_2D_DATA{i,dummydiff} - PROC_2D_DATA{i,1};
-    end
-    PROC_2D_DATA        = PROCDATA;
-%     warndlg('Plotting dummy 2 - dummy 1');
-end
-
-% interferogram   = 
 %% WRITE to dataStruct
     dataStruct.ProbeAxis           = ProbeAxis;
     dataStruct.freq_fit            = freq_fit;

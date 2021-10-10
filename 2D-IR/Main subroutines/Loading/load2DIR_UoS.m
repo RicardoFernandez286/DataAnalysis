@@ -41,13 +41,14 @@ end
 
 datafilename    = dataStruct.datafilename;
 rootdir         = dataStruct.rootdir;
+DetSz           = [96 96 32 32]; % Sizes of [probe1 probe2 ref1 ref2] in pixels
 
 %% Load all the necessary files after checking that they exist
 datadir     = [rootdir filesep datafilename];
 datadir_fl  = dir(datadir);
 datadir_fn  = {datadir_fl.name};
 
-[~,fn,~]   = fileparts(datadir_fn{contains(datadir_fn(:),'.LG','IgnoreCase',1)});
+[~,fn,~]    = fileparts(datadir_fn{contains(datadir_fn(:),'.LG','IgnoreCase',1)});
 
 filename    = [rootdir filesep datafilename filesep fn];
 
@@ -71,28 +72,55 @@ bins      = (1:Nbins)';
 
 [t2delays,t2idx]  = sort(t2delays);
 
-% Variable variables (!!)
-dt1       = 22; % fs; may change
-w0        = 0; % need to figure this in a better way
-
-% if exist([filename '.2D'],'file') ~= 0
-%     cmprobe     = (1:Npixels)';
-% else
-    cmprobe     = (1:Npixels)';  % (?)
-% end
-
-signal          = cell(Ndelays,1);
-t1delays        = cell(Ndelays,1);
-dummy_cell      = cell(Ndelays,1);
-dummy_Onescell  = cell(Ndelays,1);
-for i=1:Ndelays
-    dummy_cell{i,1}     = 0;
-    dummy_Onescell{i,1} = ones(Nbins,1);
-    signal_temp{i,1}    = log10(rawdata((Nbins*(i-1)+1):(Nbins*i),:)+1); % convert to mOD
-    t1delays{i,1}       = bins.*dt1;
+% If there is an w0 file in the current ROOTDIR, use it to set the rotating frame frequency.
+% Otherwise, plot relative to w0
+if exist([datadir filesep 'w0.csv'],'file') == 2
+	rotframe = readmatrix([datadir filesep 'w0.csv']);
+    w0  = rotframe(1);
+    dt1 = rotframe(2);
+else
+    prompt = {'Enter rotating frame frequency (\omega_{0}, in cm^{-1}):','Enter t_{1} time step (in fs):'};
+    dlgtitle = 'Rotating Frame Settings';
+    definput = {'1700','22'};
+    dims = [1 40];
+    opts.Interpreter = 'tex';
+    answer = inputdlg(prompt,dlgtitle,dims,definput,opts);
+    
+    if isempty(answer)
+        w0  = 0;
+        dt1 = 1;
+    else
+        w0  = str2double(answer{1});
+        dt1 = str2double(answer{2});
+        writematrix([w0;dt1],[datadir filesep 'w0.csv']);
+    end
 end
 
-signal = signal_temp(t2idx);
+if exist([rootdir filesep datafilename filesep 'CalibratedProbe.csv'],'file') ~= 0
+    probe_tmp   = readmatrix([rootdir filesep datafilename filesep 'CalibratedProbe.csv']);
+    cal=1;
+else
+    probe_tmp  = [1:96 1:96];  % (?)
+    cal=0;
+end
+
+signal_temp     = cell(Ndelays,2);
+t1delays        = cell(Ndelays,2);
+dummy_cell      = cell(Ndelays,2);
+dummy_Onescell  = cell(Ndelays,2);
+cmprobe         = cell(1,2);
+
+for k=1:2 % Ndetectors
+    idx = [1:DetSz(k)] + sum(DetSz(1:k-1));
+    for i=1:Ndelays
+        dummy_cell{i,k}     = 0;
+        dummy_Onescell{i,k} = ones(Nbins,1);
+        signal_temp{i,k}    = log10(rawdata((Nbins*(i-1)+1):(Nbins*i),idx)+1)*1000; % convert dT/T to mOD
+        t1delays{i,k}       = [bins bins.*dt1];
+    end
+end
+
+signal = signal_temp(t2idx,:);
 
 %% WRITE to dataStruct (Load)
     dataStruct.isSimulation  = 0;
@@ -102,7 +130,7 @@ signal = signal_temp(t2idx);
     dataStruct.t2delays      = t2delays; % Delays already in ps !!!
     dataStruct.Ndelays       = Ndelays;
     dataStruct.signal        = signal;
-    dataStruct.Nspectra      = 1;
+    dataStruct.Nspectra      = 2;
     dataStruct.Ndummies      = 1;
     dataStruct.Ndatastates   = 1;
     dataStruct.Nbins         = Nbins;
@@ -111,7 +139,8 @@ signal = signal_temp(t2idx);
     dataStruct.Nscans        = 1;
     dataStruct.datatype      = 'TimeFreq';
     dataStruct.interferogram = dummy_Onescell;
-
+    dataStruct.w0            = w0;
+    dataStruct.dt1           = dt1;
 % Clear 2DGC fit results
 dataStruct.FitResults    = [];
 dataStruct.t2_startFit   = [];

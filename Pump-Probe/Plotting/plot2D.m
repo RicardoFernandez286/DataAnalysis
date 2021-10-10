@@ -1,4 +1,4 @@
-function plot2D(app,Zdata,where,TitleOnOff)
+function plot2D(app,Zdata,where,TitleOnOff,WhichDetector)
 % Description: This function will make a contour plot of transient data
 % Usage: handles = plot2D(dataStruct,Zdata,where,TitleOnOff)
 % Inputs:

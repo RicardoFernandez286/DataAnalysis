@@ -1,5 +1,5 @@
 function dataStruct = process2DIR_UoS(app,dataStruct,ReProcess,varargin)
-% Description:  This function apodizes, zeropads and phases 2D IR data
+% Description:  This function apodises, zeropads and phases 2D IR data
 %               from the setup at the University of Sheffield
 %
 % Usage: dataStruct = process2DIR_UoS(dataStruct)
@@ -27,7 +27,7 @@ function dataStruct = process2DIR_UoS(app,dataStruct,ReProcess,varargin)
 %     The calculation routines were updated accordingly in MESS and now the chopper signal and all
 %     datastates should be calculated properly.
 %
-% Ricardo Fernandez-Teran / 11.05.2021 / v1.0a
+% Ricardo Fernandez-Teran / 08.10.2021 / v2.0b
 
 %% Choose between debug/manual mode and normal mode
 debug=0;
@@ -61,6 +61,9 @@ signal		    = dataStruct.signal;
 rootdir         = dataStruct.rootdir;
 datasubdir      = dataStruct.datafilename;
 
+w0              = dataStruct.w0;
+dt1             = dataStruct.dt1;
+
 datadir     = [rootdir filesep datasubdir];
 datadir_fl  = dir(datadir);
 datadir_fn  = {datadir_fl.name};
@@ -93,25 +96,27 @@ else
     Transient2D_mode    = 'None';
 end
 
-% If there is a calibrated WL file in the current ROOTDIR, use it
+% If there is a calibrated WL file in the current EXPDIR, use it
 if probe_calib == 0 
     wavenumberfile='CalibratedProbe.csv';
+    probe_tmp = [];
     if exist([rootdir filesep datadir filesep wavenumberfile],'file') == 2
         probe_calib = 2;
-        saved_probe=csvread([rootdir filesep datadir filesep wavenumberfile]);
+        probe_tmp=csvread([rootdir filesep datadir filesep wavenumberfile]);
     elseif exist([rootdir filesep wavenumberfile],'file') == 2
         probe_calib = 2;
-        saved_probe=csvread([rootdir filesep wavenumberfile]);
+        probe_tmp=csvread([rootdir filesep wavenumberfile]);
+    end
+    
+    for k=1:2
+        if ~isempty(probe_tmp)
+            idx = [1:DetSz(k)] + sum(DetSz(1:k-1));
+            cmprobe{k} = probe_tmp(idx);
+        else
+            cmprobe{k} = 1:96;
+        end
     end
 end    
-
-% If there is an w0 file in the current ROOTDIR, use it to set the rotating frame frequency.
-% Otherwise, plot relative to w0
-if exist([datadir filesep 'w0.csv'],'file') == 2
-	w0 = readmatrix([datadir filesep 'w0.csv']);
-else
-    w0 = 0;
-end
 
 % Hardcoded settings
     filter_type     = 'Mean';
@@ -170,7 +175,7 @@ for m=1:Ndelays
         end
     end
 
-binzero{m,k} = 1; % Because we are using the shaper
+binzero{m,k}    = 1; % Because we are using the shaper
 binspecmax(m,k) = 1;    
 %% Apodise and phase the data
 % Apodise the data by the selected method
@@ -211,7 +216,6 @@ binspecmax(m,k) = 1;
     end
     
 % Calculate the pump frequency axis from interferogram
-    dt1 = unique(diff(t1delays{m,k}));
     Resolution(m,k)             = 1/(N_FTpoints{m,k}*dt1*c_0);
     PumpAxis{m,k}               = ((1:1:N_FTpoints{m,k})-1)'.*Resolution(m,k)+w0;
     
@@ -222,13 +226,13 @@ if apodise_method=="Box"
     mean_sig{m,k}   = mean(signal{m,k}(end-zeropad_npoints:end,:),1);
 else
     mean_interf{m,k}= 0;
-    mean_sig{m,k}   = zeros(1,length(cmprobe));
+    mean_sig{m,k}   = zeros(1,length(cmprobe{k}));
 end
 
 % Build the zeropad matrices
     N_newpoints{m,k}            = N_FTpoints{m,k}-Nbins;
     pad_interf{m,k}             = ones(N_newpoints{m,k},1)*mean_interf{m,k};
-    pad_signal{m,k}             = ones(N_newpoints{m,k},length(cmprobe)).*mean_sig{m,k};
+    pad_signal{m,k}             = ones(N_newpoints{m,k},length(cmprobe{k})).*mean_sig{m,k};
 
 % Do the zeropadding
     zeropad_interf{m,k}         = [apo_interferogram{m,k};pad_interf{m,k}];
@@ -260,15 +264,15 @@ end
 
 % Do pump correction
 if pumpcorrection == 1
-    phased_FFTZPsig{m,k}        = real(FFT_ZPsig{m,k}.*phasingterm{m,k})./(abs(phased_FFTZPint{m,k}*ones(1,length(cmprobe))));
-    magnitude_FFTsig{m,k}       = abs(FFT_ZPsig{m,k}-mean(FFT_ZPsig{m,k}))./(real(phased_FFTZPint{m,k}*ones(1,length(cmprobe))));
+    phased_FFTZPsig{m,k}        = real(FFT_ZPsig{m,k}.*phasingterm{m,k})./(abs(phased_FFTZPint{m,k}*ones(1,length(cmprobe{k}))));
+    magnitude_FFTsig{m,k}       = abs(FFT_ZPsig{m,k}-mean(FFT_ZPsig{m,k}))./(real(phased_FFTZPint{m,k}*ones(1,length(cmprobe{k}))));
 else
     phased_FFTZPsig{m,k}        = real(FFT_ZPsig{m,k}.*phasingterm{m,k});
     magnitude_FFTsig{m,k}       = abs(FFT_ZPsig{m,k});
 end
     
 % %% PROBE AXIS CALIBRATION USING SCATTERING - LINEAR FIT OF THE MAXIMA ALONG THE DIAGONAL
-% if m==1 && k==1
+% if m==1
 %       % Get a list of the maxima of the interferogram (N_FTpoints/50 around the spectral max) 
 %       %%%! TO DO: needs to be redefined in terms of cm-1
 %         P                       = floor(N_FTpoints{m,k}/50);
@@ -298,14 +302,14 @@ end
 %             case 1
 %             % Check if the Probe Axis makes sense, otherwise use either the stored one
 %                 if issorted(freq_fit)
-%                     ProbeAxis       = freq_fit;
+%                     ProbeAxis{k}  = freq_fit;
 %                 else
-%                     ProbeAxis       = cmprobe;
+%                     ProbeAxis{k}  = cmprobe{k};
 %                 end
 %             case 0
-%                 ProbeAxis       = cmprobe;
+%                 ProbeAxis{k}      = cmprobe{k};
 %             case 2
-%                 ProbeAxis       = saved_probe;
+%                 ProbeAxis{k}      = saved_probe{k};
 %         end
 %       
 % end
@@ -334,45 +338,63 @@ end
 end % Ndelays
 end % Ndatastates
 
-%% Transient 2D IR processing
-% % Determine whether it is a transient 2D dataset or not, then do the stuff
-if Transient2D
-    switch Transient2D_mode
-        case 'Spectrum 1 (UV on)' % Show spectrum 1
-            PROCDATA = PROC_2D_DATA(:,1);
-        case 'Spectrum 2 (UV off)' % Show spectrum 2
-            PROCDATA = PROC_2D_DATA(:,2);
-        case 'Difference (1-2)' % Show difference 1-2
-            for m=1:Ndelays
-                PROCDATA{m,1} = PROC_2D_DATA{m,1} - PROC_2D_DATA{m,2};
-            end
-        case 'Difference (2-1)'
-            for m=1:Ndelays
-                PROCDATA{m,1} = PROC_2D_DATA{m,2} - PROC_2D_DATA{m,1};
-            end
-        case 'Sum' % Show sum
-            for m=1:Ndelays
-                PROCDATA{m,1} = PROC_2D_DATA{m,1} + PROC_2D_DATA{m,2};
-            end
-        otherwise
-            return
-    end
-    PROC_2D_DATA    = PROCDATA;
-end
-
-%% Dummies processing
-if isnumeric(dummy)
-    PROC_2D_DATA        = PROC_2D_DATA(:,dummy);
-%     warndlg(['Plotting dummy ' num2str(dummy)]);
-elseif strcmp(dummy,'diff')
-    dummydiff           = min(dummydiff,Ndummies);
-    for i=1:Ndelays
-        PROCDATA{i,1}   = PROC_2D_DATA{i,dummydiff} - PROC_2D_DATA{i,1};
-    end
-    PROC_2D_DATA        = PROCDATA;
-%     warndlg('Plotting dummy 2 - dummy 1');
-end
-
+% %% SPECTROMETER CALIBRATION
+% 
+% % Get the maxima for probe calibration    
+% magFFT                  = abs(FFT_ZPsig{m,k});
+% [~,maxindex]            = max(magFFT(fitrange,:));
+% scattering_maxima       = PumpAxis{m,k}(fitrange(maxindex));
+% 
+% % Do the fit
+% switch probe_fitorder
+%     case 1
+%         model       = 'poly1';
+%     case 2
+%         model       = 'poly2';
+% end
+% warning('off','curvefit:fit:iterationLimitReached');
+% mdl                     = fit(pixels,scattering_maxima,model,'Robust','Bisquare');
+% freq_fit                = mdl(pixels);
+% % Decide which kind of probe axis to use. It will anyway store all of them
+% switch probe_calib
+%     case 1
+%     % Check if the Probe Axis makes sense, otherwise use either the stored one
+%         if issorted(freq_fit)
+%             ProbeAxis       = freq_fit;
+%         else
+%             ProbeAxis       = cmprobe;
+%         end
+%     case 0
+%         ProbeAxis       = cmprobe;
+%     case 2
+%         ProbeAxis       = saved_probe;
+% end
+%     
+% %% Transient 2D IR processing
+% % % Determine whether it is a transient 2D dataset or not, then do the stuff
+% if Transient2D
+%     switch Transient2D_mode
+%         case 'Spectrum 1 (UV on)' % Show spectrum 1
+%             PROCDATA = PROC_2D_DATA(:,1);
+%         case 'Spectrum 2 (UV off)' % Show spectrum 2
+%             PROCDATA = PROC_2D_DATA(:,2);
+%         case 'Difference (1-2)' % Show difference 1-2
+%             for m=1:Ndelays
+%                 PROCDATA{m,1} = PROC_2D_DATA{m,1} - PROC_2D_DATA{m,2};
+%             end
+%         case 'Difference (2-1)'
+%             for m=1:Ndelays
+%                 PROCDATA{m,1} = PROC_2D_DATA{m,2} - PROC_2D_DATA{m,1};
+%             end
+%         case 'Sum' % Show sum
+%             for m=1:Ndelays
+%                 PROCDATA{m,1} = PROC_2D_DATA{m,1} + PROC_2D_DATA{m,2};
+%             end
+%         otherwise
+%             return
+%     end
+%     PROC_2D_DATA    = PROCDATA;
+% end
 
 %% WRITE to dataStruct
     dataStruct.ProbeAxis           = ProbeAxis;

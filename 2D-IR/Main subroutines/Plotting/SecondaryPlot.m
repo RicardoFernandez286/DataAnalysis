@@ -1,4 +1,4 @@
-function SecondaryPlot(dataStruct,where,what,varargin)
+function SecondaryPlot(dataStruct,where,what,k,varargin)
 
 if dataStruct.isSimulation == 1
     return
@@ -15,11 +15,10 @@ plot_all            = 0;
 
 % Read the selection on the GUI
 m = dataStruct.plotOptions.popdelay;
-k = 1;
 
 
 % Read common stuff
-ProbeAxis           = dataStruct.ProbeAxis;
+ProbeAxis           = dataStruct.ProbeAxis{k};
 freq_fit            = dataStruct.freq_fit;
 scattering_maxima   = dataStruct.scattering_maxima;
 PumpAxis            = dataStruct.PumpAxis{m,k};

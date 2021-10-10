@@ -1,4 +1,4 @@
-function varargout = ContourPlot_2DIR(plotOptions,dataStruct,plotaxis)
+function varargout = ContourPlot_2DIR(plotOptions,dataStruct,plotaxis,k)
 
 % Description: This function will make a 2D contour plot of phased 2D-IR data.
 % Usage: dataStruct = ContourPlot_2DIR(plotOptions,dataStruct,plotaxis)
@@ -42,7 +42,7 @@ end
     plot_limittype      = 'Local'; % 'Global' will take min/max of the whole 2D set, while 'Local' will take only the selected region
     interpolate         = 0;
 % Read data
-    ProbeAxis           = dataStruct.ProbeAxis;
+    ProbeAxis           = dataStruct.ProbeAxis{k};
     PumpAxis            = dataStruct.PumpAxis;
     PROC_2D_DATA        = dataStruct.PROC_2D_DATA;
     PumpSpectrum        = dataStruct.phased_FFTZPint;
@@ -85,9 +85,8 @@ if debug==0
     
     % Read the selection
     m = popdelay;
-    k = 1;
     
-    cut=1;
+    cut=2;
 
     % Determine if spectral diffusion analysis have been performed or not and whether to plot them
     if plotOptions.ShowSpecDiff && dataStruct.SpecDiff
@@ -155,9 +154,9 @@ switch cut_method
     case 'Uncalibrated'
         minindex        = 1;
         maxindex        = length(PumpAxis{m,k});
-        probelim        = 1:192;
-%         probelim    = 96+[20:70];
-%         probelim        = 1:length(ProbeAxis);
+%         probelim        = 1:192;
+%         probelim    = [10:60];
+        probelim        = 1:length(ProbeAxis);
 end
 
 if dataStruct.isSimulation == 1
@@ -209,7 +208,7 @@ end
 switch plot_pumpdirection    
 case 'Vertical' % Old way
         % Save XYZ
-        X = ProbeAxis(probelim);
+        X = ProbeAxis{k}(probelim);
         Y = PumpAxis{m,k};
         Z = proc2Ddata;
         % Interpolate the data
