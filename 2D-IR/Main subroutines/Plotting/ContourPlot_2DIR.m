@@ -208,7 +208,7 @@ end
 switch plot_pumpdirection    
 case 'Vertical' % Old way
         % Save XYZ
-        X = ProbeAxis{k}(probelim);
+        X = ProbeAxis(probelim);
         Y = PumpAxis{m,k};
         Z = proc2Ddata;
         % Interpolate the data
