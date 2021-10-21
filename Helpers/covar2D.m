@@ -1,7 +1,7 @@
 function cov2D = covar2D(Xmat,Ymat)
 % Calculate the cross-covariance matrix of matrices Xmat and Ymat
 % Xmat and Ymat are observation matrices, where each column is one
-% observable and each row is one observation
+% observable (i.e. detector pixel) and each row is one observation (i.e. laser shot)
 % Ricardo Fernández-Terán / v1.0a / 2021.08.09
 
 dXmat = (Xmat-mean(Xmat,1))';

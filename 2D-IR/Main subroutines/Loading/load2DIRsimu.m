@@ -167,7 +167,7 @@ else
 	Rbox				= 1;
 end   
 %% WRITE to dataStruct (Process 2D-IR)
-    dataStruct.ProbeAxis           = W3;
+    dataStruct.ProbeAxis           = {W3};
     dataStruct.freq_fit            = [];
     dataStruct.scattering_maxima   = [];
     dataStruct.PumpAxis            = PumpAxis;

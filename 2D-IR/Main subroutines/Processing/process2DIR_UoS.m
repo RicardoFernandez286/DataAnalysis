@@ -1,4 +1,4 @@
-function dataStruct = process2DIR_UoS(app,dataStruct,ReProcess,varargin)
+function dataStruct = process2DIR_UoS(app,dataStruct,ReProcess,bkgIdx,varargin)
 % Description:  This function apodises, zeropads and phases 2D IR data
 %               from the setup at the University of Sheffield
 %
@@ -323,21 +323,24 @@ end
 %% Subtract the scattering background (if enabled) and correct the sign of the signals
 % If DEBUG is OFF, don't consider the sign of the pump  
 if debug==0
-    SignPump(m,k)=-1;
+    SignPump(m,k)=1;
 elseif debug==1 % If debug is ON, consider the sign of the pump
     SignPump(m,k)=sign(real(phased_FFTZPint{m,k}(binspecmax(m,k))));
-end
-
-% Now do the stuff
-if bkg_sub==1 && m~=1
-    PROC_2D_DATA{m,k}       = (phased_FFTZPsig{m,k}-phased_FFTZPsig{1,k})*SignPump(m,k);
-else
-    PROC_2D_DATA{m,k}       = phased_FFTZPsig{m,k}*SignPump(m,k);
 end
 
 end % Ndelays
 end % Ndatastates
 
+for k=1:Nspectra*Ndummies*Nslowmod
+for m=1:Ndelays
+    % Background subtraction
+    if bkg_sub==1 && m~=bkgIdx
+        PROC_2D_DATA{m,k}       = (phased_FFTZPsig{m,k}-phased_FFTZPsig{bkgIdx,k})*SignPump(m,k);
+    else
+        PROC_2D_DATA{m,k}       = phased_FFTZPsig{m,k}*SignPump(m,k);
+    end
+end
+end
 % %% SPECTROMETER CALIBRATION
 % 
 % % Get the maxima for probe calibration    

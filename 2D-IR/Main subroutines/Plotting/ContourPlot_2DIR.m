@@ -85,8 +85,11 @@ if debug==0
     
     % Read the selection
     m = popdelay;
-    
-    cut=2;
+    if dataStruct.isShaper == 1
+        cut=2; % 0 or 1 for UZH, 2 for Sheffield data
+    else
+        cut=1;
+    end
 
     % Determine if spectral diffusion analysis have been performed or not and whether to plot them
     if plotOptions.ShowSpecDiff && dataStruct.SpecDiff

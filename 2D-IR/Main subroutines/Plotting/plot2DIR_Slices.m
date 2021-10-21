@@ -1,4 +1,4 @@
-function plot2DIR_Slices(app,dataStruct)
+function plot2DIR_Slices(app,dataStruct,k)
 % Ask the user what to plot
 slice_options = {'Diagonal','Along fixed pump WL','Along fixed probe WL','Integrate along pump axis','Integrate along probe axis','Along several pump WL','Along several probe WL'};
 [slice_typeindx,doplot] = listdlg('ListString',slice_options,'OKstring','Plot','SelectionMode','single','ListSize',[150,120],'PromptString','Select slice type to plot:');
@@ -14,7 +14,7 @@ interactivemode     = app.I2D_InteractivemodeSwitch.Value;
 normalise           = app.I2D_NormaliseCheckBox.Value;
 cutplot             = app.I2D_CutPlot_tick.Value;
 % Get the data
-ProbeAxis           = dataStruct.ProbeAxis;
+ProbeAxis           = dataStruct.ProbeAxis{k};
 PumpAxis            = dataStruct.PumpAxis;
 Ndelays             = dataStruct.Ndelays;
 t2delays            = dataStruct.t2delays;

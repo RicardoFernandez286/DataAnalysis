@@ -92,7 +92,11 @@ else
     else
         w0  = str2double(answer{1});
         dt1 = str2double(answer{2});
-        writematrix([w0;dt1],[datadir filesep 'w0.csv']);
+        try
+            writematrix([w0;dt1],[datadir filesep 'w0.csv']);
+        catch
+            warndlg('Error writing rotating frame info file','Error writing file');
+        end
     end
 end
 

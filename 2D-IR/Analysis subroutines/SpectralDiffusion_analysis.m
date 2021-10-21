@@ -1,4 +1,4 @@
-function  dataStruct = SpectralDiffusion_analysis(app,dataStruct,Axes,varargin)
+function  dataStruct = SpectralDiffusion_analysis(app,dataStruct,Axes,k,varargin)
 
 % Description: This function dataStruct the spectral diffusion analysis of a
 % series of 2D-IR data as a function of the waiting time
@@ -28,7 +28,7 @@ function  dataStruct = SpectralDiffusion_analysis(app,dataStruct,Axes,varargin)
 
 %% READ from dataStruct
 % Get the data
-ProbeAxis           = dataStruct.ProbeAxis;
+ProbeAxis           = dataStruct.ProbeAxis{k};
 PumpAxis            = dataStruct.PumpAxis;
 t2delays            = dataStruct.t2delays;
 Ndelays             = length(t2delays);

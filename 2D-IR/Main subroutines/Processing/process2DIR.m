@@ -1,4 +1,4 @@
-function dataStruct = process2DIR(app,dataStruct,ReProcess,varargin)
+function dataStruct = process2DIR(app,dataStruct,ReProcess,bkgIdx,varargin)
 % Description: This function apodizes, zeropads and phases 2D IR data
 %
 % Usage: dataStruct = process2DIR(dataStruct)
@@ -120,6 +120,8 @@ end
     FFTinterferogram={}; binspecmax=[]; bininterfmax=[];
     bin=[]; difference={}; coeff={}; scanrange={};
     progress = 0;
+    
+    ProbeAxis = cell(1,Nspectra*Ndummies*Nslowmod);
     
     % Create wait bar if it doesn't exist (when reprocessing data / applying changes)
     if ReProcess == 1 && ShowWaitBar
@@ -330,14 +332,14 @@ if m==1 && k==1
             case 1
             % Check if the Probe Axis makes sense, otherwise use either the stored one
                 if issorted(freq_fit)
-                    ProbeAxis       = freq_fit;
+                    ProbeAxis{k}  = freq_fit;
                 else
-                    ProbeAxis       = cmprobe;
+                    ProbeAxis{k}  = cmprobe;
                 end
             case 0
-                ProbeAxis       = cmprobe;
+                ProbeAxis{k}      = cmprobe;
             case 2
-                ProbeAxis       = saved_probe;
+                ProbeAxis{k}      = saved_probe;
         end
       
 end
@@ -349,16 +351,19 @@ elseif debug==1 % If debug is ON, consider the sign of the pump
     SignPump(m,k)=sign(real(phased_FFTZPint{m,k}(binspecmax(m,k))));
 end
 
-% Now do the stuff
-if bkg_sub==1 && m~=1
-    PROC_2D_DATA{m,k}       = (phased_FFTZPsig{m,k}-phased_FFTZPsig{1,k})*SignPump(m,k);
-else
-    PROC_2D_DATA{m,k}       = phased_FFTZPsig{m,k}*SignPump(m,k);
-end
-
 end % Ndelays
 end % Ndatastates
 
+for k=1:Nspectra*Ndummies*Nslowmod
+for m=1:Ndelays
+    % Background subtraction
+    if bkg_sub==1 && m~=bkgIdx
+        PROC_2D_DATA{m,k}       = (phased_FFTZPsig{m,k}-phased_FFTZPsig{bkgIdx,k})*SignPump(m,k);
+    else
+        PROC_2D_DATA{m,k}       = phased_FFTZPsig{m,k}*SignPump(m,k);
+    end
+end
+end
 %% Transient 2D IR processing
 % % Determine whether it is a transient 2D dataset or not, then do the stuff
 if Transient2D

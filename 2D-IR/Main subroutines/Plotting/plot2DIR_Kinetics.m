@@ -1,4 +1,4 @@
-function plot2DIR_Kinetics(app,dataStruct)
+function plot2DIR_Kinetics(app,dataStruct,k)
 % Get some information from the GUI(app structure)
 plot_pumpdirection  = app.I2D_PumpAxisOrientation.Value;
 interactivemode     = app.I2D_InteractivemodeSwitch.Value;
@@ -6,7 +6,7 @@ normalise           = app.I2D_NormaliseCheckBox.Value;
 saveTraces          = app.I2D_SavetracesSwitch.Value;
 
 % Get the data from dataStruct
-ProbeAxis           = dataStruct.ProbeAxis;
+ProbeAxis           = dataStruct.ProbeAxis{k};
 PumpAxis            = dataStruct.PumpAxis;
 Ndelays             = dataStruct.Ndelays;
 t2delays            = dataStruct.t2delays;

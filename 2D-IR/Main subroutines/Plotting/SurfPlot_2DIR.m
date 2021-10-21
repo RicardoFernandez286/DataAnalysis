@@ -1,4 +1,4 @@
-function varargout = SurfPlot_2DIR(plotOptions,dataStruct,plotaxis)
+function varargout = SurfPlot_2DIR(plotOptions,dataStruct,plotaxis,k)
 
 % Description: This function will make a 3D surface plot of phased 2D-IR data.
 % Usage: dataStruct = ContourPlot_2DIR(plotOptions,dataStruct,plotaxis)
@@ -38,7 +38,7 @@ end
     interpolate         = 0;
     textcolor           = 'none';
 % Read data
-    ProbeAxis           = dataStruct.ProbeAxis;
+    ProbeAxis           = dataStruct.ProbeAxis{k};
     PumpAxis            = dataStruct.PumpAxis;
     PROC_2D_DATA        = dataStruct.PROC_2D_DATA;
     PumpSpectrum        = dataStruct.phased_FFTZPint;
