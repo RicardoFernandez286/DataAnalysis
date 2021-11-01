@@ -119,7 +119,7 @@ for k=1:2 % Ndetectors
     for i=1:Ndelays
         dummy_cell{i,k}     = 0;
         dummy_Onescell{i,k} = ones(Nbins,1);
-        signal_temp{i,k}    = log10(rawdata((Nbins*(i-1)+1):(Nbins*i),idx)+1)*1000; % convert dT/T to mOD
+        signal_temp{i,k}    = -log10(rawdata((Nbins*(i-1)+1):(Nbins*i),idx)+1)*1000; % convert dT/T to mOD
         t1delays{i,k}       = [bins bins.*dt1];
     end
 end
