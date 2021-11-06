@@ -47,12 +47,22 @@ minabs              = min(min(Zdata));
 maxabs              = max(max(Zdata));
 maxDabs             = max([abs(minabs),abs(maxabs)]);
 
+switch TitleOnOff
+    case 'Noise'
+        symcolrange = 0;
+end
+
 if symcolrange == 1
     max_cut = maxDabs*plot_scaleRange;
     min_cut = -maxDabs*plot_scaleRange;
 else
     max_cut = maxabs*plot_scaleRange;
     min_cut = minabs*plot_scaleRange;
+end
+
+switch TitleOnOff
+    case 'Noise'
+        min_cut = 0;
 end
 
 % Define the contours to plot
@@ -74,11 +84,7 @@ if numel(Zdata) <= 2048*10
         contour(where,X,Y,Z,plot_contours,'LineStyle','-','LineColor','flat');
     end
 else
-    if plot_filledcontours == 1
         pcolor(where,X,Y,Z);
-    else
-        pcolor(where,X,Y,Z);
-    end
 end    
 
 %% Make the plot format nice:
@@ -159,8 +165,12 @@ xlabel(where,Probe_label,'FontWeight','bold','Interpreter','tex');
 ylabel(where,Time_label,'FontWeight','bold','Interpreter','tex');
 
 hline = refline(where,0,0); hline.Color = [0.5 0.5 0.5];
-if strcmp(TitleOnOff,'On')
-    title(where,{datafilename;[rawcorr,' DATA';'']},'Interpreter','none')  
+switch TitleOnOff
+    case 'On'
+        title(where,{datafilename;[rawcorr,' DATA';'']},'Interpreter','none')  
+    case 'Noise'
+        title(where,{datafilename;'NOISE PROFILE'},'Interpreter','none')
+        title(hcb,{'\delta\DeltaAbs';'(mOD)'},'FontWeight','bold','FontSize',10,'FontWeight','bold');
 end
 % Adjust the limits (if given)
 xlim(where,WLlim)

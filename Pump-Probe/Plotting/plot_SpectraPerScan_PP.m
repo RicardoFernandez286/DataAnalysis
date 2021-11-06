@@ -87,6 +87,8 @@ switch app.PP_DataFormat.Value
             caption(i)          = string(['Scan ' num2str(i)]);   
         end
         clear TempScanData;
+    case 'UniGE TA'
+        ScanData = squeeze(dataStruct.scandata(k,:,:))';
 end
 
 % Ask the user which scans to use if >15 scans
@@ -164,7 +166,7 @@ pl(end).LineWidth   = 1.5;
 
 % Nice formatting
 axes2.FontSize 		= 12;
-title(axes2,{dataStruct.datafilename;['TR. SPECTRA PER SCAN AT ',num2str(dataStruct.delays(k),'%.3g'),' ' dataStruct.timescale]},'Interpreter','none','FontSize',12)
+title(axes2,{dataStruct.datafilename;['TR. SPECTRA PER SCAN AT ' num2str(dataStruct.delays(k),'%.3g') ' ' dataStruct.timescale]},'Interpreter','none','FontSize',12)
 xlabel(axes2,dataStruct.probeunits,'FontSize',13,'FontWeight','bold')
 ylabel(axes2,label,'FontSize',13,'FontWeight','bold')
 axis(axes2,'tight');

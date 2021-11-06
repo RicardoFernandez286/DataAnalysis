@@ -86,6 +86,8 @@ switch app.PP_DataFormat.Value
             ScanData(:,i) = TempScanData(:,k);   
         end
 %         clear TempScanData;
+    case 'UniGE TA'
+        ScanData = squeeze(dataStruct.scandata(:,k,:));
 end
 % Ask the user which scans to use if >15 scans
 if Nscans >= 15
@@ -164,7 +166,7 @@ axes2.Children(1).LineWidth     = 1.5;
 
 % Nice formatting
 data_title  = regexprep(dataStruct.datafilename, '\_', '\\\_');
-title(axes2,{data_title;['KINETICS PER SCAN AT ' num2str(round(dataStruct.cmprobe(k),0)) ' cm^{-1}']},'Interpreter','tex')
+title(axes2,{data_title;['KINETICS PER SCAN AT ' num2str(round(dataStruct.cmprobe(k),0)) ' ' dataStruct.Xunits]},'Interpreter','tex')
 xlabel(axes2,['Delays',' (',dataStruct.timescale,')'],'FontSize',13,'FontWeight','bold')
 ylabel(axes2,label,'FontSize',13,'FontWeight','bold')
 axis(axes2,'tight');

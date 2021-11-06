@@ -1,4 +1,4 @@
-function plot3D(app,Zdata,where,TitleOnOff)
+function plot3D(app,Zdata,where,TitleOnOff,WhichDetector)
 % Description: This function will make a contour plot of transient data
 % Usage: handles = plot2D(dataStruct,Zdata,where,TitleOnOff)
 % Inputs:
@@ -45,12 +45,22 @@ minabs              = min(min(Zdata));
 maxabs              = max(max(Zdata));
 maxDabs             = max([abs(minabs),abs(maxabs)]);
 
+switch TitleOnOff
+    case 'Noise'
+        symcolrange = 0;
+end
+
 if symcolrange == 1
     max_cut = maxDabs*plot_scaleRange;
     min_cut = -maxDabs*plot_scaleRange;
 else
     max_cut = maxabs*plot_scaleRange;
     min_cut = minabs*plot_scaleRange;
+end
+
+switch TitleOnOff
+    case 'Noise'
+        min_cut = 0;
 end
 
 %% Do the plot
@@ -68,12 +78,15 @@ else
     mesh(where,X,Y,Z,'LineStyle','-','EdgeColor','flat');
 end
 
-% Show the plane of zero DeltaAbs
-ZeroPlane   = zeros(length(Y),length(X));
-hold(where,'on');
-surf(where,X,Y,ZeroPlane,'FaceAlpha',0.8,'FaceColor',0.85*[1 1 1],'EdgeColor','none');
-hold(where,'off');
-
+switch TitleOnOff
+    case 'Noise'
+    otherwise
+        % Show the plane of zero DeltaAbs
+        ZeroPlane   = zeros(length(Y),length(X));
+        hold(where,'on');
+        surf(where,X,Y,ZeroPlane,'FaceAlpha',0.8,'FaceColor',0.85*[1 1 1],'EdgeColor','none');
+        hold(where,'off');
+end
 %% Make the plot format nice:
 
 % Create the colormaps
@@ -153,8 +166,13 @@ zlabel(where,'\DeltaAbs (mOD)','FontWeight','bold','Interpreter','tex');
 view(where,30,30)
 
 hline = refline(where,0,0); hline.Color = [0.5 0.5 0.5];
-if strcmp(TitleOnOff,'On')
-    title(where,{datafilename;[rawcorr,' DATA';'']},'Interpreter','none')  
+switch TitleOnOff
+    case 'On'
+        title(where,{datafilename;[rawcorr,' DATA';'']},'Interpreter','none')  
+    case 'Noise'
+        title(where,{datafilename;'Noise Profile'},'Interpreter','none')  
+        zlabel(where,'\delta\DeltaAbs (mOD)','FontWeight','bold','Interpreter','tex');
+        where.View=[0 0];
 end
 % Adjust the limits (if given) -> MISSING "IF GIVEN" PART
 xlim(where,WLlim);
