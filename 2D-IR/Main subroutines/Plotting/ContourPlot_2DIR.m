@@ -322,6 +322,9 @@ end
 % Show the colorbar
 hcb     =   colorbar(plotaxis);
 ylabel(hcb,'2D signal (a.u.)','FontWeight','bold')
+hcb.LineWidth       = 0.1;
+hcb.TickLength      = 0.025;
+hcb.TickDirection   = 'out';
 
 % Set appropriate limits
 switch plot_pumpdirection

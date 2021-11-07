@@ -82,10 +82,10 @@ switch TitleOnOff
     case 'Noise'
     otherwise
         % Show the plane of zero DeltaAbs
-        ZeroPlane   = zeros(length(Y),length(X));
-        hold(where,'on');
-        surf(where,X,Y,ZeroPlane,'FaceAlpha',0.8,'FaceColor',0.85*[1 1 1],'EdgeColor','none');
-        hold(where,'off');
+%         ZeroPlane   = zeros(length(Y),length(X));
+%         hold(where,'on');
+%         surf(where,X,Y,ZeroPlane,'FaceAlpha',0.8,'FaceColor',0.85*[1 1 1],'EdgeColor','none');
+%         hold(where,'off');
 end
 %% Make the plot format nice:
 
@@ -137,6 +137,8 @@ switch plot_colourscheme
         cmap    = darkb2r(min_cut,max_cut,n_tot,n_whites);
     case 'Jet'
         cmap    = jet(n_tot);
+    case 'Spectral'
+        cmap    = flipud(othercolor('Spectral11',n_tot));
 end
 
 % Set the colormap

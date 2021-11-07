@@ -137,6 +137,8 @@ switch plot_colourscheme
         cmap    = darkb2r(min_cut,max_cut,n_tot,n_whites);
     case 'Jet'
         cmap    = jet(n_tot);
+    case 'Spectral'
+        cmap    = flipud(othercolor('Spectral11',n_tot));
 end
 
 % Set the colormap
@@ -150,7 +152,8 @@ caxis(where,[min_cut,max_cut]);
 hcb=colorbar(where);
 hcb.FontSize=12;
 hcb.LineWidth = 0.1;
-hcb.TickLength=0.0125;
+hcb.TickLength=0.025;
+hcb.TickDirection = 'out';
 title(hcb,{'\DeltaAbs';'(mOD)'},'FontWeight','bold','FontSize',10,'FontWeight','bold');
 
 % Label other axes
@@ -196,3 +199,6 @@ end
 
 %% Show axes
 where.Visible = 'on';
+where.Box = 'on';
+where.Layer = 'top';
+where.TickLength = [0.025 0.025];
