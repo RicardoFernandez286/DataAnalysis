@@ -27,7 +27,7 @@ function dataStruct = process2DIR_UoS(app,dataStruct,ReProcess,bkgIdx,varargin)
 %     The calculation routines were updated accordingly in MESS and now the chopper signal and all
 %     datastates should be calculated properly.
 %
-% Ricardo Fernandez-Teran / 08.10.2021 / v2.0b
+% Ricardo Fernandez-Teran / 09.11.2021 / v2.0c
 
 %% Choose between debug/manual mode and normal mode
 debug=0;
@@ -96,29 +96,8 @@ else
     Transient2D_mode    = 'None';
 end
 
-% If there is a calibrated WL file in the current EXPDIR, use it
-if probe_calib == 0 
-    wavenumberfile='CalibratedProbe.csv';
-    probe_tmp = [];
-    if exist([rootdir filesep datadir filesep wavenumberfile],'file') == 2
-        probe_calib = 2;
-        probe_tmp=csvread([rootdir filesep datadir filesep wavenumberfile]);
-    elseif exist([rootdir filesep wavenumberfile],'file') == 2
-        probe_calib = 2;
-        probe_tmp=csvread([rootdir filesep wavenumberfile]);
-    end
-    
-    for k=1:2
-        if ~isempty(probe_tmp)
-            idx = [1:DetSz(k)] + sum(DetSz(1:k-1));
-            cmprobe{k} = probe_tmp(idx);
-        else
-            cmprobe{k} = 1:96;
-        end
-    end
-end    
-
 % Hardcoded settings
+    DetSz           = [96 96]; % No. of probe pixels of each detector
     filter_type     = 'Mean';
     filter_points   = 10;
     zeropad_npoints = 1;
@@ -131,7 +110,38 @@ end
 % Physical constants
     HeNe            = 2.11079;          % HeNe period (fs)
     c_0             = 2.99792458e-5;    % Speed of light in cm/fs
+
     
+% If there is a calibrated WL file in the current EXPDIR, use it
+if probe_calib == 0 
+    wavenumberfile = 'CalibratedProbe.csv';
+    
+    if exist([datadir filesep wavenumberfile],'file') == 2
+        probe_calib = 2;
+        tmp_probe = readmatrix([datadir filesep wavenumberfile]);
+    elseif exist([rootdir filesep wavenumberfile],'file') == 2
+        probe_calib = 2;
+        tmp_probe = readmatrix([rootdir filesep wavenumberfile]);
+    else
+        probe_calib = 0;
+        tmp_probe = [];
+    end
+    
+    for k=1:length(DetSz)
+        if ~isempty(tmp_probe)
+            idx = (1:DetSz(k)) + sum(DetSz(1:k-1));
+            saved_probe{k}  = tmp_probe(idx);
+            cmprobe{k}      = 1:DetSz(k);
+        else
+            saved_probe{k}  = 1:DetSz(k);
+            cmprobe{k}      = 1:DetSz(k);
+        end
+    end
+elseif probe_calib == 1
+    warndlg('Feature not yet implemented. Please try again without automatic probe calibration.','Oops!');
+    return
+end   
+
 %% Preprocess the data
 % Initialise variables
     FFTinterferogram={};
@@ -314,11 +324,27 @@ end
 %       
 % end
 
-switch probe_calib
+switch probe_calib 
+    % 0=No calibration, use generated probe axis
+    % 1=Doing calibration from scattering, use the results (TBD)
+    % 2=Using saved probe (in file)
+    case 1
+        warndlg('Functionality not yet implemented.');
+        return
+    % Check if the Probe Axis makes sense, otherwise use either the stored one
+        if issorted(freq_fit)
+            ProbeAxis{k}    = freq_fit;
+        else
+            ProbeAxis{k}    = cmprobe{k};
+        end
     case 0
-        ProbeAxis       = cmprobe;
+        ProbeAxis{k}        = cmprobe{k};
+        freq_fit{k}         = cmprobe{k};   
+        scattering_maxima{k}= cmprobe{k};
     case 2
-        ProbeAxis       = saved_probe;
+        ProbeAxis{k}        = saved_probe{k};
+        freq_fit{k}         = saved_probe{k};
+        scattering_maxima{k}= saved_probe{k};
 end
 %% Subtract the scattering background (if enabled) and correct the sign of the signals
 % If DEBUG is OFF, don't consider the sign of the pump  
@@ -402,8 +428,10 @@ end
 %% WRITE to dataStruct
     dataStruct.ProbeAxis           = ProbeAxis;
     dataStruct.freq_fit            = [];
-    dataStruct.scattering_maxima   = [];
     dataStruct.PumpAxis            = PumpAxis;
+    
+    dataStruct.scattering_maxima   = scattering_maxima;
+    dataStruct.freq_fit            = freq_fit;
     
     dataStruct.t1delays            = t1delays;
     dataStruct.interferogram       = interferogram;

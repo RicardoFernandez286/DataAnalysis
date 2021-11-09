@@ -23,7 +23,7 @@ function  dataStruct = load2DIR_UoS(dataStruct,varargin)
 %     interferogram     (Cell array)
 %     signal			(Cell array)
 %
-% Ricardo Fernandez-Teran / 10.05.2021 / v0.9a
+% Ricardo Fernandez-Teran / 09.11.2021 / v2.0a
 
 %% DEBUG
 % rootdir = ''
@@ -49,7 +49,6 @@ datadir_fl  = dir(datadir);
 datadir_fn  = {datadir_fl.name};
 
 [~,fn,~]    = fileparts(datadir_fn{contains(datadir_fn(:),'.LG','IgnoreCase',1)});
-
 filename    = [rootdir filesep datafilename filesep fn];
 
 % Create progress bar and clear error string
@@ -61,6 +60,19 @@ if ShowWaitBar
     dataStruct.ErrorText.String         = "";
 end
 
+% Read Spectrograph Information
+text        = readlines([filename '.LG']);
+g1_st       = strsplit(text{75},' '); % Det186 is 1st
+w1_st       = strsplit(text{77},' ');
+g2_st       = strsplit(text{67},' '); % Det185 is 2nd
+w2_st       = strsplit(text{69},' ');
+
+Gratings(1) = str2double(g1_st{end});
+CWL(1)      = str2double(w1_st{end});
+Gratings(2) = str2double(g2_st{end});
+CWL(2)      = str2double(w2_st{end});
+
+%% Read the rest
 if exist([filename '.2D'],'file') ~= 0
 rawdata   = readmatrix([filename '.2D'],'FileType','delimitedtext');
 t2delays  = readmatrix([filename '.DT'],'FileType','delimitedtext');
@@ -100,13 +112,13 @@ else
     end
 end
 
-if exist([rootdir filesep datafilename filesep 'CalibratedProbe.csv'],'file') ~= 0
-    probe_tmp   = readmatrix([rootdir filesep datafilename filesep 'CalibratedProbe.csv']);
-    cal=1;
-else
-    probe_tmp  = [1:96 1:96];  % (?)
-    cal=0;
-end
+% if exist([rootdir filesep datafilename filesep 'CalibratedProbe.csv'],'file') ~= 0
+%     probe_tmp   = readmatrix([rootdir filesep datafilename filesep 'CalibratedProbe.csv']);
+%     cal=1;
+% else
+%     probe_tmp  = [1:96 1:96];  % (?)
+%     cal=0;
+% end
 
 signal_temp     = cell(Ndelays,2);
 t1delays        = cell(Ndelays,2);
@@ -127,6 +139,8 @@ end
 signal = signal_temp(t2idx,:);
 
 %% WRITE to dataStruct (Load)
+    dataStruct.Gratings      = Gratings;
+    dataStruct.CWL           = CWL;
     dataStruct.isSimulation  = 0;
     dataStruct.isShaper      = 1;
     dataStruct.cmprobe       = cmprobe;

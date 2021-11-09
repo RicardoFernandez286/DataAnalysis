@@ -19,8 +19,8 @@ m = dataStruct.plotOptions.popdelay;
 
 % Read common stuff
 ProbeAxis           = dataStruct.ProbeAxis{k};
-freq_fit            = dataStruct.freq_fit;
-scattering_maxima   = dataStruct.scattering_maxima;
+freq_fit            = dataStruct.freq_fit{k};
+scattering_maxima   = dataStruct.scattering_maxima{k};
 PumpAxis            = dataStruct.PumpAxis{m,k};
 
 if dataStruct.isShaper ~= 1

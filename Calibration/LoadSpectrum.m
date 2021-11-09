@@ -1,4 +1,7 @@
 function data = LoadSpectrum(app,message)
+% This subroutine loads a probe spectrum for further absorbance calculations
+% Ricardo Fernandez-Teran / 09.11.2021 / v1.0a
+
 
 [datafile, datapath, idx] = uigetfile({'*.2D','UoS TRIR';'*.dat','UniGE TA'},message);
 rootdir = app.rootdir;
@@ -18,12 +21,27 @@ switch idx
             idx =  (1:DetSz(i)) + sum(DetSz(1:i-1));
             data{i} = rawdata(idx);
         end
-        app.CAL_data.CalType = 1;
-    
+        app.CAL_data.CalType = 2;
+        
+        [~,fn,~]    = fileparts([datapath filesep datafile]);
+        text        = readlines([datapath filesep fn '.LG']);
+        g1_st       = strsplit(text{75},' '); % Det186 is 1st
+        w1_st       = strsplit(text{77},' ');
+        g2_st       = strsplit(text{67},' '); % Det185 is 2nd
+        w2_st       = strsplit(text{69},' ');
+
+        Gratings(1) = str2double(g1_st{end});
+        CWL(1)      = str2double(w1_st{end});
+        Gratings(2) = str2double(g2_st{end});
+        CWL(2)      = str2double(w2_st{end});
+        
+        app.CAL_data.Gratings   = Gratings;
+        app.CAL_data.CWL        = CWL;
+        
     case 2 % UniGE TA
         rawdata = readmatrix([datapath filesep datafile],'FileType','text','Delimiter','\t');
         data{1} = rawdata(:,3);
-        app.CAL_data.CalType = 2;
+        app.CAL_data.CalType = 1;
 end
 
 cd(currdir);

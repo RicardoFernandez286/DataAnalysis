@@ -102,3 +102,4 @@ end
 dataStruct.corrdata = dataStruct.rawsignal - dataStruct.bkg;
 
 dataStruct.timescale = 'ps';
+fclose('all');
