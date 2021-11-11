@@ -8,7 +8,7 @@ function varargout = ContourPlot_2DIR(plotOptions,dataStruct,plotaxis,k)
 % Outputs:
 %     (plot)
 %     plotLimits.min/max_cut
-% Ricardo Fernández-Terán / 23.03.2021 / v4.9c
+% Ricardo Fernández-Terán / 11.11.2021 / v6.0a
 
 debug=0;
 cla(plotaxis);
@@ -85,11 +85,11 @@ if debug==0
     
     % Read the selection
     m = popdelay;
-    if dataStruct.isShaper == 1
-        cut=2; % 0 or 1 for UZH, 2 for Sheffield data
-    else
-        cut=1;
-    end
+%     if dataStruct.isShaper == 1
+%         cut=1; % 0 or 1 for UZH, 2 for Sheffield data
+%     else
+%         cut=1;
+%     end
 
     % Determine if spectral diffusion analysis have been performed or not and whether to plot them
     if plotOptions.ShowSpecDiff && dataStruct.SpecDiff
@@ -139,9 +139,9 @@ PumpSpectrum        = PumpSpectrum{m,k}(1:L,:);
 switch cut
     case 1
         cut_method = 'Axis';
-    case 0
-        cut_method = 'Intensity';
-    case 2
+%     case 0
+%         cut_method = 'Intensity';
+    case {2,0}
         cut_method = 'Uncalibrated';
 end
 
@@ -150,9 +150,10 @@ switch cut_method
         accepted_pts    = PumpSpectrum >= (cut_threshold/100).*max(PumpSpectrum);
         minindex        = find(accepted_pts,1,'first');
         maxindex        = find(accepted_pts,1,'last');
+        probelim        = 1:length(ProbeAxis);
     case 'Axis'
-        minindex        = findClosestId2Val(PumpAxis{m,k},min(ProbeAxis))-1;
-        maxindex        = findClosestId2Val(PumpAxis{m,k},max(ProbeAxis))+1;
+        minindex        = findClosestId2Val(PumpAxis{m,k},min(ProbeAxis));
+        maxindex        = findClosestId2Val(PumpAxis{m,k},max(ProbeAxis));
         probelim        = 1:length(ProbeAxis);
     case 'Uncalibrated'
         minindex        = 1;

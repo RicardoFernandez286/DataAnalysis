@@ -23,7 +23,7 @@ function  dataStruct = load2DIR_UoS(dataStruct,varargin)
 %     interferogram     (Cell array)
 %     signal			(Cell array)
 %
-% Ricardo Fernandez-Teran / 09.11.2021 / v2.0a
+% Ricardo Fernandez-Teran / 11.11.2021 / v2.5d
 
 %% DEBUG
 % rootdir = ''
@@ -51,6 +51,8 @@ datadir_fn  = {datadir_fl.name};
 [~,fn,~]    = fileparts(datadir_fn{contains(datadir_fn(:),'.LG','IgnoreCase',1)});
 filename    = [rootdir filesep datafilename filesep fn];
 
+datadir_fn  = datadir_fn(~contains(datadir_fn(:),fn,'IgnoreCase',1))';
+
 % Create progress bar and clear error string
 if ShowWaitBar
     % dataStruct.WaitBar             = waitbar(0,'Loading data...');
@@ -72,15 +74,39 @@ CWL(1)      = str2double(w1_st{end});
 Gratings(2) = str2double(g2_st{end});
 CWL(2)      = str2double(w2_st{end});
 
-%% Read the rest
-if exist([filename '.2D'],'file') ~= 0
-rawdata   = readmatrix([filename '.2D'],'FileType','delimitedtext');
-t2delays  = readmatrix([filename '.DT'],'FileType','delimitedtext');
+est_probe   = cell(1,2);
 
+% Estimate probe axis, arbitrary calibration factors
+for i=1:2
+    switch Gratings(i)
+        case 0 % 120 l/mm
+            ppnm    = 0.168;
+        case 1 % 100 l/mm
+            ppnm    = 0.14;
+        case 2 % 50 l/mm
+            ppnm    = 0.068;
+    end
+    pix = flip(1:DetSz(i));
+    est_probe{i} = 1e7./(pix./ppnm + CWL(i)+60 - DetSz(i)./2./ppnm);
+end
+
+% Read t2 delays
+t2delays  = readmatrix([filename '.DT'],'FileType','delimitedtext');
 Ndelays   = length(t2delays);
-Npixels   = size(rawdata,2);
-Nbins     = round(size(rawdata,1)./Ndelays);
-bins      = (1:Nbins)';
+
+%% Build file list
+fn_L        = datadir_fn(contains(datadir_fn(1:end),'.2D','IgnoreCase',1));
+Ndone       = length(fn_L);
+delName     = cell(Ndone,1);
+delFN       = zeros(Ndone,1);
+
+for i=1:Ndone
+    delName{i}  = strsplit(fn_L{i},{'_D','_'});
+    delFN(i)    = str2double(delName{i}{4});
+end
+[~,delIdx]  = sort(delFN);
+
+Mcomplete   = (exist([filename '.2D'],'file') ~= 0);
 
 [t2delays,t2idx]  = sort(t2delays);
 
@@ -112,26 +138,27 @@ else
     end
 end
 
-% if exist([rootdir filesep datafilename filesep 'CalibratedProbe.csv'],'file') ~= 0
-%     probe_tmp   = readmatrix([rootdir filesep datafilename filesep 'CalibratedProbe.csv']);
-%     cal=1;
-% else
-%     probe_tmp  = [1:96 1:96];  % (?)
-%     cal=0;
-% end
-
-signal_temp     = cell(Ndelays,2);
-t1delays        = cell(Ndelays,2);
-dummy_cell      = cell(Ndelays,2);
-dummy_Onescell  = cell(Ndelays,2);
+%% Read everything that has been done
+signal_temp     = cell(Ndone,2);
+t1delays        = cell(Ndone,2);
+dummy_cell      = cell(Ndone,2);
+dummy_Onescell  = cell(Ndone,2);
 cmprobe         = cell(1,2);
 
+if Ndone >= 1
 for k=1:2 % Ndetectors
-    idx = [1:DetSz(k)] + sum(DetSz(1:k-1));
-    for i=1:Ndelays
+    idx = (1:DetSz(k)) + sum(DetSz(1:k-1));
+    for i=1:Ndone
+        rawdata             = readmatrix([datadir filesep fn_L{delIdx(i)}],'FileType','delimitedtext');
+        if i==1
+            Npixels             = size(rawdata,2);
+            Nbins               = size(rawdata,1);
+            bins                = (1:Nbins)'-1;
+        end
         dummy_cell{i,k}     = 0;
         dummy_Onescell{i,k} = ones(Nbins,1);
-        signal_temp{i,k}    = -log10(rawdata((Nbins*(i-1)+1):(Nbins*i),idx)+1)*1000; % convert dT/T to mOD
+%       signal_temp{i,k}    = -log10(rawdata((Nbins*(i-1)+1):(Nbins*i),idx)+1)*1000; % convert dT/T to mOD ->   -log10(dT/T + 1)*1000
+        signal_temp{i,k}    = rawdata(:,idx); % data is in mOD - best for numerical accuracy when saving
         t1delays{i,k}       = [bins bins.*dt1];
     end
 end
@@ -141,6 +168,8 @@ signal = signal_temp(t2idx,:);
 %% WRITE to dataStruct (Load)
     dataStruct.Gratings      = Gratings;
     dataStruct.CWL           = CWL;
+    dataStruct.est_probe     = est_probe; % Estimated probe from spectrograph info
+    
     dataStruct.isSimulation  = 0;
     dataStruct.isShaper      = 1;
     dataStruct.cmprobe       = cmprobe;

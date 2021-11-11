@@ -27,7 +27,7 @@ function dataStruct = process2DIR_UoS(app,dataStruct,ReProcess,bkgIdx,varargin)
 %     The calculation routines were updated accordingly in MESS and now the chopper signal and all
 %     datastates should be calculated properly.
 %
-% Ricardo Fernandez-Teran / 09.11.2021 / v2.0c
+% Ricardo Fernandez-Teran / 11.11.2021 / v2.5d
 
 %% Choose between debug/manual mode and normal mode
 debug=0;
@@ -46,6 +46,7 @@ end
 
 %%% Read data
 cmprobe         = dataStruct.cmprobe;
+est_probe       = dataStruct.est_probe; % Estimated probe from spectrograph info
 t1delays        = dataStruct.t1delays;
 datatype        = dataStruct.datatype;
 Ndelays         = dataStruct.Ndelays;
@@ -104,43 +105,33 @@ end
     apodize_gaussian= 0;
     apodize_Gcoeff  = 2/3; % Percentage of the Nbins for the decay of the Gaussian
     probe_fitorder  = 2;
-    phase_fitmethod = 'Shift bins'; % 'Shift wavenumbers' or 'Shift bins'
-    phase_wavenum   = 100;
-    phase_shiftbins = 10;
 % Physical constants
-    HeNe            = 2.11079;          % HeNe period (fs)
     c_0             = 2.99792458e-5;    % Speed of light in cm/fs
 
     
 % If there is a calibrated WL file in the current EXPDIR, use it
-if probe_calib == 0 
-    wavenumberfile = 'CalibratedProbe.csv';
-    
-    if exist([datadir filesep wavenumberfile],'file') == 2
-        probe_calib = 2;
-        tmp_probe = readmatrix([datadir filesep wavenumberfile]);
-    elseif exist([rootdir filesep wavenumberfile],'file') == 2
-        probe_calib = 2;
-        tmp_probe = readmatrix([rootdir filesep wavenumberfile]);
+wavenumberfile = 'CalibratedProbe.csv';
+
+if exist([datadir filesep wavenumberfile],'file') == 2
+    probe_calib = 2;
+    tmp_probe = readmatrix([datadir filesep wavenumberfile]);
+elseif exist([rootdir filesep wavenumberfile],'file') == 2
+    probe_calib = 2;
+    tmp_probe = readmatrix([rootdir filesep wavenumberfile]);
+else
+    tmp_probe = [];
+end
+
+for k=1:length(DetSz)
+    if ~isempty(tmp_probe)
+        idx = (1:DetSz(k)) + sum(DetSz(1:k-1));
+        saved_probe{k}  = tmp_probe(idx);
+        cmprobe{k}      = 1:DetSz(k);
     else
-        probe_calib = 0;
-        tmp_probe = [];
+        saved_probe{k}  = 1:DetSz(k);
+        cmprobe{k}      = 1:DetSz(k);
     end
-    
-    for k=1:length(DetSz)
-        if ~isempty(tmp_probe)
-            idx = (1:DetSz(k)) + sum(DetSz(1:k-1));
-            saved_probe{k}  = tmp_probe(idx);
-            cmprobe{k}      = 1:DetSz(k);
-        else
-            saved_probe{k}  = 1:DetSz(k);
-            cmprobe{k}      = 1:DetSz(k);
-        end
-    end
-elseif probe_calib == 1
-    warndlg('Feature not yet implemented. Please try again without automatic probe calibration.','Oops!');
-    return
-end   
+end 
 
 %% Preprocess the data
 % Initialise variables
@@ -213,7 +204,7 @@ binspecmax(m,k) = 1;
     end
 
 % Multiply the interferogram by the apodization function (No box! - Use both sides)
-    apo_interferogram{m,k}      = interferogram{m,k}.*apodize_function{m,k};
+    apo_interferogram{m,k}      = interferogram{m,k};
     
 % Multiply the signal by the apodization function (Use box! - discard data before BinZero + 1st point by 1/2)
     apo_signal{m,k}             = signal{m,k}.*apodize_function{m,k}.*box{m,k};
@@ -256,10 +247,10 @@ end
     phased_ZPint{m,k}           = zeropad_interf{m,k};
     phased_ZPsig{m,k}           = zeropad_signal{m,k};
     
-    absFFT_ZPint{m,k}           = abs(fft(phased_ZPint{m,k}));
+    absFFT_ZPint{m,k}           = phased_ZPint{m,k};
     
 % Calculate the FFT and phase
-    FFT_ZPint{m,k}              = fft(phased_ZPint{m,k});
+    FFT_ZPint{m,k}              = phased_ZPint{m,k};
     FFT_ZPsig{m,k}              = fft(phased_ZPsig{m,k});
     
     ZP_phase{m,k}               = zeros(size(phased_ZPint{m,k}));
@@ -273,40 +264,41 @@ end
     phased_FFTZPint{m,k}        = FFT_ZPint{m,k}.*phasingterm{m,k};
 
 % Do pump correction
-if pumpcorrection == 1
-    phased_FFTZPsig{m,k}        = real(FFT_ZPsig{m,k}.*phasingterm{m,k})./(abs(phased_FFTZPint{m,k}*ones(1,length(cmprobe{k}))));
-    magnitude_FFTsig{m,k}       = abs(FFT_ZPsig{m,k}-mean(FFT_ZPsig{m,k}))./(real(phased_FFTZPint{m,k}*ones(1,length(cmprobe{k}))));
-else
+% if pumpcorrection == 1
+%     phased_FFTZPsig{m,k}        = real(FFT_ZPsig{m,k}.*phasingterm{m,k})./(abs(phased_FFTZPint{m,k}*ones(1,length(cmprobe{k}))));
+%     magnitude_FFTsig{m,k}       = abs(FFT_ZPsig{m,k}-mean(FFT_ZPsig{m,k}))./(real(phased_FFTZPint{m,k}*ones(1,length(cmprobe{k}))));
+% else
     phased_FFTZPsig{m,k}        = real(FFT_ZPsig{m,k}.*phasingterm{m,k});
     magnitude_FFTsig{m,k}       = abs(FFT_ZPsig{m,k});
-end
+% end
     
-% %% PROBE AXIS CALIBRATION USING SCATTERING - LINEAR FIT OF THE MAXIMA ALONG THE DIAGONAL
-% if m==1
-%       % Get a list of the maxima of the interferogram (N_FTpoints/50 around the spectral max) 
-%       %%%! TO DO: needs to be redefined in terms of cm-1
-%         P                       = floor(N_FTpoints{m,k}/50);
-%         fitrange                = (binspecmax(m,k)-P):(binspecmax(m,k)+P);
-%         Npixels                 = size(magnitude_FFTsig{m,k},2);
-%         pixels                  = transpose(1:1:Npixels);
-%         % Get the maxima for probe calibration    
-%         magFFT                  = abs(FFT_ZPsig{m,k});
-%         [~,maxindex]            = max(magFFT(fitrange,:));
-%         scattering_maxima       = PumpAxis{m,k}(fitrange(maxindex));
-% %        % Do the fit [OLD WAY]
-% %         freq_coeff              = polyfit(pixels,scattering_maxima,probe_fitorder);
-% %         freq_fit                = transpose(polyval(freq_coeff,pixels));
-%         
-%         % Do the fit [NEW WAY - ROBUST]
-%         switch probe_fitorder
-%             case 1
-%                 model       = 'poly1';
-%             case 2
-%                 model       = 'poly2';
-%         end
-%         warning('off','curvefit:fit:iterationLimitReached');
-%         mdl                     = fit(pixels,scattering_maxima,model,'Robust','Bisquare');
-%         freq_fit                = mdl(pixels);
+%% PROBE AXIS CALIBRATION USING SCATTERING - LINEAR FIT OF THE MAXIMA ALONG THE DIAGONAL
+if m==bkgIdx
+      % Get a list of the maxima of the interferogram (N_FTpoints/50 around the spectral max) 
+      %%%! TO DO: needs to be redefined in terms of cm-1
+        minProbe_est_idx        = findClosestId2Val(PumpAxis{m,k},min(est_probe{k}));  
+        maxProbe_est_idx        = findClosestId2Val(PumpAxis{m,k},max(est_probe{k}));          
+        fitrange                = minProbe_est_idx:maxProbe_est_idx;
+        Npixels                 = size(magnitude_FFTsig{m,k},2);
+        pixels                  = transpose(1:1:Npixels);
+        % Get the maxima for probe calibration    
+        magFFT                  = abs(FFT_ZPsig{m,k});
+        [~,maxindex]            = max(magFFT(fitrange,:));
+        scattering_maxima_d     = PumpAxis{m,k}(fitrange(maxindex));
+%        % Do the fit [OLD WAY]
+%         freq_coeff              = polyfit(pixels,scattering_maxima,probe_fitorder);
+%         freq_fit                = transpose(polyval(freq_coeff,pixels));
+        
+        % Do the fit [NEW WAY - ROBUST]
+        switch probe_fitorder
+            case 1
+                model       = 'poly1';
+            case 2
+                model       = 'poly2';
+        end
+        warning('off','curvefit:fit:iterationLimitReached');
+        mdl                     = fit(pixels,scattering_maxima_d,model,'Robust','Bisquare');
+        freq_fit_tmp            = mdl(pixels);
 %       % Decide which kind of probe axis to use. It will anyway store all of them
 %         switch probe_calib
 %             case 1
@@ -321,30 +313,27 @@ end
 %             case 2
 %                 ProbeAxis{k}      = saved_probe{k};
 %         end
-%       
-% end
+
+freq_fit{k}         = freq_fit_tmp;   
+scattering_maxima{k}= scattering_maxima_d;
 
 switch probe_calib 
     % 0=No calibration, use generated probe axis
     % 1=Doing calibration from scattering, use the results (TBD)
     % 2=Using saved probe (in file)
     case 1
-        warndlg('Functionality not yet implemented.');
-        return
     % Check if the Probe Axis makes sense, otherwise use either the stored one
-        if issorted(freq_fit)
-            ProbeAxis{k}    = freq_fit;
+        if issorted(freq_fit_tmp)
+            ProbeAxis{k}    = freq_fit_tmp;
         else
-            ProbeAxis{k}    = cmprobe{k};
+            ProbeAxis{k}    = est_probe{k};
         end
     case 0
-        ProbeAxis{k}        = cmprobe{k};
-        freq_fit{k}         = cmprobe{k};   
-        scattering_maxima{k}= cmprobe{k};
+        ProbeAxis{k}        = est_probe{k};
     case 2
         ProbeAxis{k}        = saved_probe{k};
-        freq_fit{k}         = saved_probe{k};
-        scattering_maxima{k}= saved_probe{k};
+end
+
 end
 %% Subtract the scattering background (if enabled) and correct the sign of the signals
 % If DEBUG is OFF, don't consider the sign of the pump  

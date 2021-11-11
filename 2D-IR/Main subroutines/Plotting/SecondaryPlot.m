@@ -134,7 +134,7 @@ switch what
             end
         end
     case 'pc' % Plot probe calibration (data+fit)
-        plot(where,1:length(ProbeAxis),scattering_maxima,'-xr','LineWidth',2);
+        plot(where,1:length(ProbeAxis),scattering_maxima,'xr','LineWidth',2);
         xlabel(where,'Pixel number','FontWeight','bold');
         ylabel(where,'Fitted freq. (cm^{-1})','FontWeight','bold');
         hold(where,'on')
