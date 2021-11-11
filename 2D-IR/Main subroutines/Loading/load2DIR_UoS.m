@@ -133,7 +133,8 @@ else
         try
             writematrix([w0;dt1],[datadir filesep 'w0.csv']);
         catch
-            warndlg('Error writing rotating frame info file','Error writing file');
+%             warndlg('Error writing rotating frame info file','Error writing file');
+            disp('Error writing rotating frame info file');
         end
     end
 end
