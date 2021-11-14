@@ -15,14 +15,15 @@ inE_units   = 'V';      % Options: 'mV' or 'V'
 DataType    = 'Nova';   % Options: 'Nova', 'Kittie' or 'Sam'
 
 outI_units  = 'microA';
-outE_units  = 'mV';
+outE_units  = 'V';
 
 %% Sort by scan rate?
-SortScanRate = 1;
+SortScanRate = 0;
 
 %% Plotting options
 WhichScan   = 1;
 LineWidth   = 1.5;
+ShowLegend  = 1;
 
 %%%%%% DO NOT MODIFY ANYTHING BELOW THIS LINE
 %% Get the directory and a list of .txt files to load and plot
@@ -99,15 +100,15 @@ end
 
 switch inE_units
     case 'mV'
-        outE_factor = 1;
+        outE_factor = 1e3;
     case 'V'
-        outE_factor = 1000;
+        outE_factor = 1;
 end
 
 if ~isempty(ref_pot_name)
-    outE_units  = ['mV vs. ' ref_pot_name];     % set the legend of the potential axis (reference comes later)
+    outE_units  = ['V vs. ' ref_pot_name];     % set the legend of the potential axis (reference comes later)
 else
-    outE_units  = 'mV' ;     % set the legend of the potential axis (reference comes later)
+    outE_units  = 'V' ;     % set the legend of the potential axis (reference comes later)
 end
 
 %% Load the files and separate into cell array CV data vs scan number
@@ -234,17 +235,25 @@ clf(fh);
 ax = axes('parent',fh);
 
 %%% Format figure and plots
-% Figure format
-fh.Color    = 'w';
-fh.Position = [300,600,900,420];
+if ShowLegend == 1
+    % Figure format
+    fh.Color    = 'w';
+%     fh.Position = [300,600,900,420];
+    fh.Position = [300,600,620,340];
 
-% Axis format
-legend(ax,'show');
-legend(ax,'location','eastoutside');
-legend(ax,'interpreter','none');
-legend(ax,'boxoff');
-ax.Position = [0.07 0.1475 0.75 0.8];
-
+    % Axis format
+    lg = legend(ax,'show');
+    legend(ax,'location','eastoutside');
+    legend(ax,'interpreter','none');
+    legend(ax,'boxoff');
+%     ax.Position = [0.07 0.1475 0.75 0.8]; % original
+    ax.Position = [0.1065    0.2118    0.6581    0.7357];
+    lg.Position = [0.7777 0.3125 0.2048 0.5162];
+else
+    % Figure format
+    fh.Color    = 'w';
+    fh.Position = [300,600,620,340];  
+end
 box(ax,'on');
 ax.FontSize = 14;
 xlabel(ax,['Potential (' outE_units ')'],'FontWeight','bold');
