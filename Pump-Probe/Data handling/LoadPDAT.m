@@ -1,4 +1,4 @@
-function dataStruct = LoadDataHelios(dataStruct)
+function dataStruct = LoadPDAT(dataStruct)
 %% READ from dataStruct
 rootdir         = dataStruct.rootdir;
 datafilename    = dataStruct.datafilename;
@@ -8,7 +8,21 @@ fullName        = [rootdir filesep datafilename];
 
 %% Read Data
 % Read the files if the directory is correctly populated
-data            = readmatrix(fullName,'CommentStyle','%s')';
+fid             = fopen(fullName);
+units           = textscan(fid,'%s \n');
+fclose(fid);
+units           = strsplit(units{:}{:},'*');
+
+timescale       = units{1};
+Xunits          = units{2};
+switch Xunits
+    case 'nm'
+        probeunits = 'Wavelength';
+    case 'cm^{-1}'
+        probeunits = 'Wavenumbers';
+end
+
+data            = readmatrix(fullName,'FileType','text','CommentStyle','%s');
 
 delays          = data(2:end,1);
 cmprobe         = (data(1,2:end))';
@@ -17,34 +31,11 @@ rawsignal       = data(2:end,2:end);
 % remove NaN lines due to comments at end of file
 NaNidx          = sum(isnan(cmprobe));
 cmprobe         = cmprobe(1:end-NaNidx);
-rawsignal       = rawsignal(:,1:end-NaNidx)*1e3; % convert to mOD
+rawsignal       = rawsignal(:,1:end-NaNidx); % convert to mOD
 rawsignal       = fillmissing(rawsignal, 'linear');
 
-%% Read single scan data
-% dataname        = strsplit(datafilename,' ');
-% [~,shortName]   = fileparts(dataname{1});
-[~,shortName]   = fileparts(datafilename);
-filelist        = dir(rootdir);
-scanNames       = filelist(contains({filelist.name},[shortName '_scan'],'ignorecase',1) & contains({filelist.name},'csv','ignorecase',1));
-scanNames       = {scanNames.name}';
-Nscans          = length(scanNames);
-
-if Nscans >= 1
-    scandata            = zeros([size(rawsignal) Nscans]);
-    for s=1:Nscans
-        tempdata        = readmatrix([rootdir filesep scanNames{s}],'CommentStyle','%s')';
-        NaNidx          = sum(isnan(tempdata(1,:)));
-        tempdelays      = tempdata(2:end,1);
-        tempWL          = tempdata(1,2:end);
-        tempWL          = tempWL(1:end-NaNidx);
-        tempscandata    = tempdata(2:end,2:(end-NaNidx));
-        scandata(:,:,s) = fillmissing(tempscandata, 'linear')*1000;
-    end
-    noise               = std(scandata,0,3);
-else
-    Nscans = NaN;
-    noise  = zeros(size(rawsignal));
-end
+Nscans = NaN;
+noise  = zeros(size(rawsignal));
 
 %% Read the plot ranges
 mintime     = min(delays);
@@ -61,7 +52,7 @@ plotranges  = [mintime maxtime minwl maxwl minabs maxabs Ncontours];
 % Write the main variables
 dataStruct.delays      = delays;
 dataStruct.cmprobe     = cmprobe;
-dataStruct.rawsignal   = rawsignal/1000;
+dataStruct.rawsignal   = rawsignal;
 dataStruct.noise       = noise;
 dataStruct.plotranges  = plotranges;
 
@@ -82,10 +73,12 @@ end
     Idx = findClosestId2Val(dataStruct.delays,[dataStruct.mintimeBkg dataStruct.maxtimeBkg]);
     % Do the background subtraction and change status in handles.rawcorr
     if Idx(2)==1
-        dataStruct.bkg = dataStruct.rawsignal(1,:);
+        dataStruct.bkg  = dataStruct.rawsignal(1,:);
     else
-        dataStruct.bkg = mean(dataStruct.rawsignal(Idx(1):Idx(2),:));
+        dataStruct.bkg  = mean(dataStruct.rawsignal(Idx(1):Idx(2),:));
     end
-dataStruct.corrdata = dataStruct.rawsignal - dataStruct.bkg;
+dataStruct.corrdata     = dataStruct.rawsignal - dataStruct.bkg;
 
-dataStruct.timescale = 'ps';
+dataStruct.timescale    = timescale;
+dataStruct.Xunits       = Xunits;
+dataStruct.probeunits   = probeunits;

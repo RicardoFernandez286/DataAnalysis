@@ -198,7 +198,7 @@ if plot_showcontours == 1
 end
 
 %% Show axes
-where.Visible = 'on';
-where.Box = 'on';
-where.Layer = 'top';
-where.TickLength = [0.025 0.025];
+where.Visible       = 'on';
+where.Box           = 'on';
+where.Layer         = 'top';
+where.TickLength    = [0.04 0.025];
