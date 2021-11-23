@@ -84,7 +84,7 @@ delete(wb);
 % Parameters: 1=a 2=b 3=c; (4=d)  L = Wavelength in nm
 chirpFun = @(p,L) p(1) + 1e8.*p(2)./(L.^2) + 1e12.*p(3)./(L.^4);% + 1e17.*p(4)./(L.^6);
 
-C0 = [3     1       -1   ];%    1    ];
+C0 = [3     1       1   ];%    1    ];
 UB = [5     1e3     1e3  ];%    1e7  ];
 LB = [-5    -1e3    -1e3 ];%    -1e7 ];
 
