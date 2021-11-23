@@ -31,8 +31,16 @@ else
 end
 
 %% Read single scan data
-Nscans          = round(size(alldata,1)/length(delays));
-rawsignal       = zeros(Ndelays,Npixels);
+if dataStruct.chirpCorr == 0
+    Nscans          = round(size(alldata,1)/length(delays));
+    rawsignal       = zeros(Ndelays,Npixels);
+else
+    % Data is chirp-corrected, do NOT reload from files
+    rawsignal       = dataStruct.rawsignal;
+    cmprobe         = dataStruct.cmprobe;
+    delays          = dataStruct.delays;
+    Nscans          = 0;
+end
 
 if Nscans >= 1
     scandata            = zeros([size(rawsignal) Nscans]);
@@ -47,15 +55,11 @@ if Nscans >= 1
     scan_err(:,removePix,:) = [];
     rawsignal(:,removePix)  = [];
     noise(:,removePix)      = [];
-    cmprobe(removePix)    = [];
-    
-    Npixels                 = Npixels - length(removePix);
+    cmprobe(removePix)      = [];
 else
     Nscans = NaN;
     noise  = zeros(size(rawsignal));
 end
-
-
 
 %% Read the plot ranges
 mintime     = min(delays);

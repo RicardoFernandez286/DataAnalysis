@@ -6,28 +6,39 @@ datafilename    = dataStruct.datafilename;
 %% Check that all files exist and read them
 fullName        = [rootdir filesep datafilename];
 
+
 %% Read Data
-% Read the files if the directory is correctly populated
-data            = readmatrix(fullName,'CommentStyle','%s')';
+if dataStruct.chirpCorr == 0
+    % Read the files if the directory is correctly populated
+    data            = readmatrix(fullName,'CommentStyle','%s')';
 
-delays          = data(2:end,1);
-cmprobe         = (data(1,2:end))';
-rawsignal       = data(2:end,2:end);
+    delays          = data(2:end,1);
+    cmprobe         = (data(1,2:end))';
+    rawsignal       = data(2:end,2:end);
 
-% remove NaN lines due to comments at end of file
-NaNidx          = sum(isnan(cmprobe));
-cmprobe         = cmprobe(1:end-NaNidx);
-rawsignal       = rawsignal(:,1:end-NaNidx)*1e3; % convert to mOD
-rawsignal       = fillmissing(rawsignal, 'linear');
-
+    % remove NaN lines due to comments at end of file
+    NaNidx          = sum(isnan(cmprobe));
+    cmprobe         = cmprobe(1:end-NaNidx);
+    rawsignal       = rawsignal(:,1:end-NaNidx)*1e3; % convert to mOD
+    rawsignal       = fillmissing(rawsignal, 'linear');
+else
+    % Data is chirp-corrected, do NOT reload from files
+    rawsignal       = dataStruct.rawsignal;
+    cmprobe         = dataStruct.cmprobe;
+    delays          = dataStruct.delays;
+end
 %% Read single scan data
-% dataname        = strsplit(datafilename,' ');
-% [~,shortName]   = fileparts(dataname{1});
-[~,shortName]   = fileparts(datafilename);
-filelist        = dir(rootdir);
-scanNames       = filelist(contains({filelist.name},[shortName '_scan'],'ignorecase',1) & contains({filelist.name},'csv','ignorecase',1));
-scanNames       = {scanNames.name}';
-Nscans          = length(scanNames);
+if dataStruct.chirpCorr == 0
+    % dataname        = strsplit(datafilename,' ');
+    % [~,shortName]   = fileparts(dataname{1});
+    [~,shortName]   = fileparts(datafilename);
+    filelist        = dir(rootdir);
+    scanNames       = filelist(contains({filelist.name},[shortName '_scan'],'ignorecase',1) & contains({filelist.name},'csv','ignorecase',1));
+    scanNames       = {scanNames.name}';
+    Nscans          = length(scanNames);
+else
+    Nscans = 0;
+end
 
 if Nscans >= 1
     scandata            = zeros([size(rawsignal) Nscans]);
@@ -61,7 +72,7 @@ plotranges  = [mintime maxtime minwl maxwl minabs maxabs Ncontours];
 % Write the main variables
 dataStruct.delays      = delays;
 dataStruct.cmprobe     = cmprobe;
-dataStruct.rawsignal   = rawsignal/1000;
+dataStruct.rawsignal   = rawsignal;
 dataStruct.noise       = noise;
 dataStruct.plotranges  = plotranges;
 
