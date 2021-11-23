@@ -11,7 +11,6 @@ delays      = dataStruct.delays;
 probeAxis   = dataStruct.cmprobe;
 
 Ndelays = length(delays);
-Npixels = length(probeAxis);
 
 switch dataStruct.rawcorr
     case 'CORRECTED'
@@ -38,47 +37,43 @@ NfitPix     = length(fitPixels);
 
 %% Fit a Gaussian response and take the WL-dependent t0 parameter to do the chirp fit
 
-% 1D Gaussian with offset as fit function
-% Parameters: 1=t0 2=FWHM 3=Amplitude 4=Offset
-G0 = @(p,t) p(3).*exp(-log(2).*((t-p(1))./p(2)).^2) + p(4);
-G1 = @(p,t) -2.*log(2)./p(2).*t.*G0(p,t);
-G2 = @(p,t) -2.*log(2)./p(2).*G0(p,t) - G1(p,t).*2.*log(2)./p(2).*t;
+% 1D Gaussian with 1st and 2nd derivative
+% Parameters: 1=t0  2=FWHM  3=Amplitude  4=Offset  5=Amp 1st deriv  6=Amp 2nd deriv
+G0 = @(p,t) exp(-log(2).*((t-p(1))./p(2)).^2);
+G1 = @(p,t) -2.*log(2)./(p(2).^2).*(t-p(1)).*G0(p,t);
+G2 = @(p,t) 2.*log(2).*(-p(2).^2 + 2.*log(2).*(t-p(1)).^2)./(p(2).^4).*G0(p,t);
 
-% syms t t0 A s A0 A1 A2
-% Gau1D_sym(t,t0,A,s) = A.*exp(-log(2).*((t-t0)./s).^2);
-% Gau1D_art(t,t0,s,A,A0,A1,A2) = Gau1D_sym(t,t0,A,s) + A0 + A1*diff(Gau1D_sym(t,t0,A1,s),1) + A2*diff(Gau1D_sym(t,t0,A2,s),2);
-% ArtFit = @(p,t) (Gau1D_art(t,p(1),p(2),p(3),p(4),p(5),p(6)));
+ArtFit = @(p,t) p(3) + p(4).*G0(p,t) + p(5).*G1(p,t) + p(6).*G2(p,t);
 
-ArtFit = @(p,t) G0(p,t) + G1(p,t) + G2(p,t);
-
-% Initial Parameters and bounds
-% P0  = [0    0.15  10    0   ];
-% LB  = [-5   0     -50   -50 ];
-% UB  = [5    1     50    50  ];
-
-P0  = [0    0.15  10    10   10   10  ];
-LB  = [-5   0     -50   -50  -50  -50];
-UB  = [5    1     50    50   50   50 ];
-
+P0  = [0    0.1   10    0.1    0.1  0.1  ];
+LB  = [-5   0     -50   -50  -50  -50  ];
+UB  = [5    1     50    50   50   50   ];
 
 % Prepare an array where we will store the results
 Pfit = zeros(NfitPix,length(P0));
+Dfit = zeros(Ndelays,NfitPix);
 
 % Define fit options
 options     = optimoptions(@lsqcurvefit,...
-                'FunctionTolerance',5e-3,...
-                'MaxIterations',5e2,...
-                'MaxFunctionEvaluations',5e2,...
-                'steptolerance',5e-3,...
+                'FunctionTolerance',5e-10,...
+                'MaxIterations',1e4,...
+                'MaxFunctionEvaluations',1e4,...
+                'steptolerance',5e-10,...
                 'display','off');
 
 % Do the fits
 wb = waitbar(0);            
 for j=1:NfitPix
     i=fitPixels(j);
-    [~,idM] = max(abs(Z(:,i)));
+    [P0(3),idM] = max(abs(Z(:,i)));
     P0(1)   = delays(idM);
+    UB(1)   = P0(1) + 0.2;
+    LB(1)   = P0(1) - 0.2;
+    
+    UB(3:6)   = 10*P0(3);
+    LB(3:6)   = -10*P0(3);
     Pfit(j,:) = lsqcurvefit(ArtFit,P0,delays,Z(:,i),LB,UB,options);
+    Dfit(:,j) = ArtFit(Pfit(j,:),delays);
     waitbar(j/NfitPix,wb,['Fitting chirp correction... (' num2str(j) ' of ' num2str(NfitPix) ')'])
 end
 delete(wb);
@@ -87,11 +82,11 @@ delete(wb);
 
 % Fit dispersion using Cauchy's Equation (truncated on the 3rd/4th term)
 % Parameters: 1=a 2=b 3=c; (4=d)  L = Wavelength in nm
-chirpFun = @(p,L) p(1) + 1e7.*p(2)./(L.^2) + 1e11.*p(3)./(L.^4);% + 1e16.*p(4)./(L.^6);
+chirpFun = @(p,L) p(1) + 1e8.*p(2)./(L.^2) + 1e12.*p(3)./(L.^4);% + 1e17.*p(4)./(L.^6);
 
-C0 = [3     1       -1];%      1    ];
-UB = [5     1e3     1e3];%      1e7  ];
-LB = [-5    -1e3    -1e3];%     -1e7 ];
+C0 = [3     1       1   ];%    1    ];
+UB = [5     1e3     1e3  ];%    1e7  ];
+LB = [-5    -1e3    -1e3 ];%    -1e7 ];
 
 options     = optimoptions(@lsqcurvefit,...
                 'FunctionTolerance',1e-10,...
@@ -102,8 +97,37 @@ options     = optimoptions(@lsqcurvefit,...
             
 Cfit = lsqcurvefit(chirpFun,C0,fitWL,Pfit(:,1),LB,UB,options);
 
+% Plot Everything
+%%% Plot fitted chirp data
+WHAT = Z;
+maxPl = max(abs(WHAT(:)));
+minPl = -maxPl;
+ctrs  = linspace(minPl,maxPl,40);
+
+fh = figure(1);
+clf(fh);
+fh.Color = 'w';
+
+ax = axes('parent',fh);
+
+contourf(ax,probeAxis,delays,WHAT,ctrs,'EdgeColor','flat');
+colormap(darkb2r(minPl,maxPl,40,2));
+caxis([minPl,maxPl]);
+colorbar;
+
+hold(ax,'on');
+plot(ax,fitWL,Pfit(:,1),'o','Color',0.8*[0 1 1])
+plot(ax,probeAxis,chirpFun(Cfit,probeAxis),'y','LineWidth',3);
+hold(ax,'off');
+
+ylim(ax,[min(Pfit(:,1))-0.25 max(Pfit(:,1))+0.25])
+title(ax,'Fitted Dispersion Curve','FontWeight','bold');
+ylabel(ax,'Delay (ps)','FontWeight','bold');
+xlabel(ax,'Wavelength (nm)','FontWeight','bold');
+ax.FontSize = 16;
+
 %%% Plot dispersion fit
-fh = figure(3);
+fh = figure(2);
 clf(fh);
 fh.Color = 'w';
 ax = axes('parent',fh);
@@ -144,7 +168,7 @@ ax2.TickLength = [0.02 0.02];
 linkaxes([ax,ax2],'x');
 
 %%% Plot wavelength-dependent FWHM
-fh = figure(2);
+fh = figure(3);
 clf(fh);
 fh.Color = 'w';
 ax = axes('parent',fh);
@@ -169,7 +193,7 @@ ax.TickLength = [0.02 0.02];
 
 %% Save the chirp correction .mat file
 path_save = uigetdir(rootfolder,'Save Chirp Correction Parameters to...');
-fn_save = ['chirpCorr_' datestr(datetime,'YYYYMMDD-hhmmss') '.mat'];
+fn_save = ['chirpCorr_' datestr(datetime('now'),'yyyymmdd-HHMMSS') '.mat'];
 try 
     save([path_save filesep fn_save],'chirpFun','Cfit','fitPixels','fitWL','Pfit');
     helpdlg(["Chirp correction file successfully saved to: "; [path_save filesep fn_save]],'Chirp Correction Saved!');
