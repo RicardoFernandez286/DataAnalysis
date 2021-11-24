@@ -13,6 +13,16 @@ plot_pumpdirection  = app.I2D_PumpAxisOrientation.Value;
 interactivemode     = app.I2D_InteractivemodeSwitch.Value;
 normalise           = app.I2D_NormaliseCheckBox.Value;
 cutplot             = app.I2D_CutPlot_tick.Value;
+
+switch plot_pumpdirection
+    case 'Horizontal'
+        PumpLimits          = xlim(app.TwoDAxes);
+        ProbeLimits         = ylim(app.TwoDAxes);
+    case 'Vertical'
+        PumpLimits          = ylim(app.TwoDAxes);
+        ProbeLimits         = xlim(app.TwoDAxes);
+end
+
 % Get the data
 ProbeAxis           = dataStruct.ProbeAxis{k};
 PumpAxis            = dataStruct.PumpAxis;
@@ -20,6 +30,8 @@ Ndelays             = dataStruct.Ndelays;
 t2delays            = dataStruct.t2delays;
 PROC_2D_DATA        = dataStruct.PROC_2D_DATA;
 datafilename        = string(dataStruct.datafilename);
+
+
 
 switch slice_options{slice_typeindx}
     case 'Diagonal'
@@ -30,10 +42,10 @@ switch slice_options{slice_typeindx}
         % Get the data to be plotted
         for m=1:Ndelays
             % Get the indices of the probe wavelengths in the pump axis
-            pump_indexes{m}     = findClosestId2Val(PumpAxis{m,1},transpose(ProbeAxis));
+            pump_indexes{m}     = findClosestId2Val(PumpAxis{m,k},transpose(ProbeAxis));
             probe_indexes       = 1:length(ProbeAxis);
             % Get the data
-            data(:,m)           = diag(PROC_2D_DATA{m,1}(pump_indexes{m},probe_indexes));
+            data(:,m)           = diag(PROC_2D_DATA{m,k}(pump_indexes{m},probe_indexes));
         end
         
         % Create a new figure
@@ -105,11 +117,11 @@ switch slice_options{slice_typeindx}
         % Get the data to be plotted
         for m=1:Ndelays
             % Get the indices of the probe wavelengths
-            pump_indexes{m}     = findClosestId2Val(PumpAxis{m,1},pump_search);
+            pump_indexes{m}     = findClosestId2Val(PumpAxis{m,k},pump_search);
             probe_indexes       = 1:length(ProbeAxis);
             % Get the data
             for p=1:L
-                data(:,m,p)     = transpose(PROC_2D_DATA{m,1}(pump_indexes{m}(p),probe_indexes));
+                data(:,m,p)     = transpose(PROC_2D_DATA{m,k}(pump_indexes{m}(p),probe_indexes));
             end
         end
         
@@ -184,16 +196,16 @@ switch slice_options{slice_typeindx}
         pump_indexes = cell(Ndelays,1);
         for m=1:Ndelays
             if cutplot
-                min_pump        = findClosestId2Val(PumpAxis{m,1},min(ProbeAxis));
-                max_pump        = findClosestId2Val(PumpAxis{m,1},max(ProbeAxis));
+                min_pump        = findClosestId2Val(PumpAxis{m,k},min(ProbeAxis));
+                max_pump        = findClosestId2Val(PumpAxis{m,k},max(ProbeAxis));
                 pump_indexes{m} = min_pump:1:max_pump;
             else
-                pump_indexes{m} = 1:1:length(PumpAxis{m,1});
+                pump_indexes{m} = 1:1:length(PumpAxis{m,k});
             end
         end
         
         % Initialise variables
-        data                    = zeros(length(PumpAxis{1,1}(pump_indexes{m})),Ndelays,L);
+        data                    = zeros(length(PumpAxis{1,k}(pump_indexes{m})),Ndelays,L);
               
         % Get the probe indexes
         probe_indexes           = findClosestId2Val(ProbeAxis,probe_search);
@@ -201,7 +213,7 @@ switch slice_options{slice_typeindx}
         % Get the data to be plotted
         for m=1:Ndelays
             for p=1:L
-                data(:,m,p)     = PROC_2D_DATA{m,1}(pump_indexes{m},probe_indexes(p));
+                data(:,m,p)     = PROC_2D_DATA{m,k}(pump_indexes{m},probe_indexes(p));
             end
         end
         
@@ -216,7 +228,7 @@ switch slice_options{slice_typeindx}
             % Plot the data
             cmap=colormap(axes2,othercolor('Mrainbow',Ndelays));
             for m=1:Ndelays
-               plot(axes2,PumpAxis{m,1}(pump_indexes{m}),data(:,m,p),'-','LineWidth',2,'MarkerSize',2,'color',cmap(m,:),'DisplayName',[num2str(t2delays(m),'%.3g') ' ps']);
+               plot(axes2,PumpAxis{m,k}(pump_indexes{m}),data(:,m,p),'-','LineWidth',2,'MarkerSize',2,'color',cmap(m,:),'DisplayName',[num2str(t2delays(m),'%.3g') ' ps']);
                hold(axes2,'on')
             end
 
@@ -261,16 +273,17 @@ switch slice_options{slice_typeindx}
                              'Input pump wavenumber range to integrate:', [1 60],defaults);
                 SelTraces = str2num(SelTraces{:});
             case 'On'
-                SelTraces = [ProbeAxis(1) ProbeAxis(end)];
+                % Get limit indexes
+                SelTraces = PumpLimits;
         end
         
         % Get the indices of the pump wavelengths to integrate
-        pump_indexes    = findClosestId2Val(PumpAxis{1,1},SelTraces);
+        pump_indexes    = findClosestId2Val(PumpAxis{PopDelay,k},SelTraces);
         % Initialize variables
         data            = zeros(length(ProbeAxis),Ndelays);
         % Get the data to be plotted
         for m=1:Ndelays
-            data(:,m)   = transpose(sum(PROC_2D_DATA{m,1}(min(pump_indexes):max(pump_indexes),:),1));
+            data(:,m)   = transpose(sum(PROC_2D_DATA{m,k}(min(pump_indexes):max(pump_indexes),:),1));
         end
         
         % Create a new figure
@@ -320,7 +333,7 @@ switch slice_options{slice_typeindx}
         switch interactivemode
             case 'Off'
                 % Ask user for pump range (default is same as probe range)
-                defaults          = {num2str([ProbeAxis(1) ProbeAxis(end)])};
+                defaults  = {num2str([ProbeAxis(1) ProbeAxis(end)])};
                 SelTraces = inputdlg('Enter the pump range to show:',...
                              'Input pump wavenumber range to show:', [1 60],defaults);
                 SelTraces = str2num(SelTraces{:});
@@ -329,12 +342,12 @@ switch slice_options{slice_typeindx}
         end
         
         % Get the indices of the pump wavelengths
-        pump_indexes    = findClosestId2Val(PumpAxis{1,1},SelTraces);
+        pump_indexes    = findClosestId2Val(PumpAxis{1,k},SelTraces);
         % Initialize variables
         data            = zeros((max(pump_indexes)-min(pump_indexes)+1),Ndelays);
         % Get the data to be plotted
         for m=1:Ndelays
-            data(:,m)   = sum(PROC_2D_DATA{m,1}(min(pump_indexes):max(pump_indexes),:),2);
+            data(:,m)   = sum(PROC_2D_DATA{m,k}(min(pump_indexes):max(pump_indexes),:),2);
         end
         
         % Create a new figure
@@ -346,7 +359,7 @@ switch slice_options{slice_typeindx}
         % Plot the data
         cmap=colormap(axes2,othercolor('Mrainbow',Ndelays));
         for m=1:Ndelays
-           plot(axes2,PumpAxis{1,1}(min(pump_indexes):max(pump_indexes)),data(:,m),'-','LineWidth',2,'MarkerSize',2,'color',cmap(m,:),'DisplayName',[num2str(t2delays(m),'%.3g') ' ps']);
+           plot(axes2,PumpAxis{1,k}(min(pump_indexes):max(pump_indexes)),data(:,m),'-','LineWidth',2,'MarkerSize',2,'color',cmap(m,:),'DisplayName',[num2str(t2delays(m),'%.3g') ' ps']);
            hold(axes2,'on');
         end
 
@@ -407,7 +420,7 @@ switch slice_options{slice_typeindx}
         data            = zeros(length(ProbeAxis),L);
         % Get the data
         for p=1:L
-            data(:,p)       = transpose(PROC_2D_DATA{PopDelay,1}(pump_indexes(p),probe_indexes));
+            data(:,p)       = transpose(PROC_2D_DATA{PopDelay,k}(pump_indexes(p),probe_indexes));
         end
         
         if normalise

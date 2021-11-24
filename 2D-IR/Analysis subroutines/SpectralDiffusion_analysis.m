@@ -113,17 +113,17 @@ Interp_Data = cell(Ndelays,1);
 switch Interp_method
     case '2D FFT'
         for m=1:Ndelays
-            Interp_Data{m,1}    = real(fft(ifft(PROC_2D_DATA{m,1},2),Npixels.*Interp_order,2));
+            Interp_Data{m,k}    = real(fft(ifft(PROC_2D_DATA{m,k},2),Npixels.*Interp_order,2));
         end
     case 'InterpFT'
         for m=1:Ndelays
-            Interp_Data{m,1}    = interpft(PROC_2D_DATA{m,1},Npixels.*Interp_order,2);
+            Interp_Data{m,k}    = interpft(PROC_2D_DATA{m,k},Npixels.*Interp_order,2);
         end
     case 'Mesh'
         % Do something
     case 'None'
         for m=1:Ndelays
-            Interp_Data{m,1} = PROC_2D_DATA{m,1};
+            Interp_Data{m,k} = PROC_2D_DATA{m,k};
         end
 end
 
@@ -193,7 +193,7 @@ for q=1:L
             CLS_Ydata           = cell(Ndelays);
             for m=t2_idx
                 % Get the data around the minimum
-                [peak_val,peak_pos] = min(Interp_Data{m,1}(pump_indexes,probe_indexes),[],2);
+                [peak_val,peak_pos] = min(Interp_Data{m,k}(pump_indexes,probe_indexes),[],2);
                 peak_pos            = peak_pos + probe_idxrange(1);
                 % Fit a quadratic polynomial within N points around the minimum 
                 %   and find the analytical vertex of the parabola
@@ -204,7 +204,7 @@ for q=1:L
                     start_probe     = max(peak_pos(i)-N_pointsParabola,1);
                     end_probe       = min(peak_pos(i)+N_pointsParabola,length(Interp_ProbeAxis));
                     probe_segment   = Interp_ProbeAxis(start_probe:end_probe);
-                    data_segment    = Interp_Data{m,1}(pump_indexes(i),start_probe:end_probe);
+                    data_segment    = Interp_Data{m,k}(pump_indexes(i),start_probe:end_probe);
                     coeff           = polyfit(probe_segment,data_segment,2);
                     min_values(i,m) = -coeff(2)/(2*coeff(1));
                     if diagnosticPlot == 1
@@ -243,7 +243,7 @@ for q=1:L
             IvCLS_Ydata         = cell(Ndelays);
             for m=t2_idx
                 % Get the data around the minimum
-                [peak_val,peak_pos] = min(Interp_Data{m,1}(pump_indexes,probe_indexes),[],1);
+                [peak_val,peak_pos] = min(Interp_Data{m,k}(pump_indexes,probe_indexes),[],1);
                 peak_pos            = peak_pos + pump_idxrange(1);
                 % Fit a quadratic polynomial within 2 points around the minimum 
                 %   and find the analytical vertex of the parabola
@@ -252,7 +252,7 @@ for q=1:L
                 end
                 for i=1:Npeaks
                     pump_segment    = PumpAxis{1,1}(peak_pos(i)-N_points_IvCLS:peak_pos(i)+N_points_IvCLS);
-                    data_segment    = Interp_Data{m,1}(peak_pos(i)-N_points_IvCLS:peak_pos(i)+N_points_IvCLS,probe_indexes(i));
+                    data_segment    = Interp_Data{m,k}(peak_pos(i)-N_points_IvCLS:peak_pos(i)+N_points_IvCLS,probe_indexes(i));
                     coeff           = polyfit(pump_segment,data_segment,2);
                     min_values(i,m) = -coeff(2)/(2*coeff(1));
                     if diagnosticPlot == 1
@@ -294,7 +294,7 @@ for q=1:L
             IvCLS_Ydata         = cell(Ndelays);
             for m=t2_idx
                 % Get the data around the minimum
-                [peak_val,peak_pos] = min(Interp_Data{m,1}(pump_indexes,probe_indexes),[],1);
+                [peak_val,peak_pos] = min(Interp_Data{m,k}(pump_indexes,probe_indexes),[],1);
                 peak_pos            = peak_pos + pump_idxrange(1);
                 % Fit a quadratic polynomial within 2 points around the minimum 
                 %   and find the analytical vertex of the parabola
@@ -303,7 +303,7 @@ for q=1:L
                 end
                 for i=1:Npeaks
                     pump_segment    = PumpAxis{1,1}(peak_pos(i)-N_points_IvCLS:peak_pos(i)+N_points_IvCLS);
-                    data_segment    = Interp_Data{m,1}(peak_pos(i)-N_points_IvCLS:peak_pos(i)+N_points_IvCLS,probe_indexes(i));
+                    data_segment    = Interp_Data{m,k}(peak_pos(i)-N_points_IvCLS:peak_pos(i)+N_points_IvCLS,probe_indexes(i));
                     coeff           = polyfit(pump_segment,data_segment,2);
                     min_values(i,m) = -coeff(2)/(2*coeff(1));
                     if diagnosticPlot == 1
@@ -336,7 +336,7 @@ for q=1:L
             CLS_Ydata           = cell(Ndelays);
             for m=t2_idx
                 % Get the data around the minimum
-                [peak_val,peak_pos] = min(Interp_Data{m,1}(pump_indexes,probe_indexes),[],2);
+                [peak_val,peak_pos] = min(Interp_Data{m,k}(pump_indexes,probe_indexes),[],2);
                 peak_pos            = peak_pos + probe_idxrange(1);
                 % Fit a quadratic polynomial within N points around the minimum 
                 %   and find the analytical vertex of the parabola
@@ -345,7 +345,7 @@ for q=1:L
                 end
                 for i=1:Npeaks
                     probe_segment   = Interp_ProbeAxis(peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola);
-                    data_segment    = Interp_Data{m,1}(pump_indexes(i),peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola);
+                    data_segment    = Interp_Data{m,k}(pump_indexes(i),peak_pos(i)-N_pointsParabola:peak_pos(i)+N_pointsParabola);
                     coeff           = polyfit(probe_segment,data_segment,2);
                     min_values(i,m) = -coeff(2)/(2*coeff(1));
                     if diagnosticPlot == 1
