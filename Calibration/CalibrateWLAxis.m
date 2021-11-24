@@ -60,8 +60,8 @@ for i=1:Ndet
                     maxRefX = CWL(i) + 350;
                     ppnm    = 0.137;             % pixels per nm = 1/resolution;
                 case 2 % 50 l/mm
-                    minRefX = CWL(i) - 550;
-                    maxRefX = CWL(i) + 550;
+                    minRefX = CWL(i) - 450;
+                    maxRefX = CWL(i) + 450;
                     ppnm    = 0.068;             % pixels per nm = 1/resolution;
             end
             wp1         = CWL(i) - 48/ppnm; % lowest wavelength (nm) = CWL - Npix/2*resolution
