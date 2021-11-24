@@ -34,6 +34,12 @@ end
 if dataStruct.chirpCorr == 0
     Nscans          = round(size(alldata,1)/length(delays));
     rawsignal       = zeros(Ndelays,Npixels);
+    
+    % remove NaN lines due to comments at end of file
+    NaNidx          = sum(isnan(cmprobe));
+    cmprobe         = cmprobe(1:end-NaNidx);
+    rawsignal       = rawsignal(:,1:end-NaNidx)*1e3; % convert to mOD
+    rawsignal       = fillmissing(rawsignal, 'linear');
 else
     % Data is chirp-corrected, do NOT reload from files
     rawsignal       = dataStruct.rawsignal;
@@ -42,6 +48,12 @@ else
     Nscans          = 0;
 end
 
+ % remove NaN lines due to comments at end of file
+    NaNidx          = sum(isnan(cmprobe));
+    cmprobe         = cmprobe(1:end-NaNidx);
+    rawsignal       = rawsignal(:,1:end-NaNidx)*1e3; % convert to mOD
+    rawsignal       = fillmissing(rawsignal, 'linear');
+    
 if Nscans >= 1
     scandata            = zeros([size(rawsignal) Nscans]);
     scan_err            = zeros([size(rawsignal) Nscans]);
@@ -94,14 +106,14 @@ dataStruct.Nscans      = Nscans;
 if dataStruct.recalcBkg == 0
     % Subtract the first negative delay from all the dataset by default - otherwise take the inputs
     dataStruct.mintimeBkg = dataStruct.delays(1);
-    dataStruct.maxtimeBkg = dataStruct.delays(1);
+    dataStruct.maxtimeBkg = dataStruct.delays(3);
 end
     Idx = findClosestId2Val(dataStruct.delays,[dataStruct.mintimeBkg dataStruct.maxtimeBkg]);
     % Do the background subtraction and change status in handles.rawcorr
     if Idx(2)==1
         dataStruct.bkg = dataStruct.rawsignal(1,:);
     else
-        dataStruct.bkg = mean(dataStruct.rawsignal(Idx(1):Idx(2),:));
+        dataStruct.bkg = mean(dataStruct.rawsignal(Idx(1):Idx(2),:),'omitnan');
     end
 dataStruct.corrdata = dataStruct.rawsignal - dataStruct.bkg;
 

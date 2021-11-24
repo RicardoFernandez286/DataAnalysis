@@ -88,14 +88,14 @@ dataStruct.Nscans      = Nscans;
 if dataStruct.recalcBkg == 0
     % Subtract the first negative delay from all the dataset by default - otherwise take the inputs
     dataStruct.mintimeBkg = dataStruct.delays(1);
-    dataStruct.maxtimeBkg = dataStruct.delays(1);
+    dataStruct.maxtimeBkg = dataStruct.delays(3);
 end
     Idx = findClosestId2Val(dataStruct.delays,[dataStruct.mintimeBkg dataStruct.maxtimeBkg]);
     % Do the background subtraction and change status in handles.rawcorr
     if Idx(2)==1
         dataStruct.bkg = dataStruct.rawsignal(1,:);
     else
-        dataStruct.bkg = mean(dataStruct.rawsignal(Idx(1):Idx(2),:));
+        dataStruct.bkg = mean(dataStruct.rawsignal(Idx(1):Idx(2),:),'omitnan');
     end
 dataStruct.corrdata = dataStruct.rawsignal - dataStruct.bkg;
 
