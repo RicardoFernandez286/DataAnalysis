@@ -28,10 +28,10 @@ if debug==1
     plot_showcontours=1;
     
     popdelay=1;
-    plot_pumpdirection='Horizontal';
-    plot_axislegend=1;
-    plot_colourscheme='Red/blue'; % 'Red/blue' 'Jet' 'Blue/DRed'
-    plot_skiplevels=0;
+    plot_pumpdirection  = 'Horizontal';
+    plot_axislegend     = 1;
+    plot_colourscheme   = 'Red/blue'; % 'Red/blue' 'Jet' 'Blue/DRed'
+    plot_skiplevels     = 0;
     t2_delay_ps         = dataStruct.t2_delay_ps;
 end
 
@@ -85,11 +85,11 @@ if debug==0
     
     % Read the selection
     m = popdelay;
-%     if dataStruct.isShaper == 1
-%         cut=1; % 0 or 1 for UZH, 2 for Sheffield data
-%     else
-%         cut=1;
-%     end
+    if dataStruct.isShaper == 0 && cut == 1
+        cut=2; % 0 or 1 for UZH, 2 for Sheffield data
+    elseif cut ~= 0
+        cut=1;
+    end
 
     % Determine if spectral diffusion analysis have been performed or not and whether to plot them
     if plotOptions.ShowSpecDiff && dataStruct.SpecDiff
@@ -147,19 +147,21 @@ end
 
 switch cut_method
     case 'Intensity'
+        plot_limittype  = 'Local';
         accepted_pts    = PumpSpectrum >= (cut_threshold/100).*max(PumpSpectrum);
         minindex        = find(accepted_pts,1,'first');
         maxindex        = find(accepted_pts,1,'last');
         probelim        = 1:length(ProbeAxis);
     case 'Axis'
-        minindex        = findClosestId2Val(PumpAxis{m,k},min(ProbeAxis));
-        maxindex        = findClosestId2Val(PumpAxis{m,k},max(ProbeAxis));
-        probelim        = 1:length(ProbeAxis);
+        plot_limittype  = 'Local';
+        minindex        = findClosestId2Val(PumpAxis{m,k},minWL_pump);
+        maxindex        = findClosestId2Val(PumpAxis{m,k},maxWL_pump);
+        probeID         = findClosestId2Val(ProbeAxis,[minWL_probe maxWL_probe]);
+        probelim        = min(probeID):1:max(probeID);
     case 'Uncalibrated'
+        plot_limittype  = 'Global';
         minindex        = 1;
         maxindex        = length(PumpAxis{m,k});
-%         probelim        = 1:192;
-%         probelim    = [10:60];
         probelim        = 1:length(ProbeAxis);
 end
 

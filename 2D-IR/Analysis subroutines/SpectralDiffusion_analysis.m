@@ -423,7 +423,8 @@ switch specdif_options{specdif_typeindx}
                     'Algorithm','trust-region-reflective',...  %'levenberg-marquardt' 'trust-region-reflective'
                     'OptimalityTolerance',1e-15,...
                     'FunctionTolerance',1e-15,...
-                    'StepTolerance',1e-15);
+                    'StepTolerance',1e-15,...
+                    'Display','off');
         [CLS_param,~,residuals_CLS,~,~,~,jacobian_CLSfit] = lsqcurvefit(FFCF_func,start_param,t2delays(t2_idx),CLS_value(t2_idx),LB,UB,options);
         [IvCLS_param,~,residuals_IvCLS,~,~,~,jacobian_IvCLSfit] = lsqcurvefit(FFCF_func,start_param,t2delays(t2_idx),IvCLS_value(t2_idx),LB,UB,options);
         fittedCLS_CI    = nlparci(CLS_param,residuals_CLS,'jacobian',jacobian_CLSfit);
@@ -542,7 +543,8 @@ switch specdif_options{specdif_typeindx}
                             'Algorithm','trust-region-reflective',...  %'levenberg-marquardt' 'trust-region-reflective'
                             'OptimalityTolerance',1e-15,...
                             'FunctionTolerance',1e-15,...
-                            'StepTolerance',1e-15);
+                            'StepTolerance',1e-15,...
+                            'Display','off');
                 [fitted_param,~,residuals,~,~,~,jacobian_fit] = lsqcurvefit(FFCF_func,start_param,t2delays(t2_idx),SpecDif_ind(t2_idx),LB,UB,options);
                 fitted_CI   = nlparci(fitted_param,residuals,'jacobian',jacobian_fit);
                 fitted_err  = (fitted_CI(:,2) - fitted_CI(:,1))/2;
