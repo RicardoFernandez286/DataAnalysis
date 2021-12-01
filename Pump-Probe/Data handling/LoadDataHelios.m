@@ -6,25 +6,24 @@ datafilename    = dataStruct.datafilename;
 %% Check that all files exist and read them
 fullName        = [rootdir filesep datafilename];
 
-
 %% Read Data
 if dataStruct.chirpCorr == 0
     % Read the files if the directory is correctly populated
     data            = readmatrix(fullName,'CommentStyle','%s')';
 
     delays          = data(2:end,1);
-    cmprobe         = (data(1,2:end))';
-    rawsignal       = data(2:end,2:end);
+    cmprobe{1}      = (data(1,2:end))';
+    rawsignal{1}    = data(2:end,2:end);
 
     % remove NaN lines due to comments at end of file
-    NaNidx          = sum(isnan(cmprobe));
-    cmprobe         = cmprobe(1:end-NaNidx);
-    rawsignal       = rawsignal(:,1:end-NaNidx)*1e3; % convert to mOD
-    rawsignal       = fillmissing(rawsignal, 'linear');
+    NaNidx          = sum(isnan(cmprobe{1}));
+    cmprobe{1}      = cmprobe{1}(1:end-NaNidx);
+    rawsignal{1}    = rawsignal{1}(:,1:end-NaNidx)*1e3; % convert to mOD
+    rawsignal{1}    = fillmissing(rawsignal{1}, 'linear');
 else
     % Data is chirp-corrected, do NOT reload from files
-    rawsignal       = dataStruct.rawsignal;
-    cmprobe         = dataStruct.cmprobe;
+    rawsignal{1}    = dataStruct.rawsignal;
+    cmprobe{1}      = dataStruct.cmprobe;
     delays          = dataStruct.delays;
 end
 %% Read single scan data
@@ -60,13 +59,13 @@ end
 %% Read the plot ranges
 mintime     = min(delays);
 maxtime     = max(delays);
-minabs      = min(rawsignal(:));
-maxabs      = max(rawsignal(:));
+minabs      = min(rawsignal{1}(:));
+maxabs      = max(rawsignal{1}(:));
 zminmax     = round(max([abs(minabs) abs(maxabs)]),3);
-minwl       = min(cmprobe);
-maxwl       = max(cmprobe);
+minwl       = min(cmprobe{1});
+maxwl       = max(cmprobe{1});
 Ncontours   = 40; % 40 contours by default is OK
-plotranges  = [mintime maxtime minwl maxwl minabs maxabs Ncontours];
+plotranges{1} = [mintime maxtime minwl maxwl minabs maxabs Ncontours];
 
 %% WRITE to dataStruct
 % Write the main variables
@@ -93,10 +92,10 @@ end
     Idx = findClosestId2Val(dataStruct.delays,[dataStruct.mintimeBkg dataStruct.maxtimeBkg]);
     % Do the background subtraction and change status in handles.rawcorr
     if Idx(2)==1
-        dataStruct.bkg = dataStruct.rawsignal(1,:);
+        dataStruct.bkg{1} = dataStruct.rawsignal{1}(1,:);
     else
-        dataStruct.bkg = mean(dataStruct.rawsignal(Idx(1):Idx(2),:),'omitnan');
+        dataStruct.bkg{1} = mean(dataStruct.rawsignal{1}(Idx(1):Idx(2),:),'omitnan');
     end
-dataStruct.corrdata = dataStruct.rawsignal - dataStruct.bkg;
+dataStruct.corrdata{1}  = dataStruct.rawsignal{1} - dataStruct.bkg{1};
 
-dataStruct.timescale = 'ps';
+dataStruct.timescale    = 'ps';

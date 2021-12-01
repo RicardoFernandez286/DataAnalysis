@@ -1,4 +1,4 @@
-function dataStruct = ApplyChirpCorr(dataStruct,chirpSt,rootdir,type)
+function dataStruct = ApplyChirpCorr(dataStruct,chirpSt,rootdir,type,k)
 
 switch type
     case 'After fit'
@@ -14,16 +14,16 @@ switch type
 end
 %% Read from dataStruct
 delays      = dataStruct.delays;
-probeAxis   = dataStruct.cmprobe;
+probeAxis   = dataStruct.cmprobe{k};
 
 t0fit       = chirpFun(Cfit,probeAxis);
 
 % Ndelays = length(t);
 Npixels = length(probeAxis);
 
-Zcorr   = dataStruct.corrdata;
-Zraw    = dataStruct.rawsignal;
-noise   = dataStruct.noise;
+Zcorr   = dataStruct.corrdata{k};
+Zraw    = dataStruct.rawsignal{k};
+noise   = dataStruct.noise{k};
 
 %% Interpolate data at each pixel
 Zraw_new    = zeros(size(Zraw));

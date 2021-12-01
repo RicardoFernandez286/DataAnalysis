@@ -1,4 +1,4 @@
-function chirpSt = FitChirpCorr(dataStruct,rootfolder)
+function chirpSt = FitChirpCorr(dataStruct,rootfolder,k)
 % This routine will fit a dispersion curve by considering a Gaussian IRF
 % with a wavelength-dependent t0. These t0's will be fit to Cauchy's
 % dispersion equation to give a general time-dependent chirp, which can
@@ -8,16 +8,16 @@ function chirpSt = FitChirpCorr(dataStruct,rootfolder)
 
 %% Read from dataStruct
 delays      = dataStruct.delays;
-probeAxis   = dataStruct.cmprobe;
+probeAxis   = dataStruct.cmprobe{k};
 
 Ndelays = length(delays);
 Npixels = length(probeAxis);
 
 switch dataStruct.rawcorr
     case 'CORRECTED'
-        Z = dataStruct.corrdata;
+        Z = dataStruct.corrdata{k};
     case 'RAW'
-        Z = dataStruct.rawsignal;
+        Z = dataStruct.rawsignal{k};
 end
 
 %% Read Probe fit ranges
