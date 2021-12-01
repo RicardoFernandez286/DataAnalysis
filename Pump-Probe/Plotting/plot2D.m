@@ -1,4 +1,4 @@
-function plot2D(app,Zdata,where,TitleOnOff,WhichDetector)
+function plot2D(app,Zdata,where,TitleOnOff,k)
 % Description: This function will make a contour plot of transient data
 % Usage: handles = plot2D(dataStruct,Zdata,where,TitleOnOff)
 % Inputs:
@@ -16,9 +16,9 @@ function plot2D(app,Zdata,where,TitleOnOff,WhichDetector)
 dataStruct          = app.PP_Data;
 datafilename        = dataStruct.datafilename;
 delays              = dataStruct.delays;
-probe               = dataStruct.cmprobe;
+probe               = dataStruct.cmprobe{k};
 rawcorr             = dataStruct.rawcorr;
-plotranges          = dataStruct.plotranges;
+plotranges          = dataStruct.plotranges{k};
 
 % Read plot options from the GUI app
 plot_Ncontours      = app.PP_NContours.Value;
@@ -34,8 +34,6 @@ LineStyle           = app.PP_ContourFormat.Value;
 plot_colourscheme   = app.PP_ColourScheme.Value;
 
 DataFormat          = app.PP_DataFormat.Value;
-DetSwitch           = app.PP_ProbeDetSwitch.Value;
-
 linlog_time         = dataStruct.linlog;
 
 %% Parse the plot ranges
@@ -43,8 +41,8 @@ delaylim            = plotranges(1:2); %delaylim = [Min Max]
 WLlim               = plotranges(3:4); %WLlim = [Min Max]
 
 % Determine the plotting range
-minabs              = min(min(Zdata));
-maxabs              = max(max(Zdata));
+minabs              = min(min(Zdata{k}));
+maxabs              = max(max(Zdata{k}));
 maxDabs             = max([abs(minabs),abs(maxabs)]);
 
 switch TitleOnOff
@@ -71,13 +69,13 @@ plot_contours = linspace(min_cut,max_cut,plot_Ncontours);
 %% Do the plot
 X  = probe;
 Y  = delays;
-Z  = Zdata;
+Z  = Zdata{k};
 
-if sum(Zdata(:),'omitnan') == 0
+if sum(Zdata{k}(:),'omitnan') == 0
     return
 end
 
-if numel(Zdata) <= 2048*10
+if numel(Zdata{k}) <= 2048*10
     if plot_filledcontours == 1
         contourf(where,X,Y,Z,plot_contours,'LineStyle','-','LineColor','flat');
     else
