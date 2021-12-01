@@ -43,6 +43,7 @@ ShowWaitBar     = true;
 % datafilename    = dataStruct.datafilename;
 % rootdir         = dataStruct.rootdir;
 
+if 1==1
 %% Load all the necessary files after checking that they exist
 datadir     = [rootdir filesep datafilename];
 datadir_fl  = dir(datadir);

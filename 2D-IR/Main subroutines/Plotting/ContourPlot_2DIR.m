@@ -475,8 +475,8 @@ if isfield(dataStruct,'FitResults') ~= 0  && ~isempty(dataStruct.FitResults) && 
 
     if plotResidualsFit == 1
     PROC_2D_DATA    = dataStruct.PROC_2D_DATA;
-    ProbeAxis       = dataStruct.ProbeAxis;
-    PumpAxis        = dataStruct.PumpAxis{1,1};
+    ProbeAxis       = dataStruct.ProbeAxis{k};
+    PumpAxis        = dataStruct.PumpAxis{1,k};
     % Get the indices
     pump_range      = [min(inputstruct.Omega{1}) max(inputstruct.Omega{1})];
     probe_range     = [min(inputstruct.Omega{2}) max(inputstruct.Omega{2})];
@@ -486,7 +486,7 @@ if isfield(dataStruct,'FitResults') ~= 0  && ~isempty(dataStruct.FitResults) && 
     ZData           = zeros(pump_idxrange(2)-pump_idxrange(1)+1,probe_idxrange(2)-probe_idxrange(1)+1,Ndelays);       
     % Cut the data
     for m=1:Ndelays
-        data                = PROC_2D_DATA{popdelay,1};
+        data                = PROC_2D_DATA{popdelay,k};
         ZData(:,:,m)        = data(pump_idxrange(1):pump_idxrange(2),probe_idxrange(1):probe_idxrange(2));
     end
     hold(plotaxis,'on')

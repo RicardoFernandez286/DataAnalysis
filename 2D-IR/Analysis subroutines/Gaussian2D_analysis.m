@@ -8,7 +8,7 @@ function [dataStruct,exitcode] = Gaussian2D_analysis(app,dataStruct,varargin)
 %     PumpAxis
 %     t2delays
 %     PROC_2D_DATA
-%     InteractiveModeTick.Value (a tick box to define whether the user is asked for graphical or textual input)
+%     InteractiveMoDETick.Value (a tick box to define whether the user is asked for graphical or textual input)
 % Outputs:
 %     fitPar and firErr: two data structures containing the fit results and their standard errors.
 %
@@ -19,9 +19,11 @@ function [dataStruct,exitcode] = Gaussian2D_analysis(app,dataStruct,varargin)
 plot_pumpdirection  = app.I2D_PumpAxisOrientation.Value;
 interactivemode     = app.I2D_InteractivemodeSwitch.Value;
 
+DET                 = app.I2D_ProbeDetSwitch.Value;
+
 % Get the data
-ProbeAxis           = dataStruct.ProbeAxis;
-PumpAxis            = dataStruct.PumpAxis{1,1};
+ProbeAxis           = dataStruct.ProbeAxis{DET};
+PumpAxis            = dataStruct.PumpAxis{DET,1};
 t2delays            = dataStruct.t2delays;
 PROC_2D_DATA        = dataStruct.PROC_2D_DATA;
 
@@ -156,10 +158,10 @@ ZData               = zeros(pump_idxrange(2)-pump_idxrange(1)+1,probe_idxrange(2
 
 % Cut the data
 for m=1:Ndelays
-    data                = PROC_2D_DATA{m,1};
-    PROC_2D_DATA{m,1}   = data(pump_idxrange(1):pump_idxrange(2),probe_idxrange(1):probe_idxrange(2));
-    Znormfactor(m)      = max(abs(PROC_2D_DATA{m,1}),[],'all');
-    ZData(:,:,m)        = PROC_2D_DATA{m,1}./Znormfactor(m);
+    data                = PROC_2D_DATA{m,DET};
+    PROC_2D_DATA{m,DET} = data(pump_idxrange(1):pump_idxrange(2),probe_idxrange(1):probe_idxrange(2));
+    Znormfactor(m)      = max(abs(PROC_2D_DATA{m,DET}),[],'all');
+    ZData(:,:,m)        = PROC_2D_DATA{m,DET}./Znormfactor(m);
 end
 
 % Cut the pump and probe axes
@@ -184,10 +186,11 @@ options = optimoptions('lsqcurvefit',...
                     'OptimalityTolerance',5e-5,...
                     'FunctionTolerance',5e-5,...
                     'StepTolerance',5e-5,...
-                    'UseParallel',true,...
+                    'UseParallel',false,...
                     'TypicalX',TypicalX,...
                     'Display','off',...
-                    'SubproblemAlgorithm','factorization', 'PlotFcn','optimplotresnorm');
+                    'SubproblemAlgorithm','factorization',...
+                    'PlotFcn','optimplotresnorm');
     else
         options = optimoptions('lsqcurvefit',...
                     'MaxFunctionEvaluations',15000,...
@@ -301,7 +304,7 @@ end
 %         filename    = [dataStruct.rootdir filesep dataStruct.datafilename '_FIT_RESULTS.mat'];
 %         save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input_st','FitResults','NormVols','NormErr');
 %     catch
-        filename    = [writepath filesep dataStruct.datafilename '_FIT_RESULTS.mat'];
+        filename    = [writepath filesep dataStruct.datafilename '_FIT_RESULTS_DET' num2str(DET) '.mat'];
         save(filename,'fitPar','fitErr','SSR','output_st','t2delays','input_st','FitResults','NormVols','NormErr');
 %     end
 

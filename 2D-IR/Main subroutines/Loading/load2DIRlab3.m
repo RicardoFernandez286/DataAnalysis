@@ -151,7 +151,7 @@ else    % This is a sample t2 delay, process it normally
     end
     q=1:Nbins;
     cosine             = ((cos(pi*(q)/(2*Nbins))).^cos_exp)';
-    box                = (heaviside(q))';
+    box                = (heavisideRF(q))';
     apodize_function   = cosine.*box;
     apo_NR             = signal_NR.*apodize_function;
     apo_RE             = signal_RE.*apodize_function;

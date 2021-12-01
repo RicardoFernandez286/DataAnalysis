@@ -20,6 +20,10 @@ switch dataStruct.rawcorr
         Z = dataStruct.rawsignal;
 end
 
+%% Hardcoded settings
+ChirpEquation = 'Shaper';
+c0 = 2.99792458e+2;    % Speed of light in nm/fs
+
 %% Read Probe fit ranges
 % probeRanges = [360 380 415 645];
 % probeRanges = [0 1000];
@@ -34,7 +38,6 @@ end
 fitPixels   = 1:Npixels;
 fitWL       = probeAxis(fitPixels);
 NfitPix     = length(fitPixels);
-
 
 mode        = questdlg('Select Chirp Correction Method','Chirp Correction Method','Automatic','Manual','Cancel','Automatic');
 
@@ -83,7 +86,6 @@ switch mode
         
         fitWL       = ds.SelTraces(:,1);
         Pfit(:,1)   = ds.SelTraces(:,2);
-        a=0;
         delete(fh);
     case 'Automatic'
         %%% Fit a Gaussian response and take the WL-dependent t0 parameter to do the chirp fit
@@ -129,37 +131,65 @@ switch mode
         delete(wb);
 end
 
+%%
+        % Need to work in THz and fs
+        Pfit(:,1) = Pfit(:,1).*1000;
+        delays    = delays.*1000;
+        CWL       = mean([min(fitWL) max(fitWL)]);
+        
+        probeAxis = c0./probeAxis;
+        fitWL     = c0./fitWL;
+        
+
 %% Fit Chirp vs Lambda
 
-% Fit dispersion using Cauchy's Equation (truncated on the 3rd/4th term)
-% Parameters: 1=a 2=b 3=c; (4=d)  L = Wavelength in nm
-chirpFun = @(p,L) p(1) + 1e8.*p(2)./(L.^2) + 1e12.*p(3)./(L.^4);% + 1e17.*p(4)./(L.^6);
+switch ChirpEquation
+    case 'Cauchy'
+        % Fit dispersion using Cauchy's Equation (truncated on the 3rd/4th term)
+        % Parameters: 1=a 2=b 3=c; (4=d)  L = Wavelength in nm
+        chirpFun = @(p,L) p(1) + 1e8.*p(2)./(L.^2) + 1e12.*p(3)./(L.^4);% + 1e17.*p(4)./(L.^6);
 
-C0 = [3     1       1   ];%    1    ];
-UB = [5     1e3     1e3  ];%    1e7  ];
-LB = [-5    -1e3    -1e3 ];%    -1e7 ];
+        C0 = [3     1       1    ];%    1    ];
+        UB = [5     1e3     1e3  ];%    1e7  ];
+        LB = [-5    -1e3    -1e3 ];%    -1e7 ];
+    case 'Shaper'
+        % Fit dispersion using a Taylor expansion centred at w0 --- ONLY FOR PULSE SHAPER CALIBRATION
+        % Parameters: 1=a 2=b 3=c; (4=d)  L = Wavelength in nm   W0 = central wavelength
 
-options     = optimoptions(@lsqcurvefit,...
-                'FunctionTolerance',1e-10,...
-                'MaxIterations',5e4,...
-                'MaxFunctionEvaluations',5e4,...
-                'steptolerance',1e-8,...
-                'display','off');
-            
-Cfit = lsqcurvefit(chirpFun,C0,fitWL,Pfit(:,1),LB,UB,options);
+        % Expand around the central wavelength
+        nu0     = c0./CWL;     
+        SpPhase = @(p,nu) p(2).*(2.*pi).*(nu-nu0) + 1/2*p(3).*(2.*pi).^2.*(nu-nu0).^2 + 1/6*p(4).*(2.*pi).^3.*(nu-nu0).^3 + 1/24*p(5).*(2.*pi).^4.*(nu-nu0).^4;
+        chirpFun= @(p,nu) p(1) + 1./nu.*SpPhase(p,nu);
+        
+%         C0 = [1.3e3 125   -25    20    -20 ];
+        C0 = [1.3e3   eps   -200   -350   eps  ];
+        UB = [1e5   1E3     1e5    1e5   1e5 ];
+        LB = [-1e5  -1E3  -1e5   -1e5  -1e5];
+end
+
+        options     = optimoptions(@lsqcurvefit,...
+                        'FunctionTolerance',1e-10,...
+                        'MaxIterations',5e4,...
+                        'MaxFunctionEvaluations',5e4,...
+                        'steptolerance',1e-10,...
+                        'display','off');
+%                       'typicalX',C0,...
+
+Cfit    = lsqcurvefit(chirpFun,C0,fitWL,Pfit(:,1),LB,UB,options);
+% Cfit = C0;
 
 % Plot Everything
 %%% Plot fitted chirp data
-WHAT = Z;
-maxPl = max(abs(WHAT(:)));
-minPl = -maxPl;
-ctrs  = linspace(minPl,maxPl,40);
+WHAT    = Z;
+maxPl   = max(abs(WHAT(:)));
+minPl   = -maxPl;
+ctrs    = linspace(minPl,maxPl,40);
 
-fh = figure(1);
+fh      = figure(1);
 clf(fh);
-fh.Color = 'w';
+fh.Color= 'w';
 
-ax = axes('parent',fh);
+ax      = axes('parent',fh);
 
 contourf(ax,probeAxis,delays,WHAT,ctrs,'EdgeColor','flat');
 colormap(darkb2r(minPl,maxPl,40,2));
@@ -171,10 +201,19 @@ plot(ax,fitWL,Pfit(:,1),'o','Color',0.8*[0 1 1])
 plot(ax,probeAxis,chirpFun(Cfit,probeAxis),'y','LineWidth',3);
 hold(ax,'off');
 
-ylim(ax,[min(Pfit(:,1))-0.25 max(Pfit(:,1))+0.25])
-title(ax,'Fitted Dispersion Curve','FontWeight','bold');
-ylabel(ax,'Delay (ps)','FontWeight','bold');
-xlabel(ax,'Wavelength (nm)','FontWeight','bold');
+switch ChirpEquation
+    case 'Cauchy'
+        ylim(ax,[min(Pfit(:,1))-0.25 max(Pfit(:,1))+0.25])
+        title(ax,'Fitted Dispersion Curve','FontWeight','bold');
+        ylabel(ax,'Delay (ps)','FontWeight','bold');
+        xlabel(ax,'Wavelength (nm)','FontWeight','bold');
+    case 'Shaper'
+        ylim(ax,[min(Pfit(:,1))-250 max(Pfit(:,1))+250])
+        title(ax,'Fitted Dispersion Curve','FontWeight','bold');
+        ylabel(ax,'Delay (fs)','FontWeight','bold');
+        xlabel(ax,'Frequency (THz)','FontWeight','bold');
+        ax.XDir='reverse';
+end   
 ax.FontSize = 16;
 
 %%% Plot dispersion fit
@@ -201,15 +240,37 @@ ax2 = axes('parent',fh);
 
 ax.Position = [0.15 0.46 0.7750 0.4612];
 ax2.Position= [0.15 0.15 0.7750 0.2528];
+       
+switch ChirpEquation
+    case 'Cauchy'
+        factorRes   = 1000;
+    case 'Shaper'
+        factorRes   = 1;
+end
 
-res = 1000*(Pfit(:,1)-chirpFun(Cfit,fitWL));
-
+res = factorRes.*(Pfit(:,1)-chirpFun(Cfit,fitWL));
 plot(ax2,fitWL,res,'xk')
 yline(ax2,0);
 ax.XTickLabel=[];
-xlabel(ax2,'Wavelength (nm)','FontWeight','bold');
-ylabel(ax2,'{\Delta}{t_{0}}^{res} (fs)','FontWeight','bold');
-ylim(ax2,[-50,50]);
+
+switch ChirpEquation
+    case 'Cauchy'
+        ylim(ax,[min(Pfit(:,1))-0.25 max(Pfit(:,1))+0.25])
+        xlabel(ax2,'Wavelength (nm)','FontWeight','bold');
+        ylabel(ax2,'{\Delta}{t_{0}}^{res} (fs)','FontWeight','bold');
+        ylim(ax2,[-50,50]);
+    case 'Shaper'
+%         ylim(ax,[min(Pfit(:,1))-250 max(Pfit(:,1))+250])
+        title(ax,'Fitted Dispersion Curve','FontWeight','bold');
+        ylabel(ax,'Delay (fs)','FontWeight','bold');
+        xlabel(ax2,'Frequency (THz)','FontWeight','bold');
+        xline(ax,nu0);
+        ax2.XDir='reverse';
+%         ylim(ax,[-pi,pi]);
+%         yline(ax,Cfit(1));
+end   
+
+title(ax,'Fitted Dispersion Curve','FontWeight','bold');
 
 box(ax2,'on');
 ax.FontSize = 16;

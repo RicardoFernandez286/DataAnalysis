@@ -231,9 +231,9 @@ LB(S12_pos(isDiagonal))= 5;
 
 %%% Time-dependent parameters
 % Spectral diffusion
-Start_param(C_pos(C_pos~=0)) = 0.25;    % Starting C value of 0.5 for all points. Needs improvement.
-UB(C_pos(C_pos~=0))     = 0.99;         % C can only be in the range (-1 1). Considering positive only
-LB(C_pos(C_pos~=0))     = -0.99;        % C can only be in the range (-1 1). Considering positive only
+Start_param(C_pos(C_pos~=0))    = 0.5;    % Starting C value of 0.5 for all points. Needs improvement.
+UB(C_pos(C_pos~=0))             = 0.99;         % C can only be in the range (-1 1). Considering positive only
+LB(C_pos(C_pos~=0))             = -0.99;        % C can only be in the range (-1 1). Considering positive only
 
 
 % Amplitudes

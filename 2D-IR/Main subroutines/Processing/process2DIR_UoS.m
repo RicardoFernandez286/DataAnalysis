@@ -193,7 +193,7 @@ binspecmax(m,k) = 1;
     end
     q=1:Nbins;
     cosine{m,k}             = ((cos(pi*(q-binzero{m,k})/(2*(Nbins-binzero{m,k})))).^cos_exp)';
-    box{m,k}                = (heaviside(q-binzero{m,k}))';
+    box{m,k}                = (heavisideRF(q-binzero{m,k}))';
 
     % Gaussian
     if apodize_gaussian==1
