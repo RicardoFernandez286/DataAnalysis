@@ -27,7 +27,21 @@ CWL(1)      = str2double(w1_st{end});
 Gratings(2) = str2double(g2_st{end});
 CWL(2)      = str2double(w2_st{end});
 
+probe_calib = 0;
 est_probe   = cell(1,2);
+
+% If there is a calibrated WL file in the current EXPDIR, use it
+wavenumberfile = 'CalibratedProbe.csv';
+
+if exist([datadir filesep wavenumberfile],'file') == 2
+    probe_calib = 2;
+    tmp_probe = readmatrix([datadir filesep wavenumberfile]);
+elseif exist([rootdir filesep wavenumberfile],'file') == 2
+    probe_calib = 2;
+    tmp_probe = readmatrix([rootdir filesep wavenumberfile]);
+else
+    tmp_probe = [];
+end
 
 % Estimate probe axis, arbitrary calibration factors
 for i=1:2
@@ -47,7 +61,14 @@ end
 rawdata         = readmatrix([filename '.2D'],'FileType','delimited');
 delays          = readmatrix([filename '.DT'],'FileType','delimited'); % Delays originally in microseconds, convert to seconds
 
-cmprobe         = est_probe;
+switch probe_calib
+    case 0
+        cmprobe         = est_probe;
+    case 2
+        cmprobe{1}      = tmp_probe(1:96);
+        cmprobe{2}      = tmp_probe(97:end);
+end
+
 Ndelays         = length(delays);
 rawsignal       = cell(2,1);
 %% Split Data into two detectors

@@ -23,7 +23,7 @@ end
 %% Hardcoded settings
 ChirpEquation = 'Shaper';
 c0 = 2.99792458e+2;    % Speed of light in nm/fs
-
+plotpercent = 50;
 %% Read Probe fit ranges
 % probeRanges = [360 380 415 645];
 % probeRanges = [0 1000];
@@ -46,7 +46,7 @@ switch mode
         return
     case 'Manual'
         % Make a plot of the data
-        maxPl = max(abs(Z(:)));
+        maxPl = plotpercent./100.*max(abs(Z(:)));
         minPl = -maxPl;
         ctrs  = linspace(minPl,maxPl,40);
         
@@ -61,7 +61,7 @@ switch mode
         caxis(ax,[minPl,maxPl]);
         colorbar(ax);
         
-        ylim([-5,5]); % Set this preliminary zoom level in case the data contains longer delays
+        ylim([-20,20]); % Set this preliminary zoom level in case the data contains longer delays
         
         % Select a region to zoom in
         title(ax,'Define min/max delay region to zoom in','FontWeight','bold');
@@ -135,6 +135,10 @@ end
         % Need to work in THz and fs
         Pfit(:,1) = Pfit(:,1).*1000;
         delays    = delays.*1000;
+            
+        probeAxis = 1e7./probeAxis;
+        fitWL     = 1e7./fitWL;
+        
         CWL       = mean([min(fitWL) max(fitWL)]);
         
         probeAxis = c0./probeAxis;
@@ -162,9 +166,9 @@ switch ChirpEquation
         chirpFun= @(p,nu) p(1) + 1./nu.*SpPhase(p,nu);
         
 %         C0 = [1.3e3 125   -25    20    -20 ];
-        C0 = [1.3e3   eps   -200   -350   eps  ];
-        UB = [1e5   1E3     1e5    1e5   1e5 ];
-        LB = [-1e5  -1E3  -1e5   -1e5  -1e5];
+        C0 = [1.3e3  eps   -200   -350   0  ];
+        UB = [1e6   1E10    1e10    0   0 ];
+        LB = [-1e6  -1E10  -1e10   -0  0];
 end
 
         options     = optimoptions(@lsqcurvefit,...
