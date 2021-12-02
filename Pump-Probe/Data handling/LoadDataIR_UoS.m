@@ -1,10 +1,10 @@
 function dataStruct = LoadDataIR_UoS(dataStruct,varargin)
 %% READ from dataStruct
 % Get stuff from dataStruct
-rootdir         = dataStruct.rootdir;
-datafilename    = dataStruct.datafilename;
+rootdir     = dataStruct.rootdir;
+datafilename= dataStruct.datafilename;
 
-DetSz           = [96 96 32 32]; % Sizes of [probe1 probe2 ref1 ref2] in pixels
+DetSz       = [96 96 32 32]; % Sizes of [probe1 probe2 ref1 ref2] in pixels
 
 % Get files
 datadir     = [rootdir filesep datafilename];
@@ -31,16 +31,16 @@ probe_calib = 0;
 est_probe   = cell(1,2);
 
 % If there is a calibrated WL file in the current EXPDIR, use it
-wavenumberfile = 'CalibratedProbe.csv';
+wavenumberfile  = 'CalibratedProbe.csv';
 
 if exist([datadir filesep wavenumberfile],'file') == 2
     probe_calib = 2;
     tmp_probe = readmatrix([datadir filesep wavenumberfile]);
 elseif exist([rootdir filesep wavenumberfile],'file') == 2
     probe_calib = 2;
-    tmp_probe = readmatrix([rootdir filesep wavenumberfile]);
+    tmp_probe   = readmatrix([rootdir filesep wavenumberfile]);
 else
-    tmp_probe = [];
+    tmp_probe   = [];
 end
 
 % Estimate probe axis, arbitrary calibration factors
@@ -71,6 +71,7 @@ end
 
 Ndelays         = length(delays);
 rawsignal       = cell(2,1);
+plotranges      = cell(2,1);
 %% Split Data into two detectors
 for j=1:2
     idx = (1:DetSz(j)) + sum(DetSz(1:j-1));
@@ -79,23 +80,23 @@ for j=1:2
     % Noise and ranges
     noise           = zeros(size(rawsignal));
     % Read the plot ranges
-    mintime     = min(delays);
-    maxtime     = max(delays);
-    minabs      = min(rawsignal{j}(:));
-    maxabs      = max(rawsignal{j}(:));
-    zminmax     = round(max([abs(minabs) abs(maxabs)]),3);
-    minwl       = min(cmprobe{j});
-    maxwl       = max(cmprobe{j});
-    Ncontours   = 40; % 40 contours by default is OK
-    plotranges{j}  = [mintime maxtime minwl maxwl minabs maxabs Ncontours];
+    mintime         = min(delays);
+    maxtime         = max(delays);
+    minabs          = min(rawsignal{j}(:));
+    maxabs          = max(rawsignal{j}(:));
+    zminmax         = round(max([abs(minabs) abs(maxabs)]),3);
+    minwl           = min(cmprobe{j});
+    maxwl           = max(cmprobe{j});
+    Ncontours       = 40; % 40 contours by default is OK
+    plotranges{j}   = [mintime maxtime minwl maxwl minabs maxabs Ncontours];
 end
 %% WRITE to dataStruct
 % Write the main variables
-dataStruct.delays      = delays;
-dataStruct.cmprobe     = cmprobe;
-dataStruct.rawsignal   = rawsignal;
-dataStruct.noise       = noise;
-dataStruct.plotranges  = plotranges;
+dataStruct.delays       = delays;
+dataStruct.cmprobe      = cmprobe;
+dataStruct.rawsignal    = rawsignal;
+dataStruct.noise        = noise;
+dataStruct.plotranges   = plotranges;
 
 % Calculate noise statistics
 dataStruct.AvgNoise     = mean(noise(:));
@@ -103,7 +104,7 @@ dataStruct.MaxNoise     = max(noise(:));
 dataStruct.SNR          = abs(round(zminmax/dataStruct.AvgNoise,3));
 
 % Number of scans
-   dataStruct.Nscans        = NaN;
+   dataStruct.Nscans    = NaN;
 
 for j=1:2
 % Background Subtraction

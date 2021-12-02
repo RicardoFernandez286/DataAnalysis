@@ -3,7 +3,7 @@ function data = LoadSpectrum(app,message)
 % Ricardo Fernandez-Teran / 09.11.2021 / v1.0a
 
 
-[datafile, datapath, idx] = uigetfile({'*.2D','UoS TRIR';'*.dat','UniGE TA'},message);
+[datafile, datapath, idx] = uigetfile({'*.2D','UoS TRIR';'*.dat','UniGE TA';'*.dat','UniGe nsTA'},message);
 rootdir = app.rootdir;
 if isempty(rootdir)
   rootdir = pwd;
@@ -41,6 +41,11 @@ switch idx
     case 2 % UniGE TA
         rawdata = readmatrix([datapath filesep datafile],'FileType','text','Delimiter','\t');
         data{1} = rawdata(:,3);
+        app.CAL_data.CalType = 1;
+        
+    case 3
+        rawdata = readmatrix([datapath filesep datafile],'FileType','text','Delimiter','\t');
+        data{1} = rawdata(:,2);
         app.CAL_data.CalType = 1;
 end
 

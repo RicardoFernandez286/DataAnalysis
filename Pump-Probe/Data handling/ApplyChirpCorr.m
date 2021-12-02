@@ -19,11 +19,11 @@ probeAxis   = dataStruct.cmprobe{k};
 t0fit       = chirpFun(Cfit,probeAxis);
 
 % Ndelays = length(t);
-Npixels = length(probeAxis);
+Npixels     = length(probeAxis);
 
-Zcorr   = dataStruct.corrdata{k};
-Zraw    = dataStruct.rawsignal{k};
-noise   = dataStruct.noise{k};
+Zcorr       = dataStruct.corrdata{k};
+Zraw        = dataStruct.rawsignal{k};
+noise       = dataStruct.noise{k};
 
 %% Interpolate data at each pixel
 Zraw_new    = zeros(size(Zraw));
@@ -43,9 +43,9 @@ delays      = delays(1:end-1);
 
 switch dataStruct.rawcorr
     case 'CORRECTED'
-        Z = dataStruct.corrdata;
+        Z = dataStruct.corrdata{k};
     case 'RAW'
-        Z = dataStruct.rawsignal;
+        Z = dataStruct.rawsignal{k};
 end
 
 %% Read the plot ranges
@@ -61,11 +61,11 @@ plotranges  = [mintime maxtime minwl maxwl minabs maxabs Ncontours];
 %% WRITE to dataStruct
 % Write the main variables
 dataStruct.delays       = delays;
-dataStruct.cmprobe      = probeAxis;
-dataStruct.rawsignal    = Zraw_new;
-dataStruct.corrdata     = Zcorr_new;
-dataStruct.noise        = Noise_new;
-dataStruct.plotranges   = plotranges;
+dataStruct.cmprobe{k}   = probeAxis;
+dataStruct.rawsignal{k} = Zraw_new;
+dataStruct.corrdata{k}  = Zcorr_new;
+dataStruct.noise{k}     = Noise_new;
+dataStruct.plotranges{k}= plotranges;
 dataStruct.chirpCorr    = 1;
 
 %% FOR DIAGNOSTICS

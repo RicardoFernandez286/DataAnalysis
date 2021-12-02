@@ -1,4 +1,4 @@
-function dataStruct = LoadDataTAUniGE(dataStruct)
+function dataStruct = LoadData_nsTAUniGE(dataStruct)
 %% READ from dataStruct
 rootdir         = dataStruct.rootdir;
 datafilename    = dataStruct.datafilename;
@@ -12,14 +12,11 @@ text            = fscanf(fopen(fullName),'%c');
 head_n          = count(text,'%');
 
 alldata         = readmatrix(fullName,'FileType','text','NumHeaderLines',head_n,'CommentStyle','%s');
-
-Npixels         = round(size(alldata,2)/2)-1;
+delays          = unique(alldata(:,1))*1e9; % convert to ns
+Ndelays         = length(delays);
+Npixels         = size(alldata,1)./Ndelays;
 
 removePix       = sort([1:25 Npixels-(0:1:10)]);
-
-% cmprobe         = 
-delays          = unique((alldata(2:end,1)))*1e12; % convert to ps
-Ndelays         = length(delays);
 
 %%%% remove NaN lines due to comments at end of file
 % NaNidx          = sum(isnan(cmprobe));
@@ -27,51 +24,39 @@ if exist([rootdir filesep 'pix2lam.mat'],'file') ~= 0
     load([rootdir filesep 'pix2lam.mat'],'lam');
     cmprobe{1}  = lam;
 else
-    cmprobe{1}  = (1:Npixels)';
+    cmprobe{1}  = (1:Npixels)'; %#ok<*BDSCI>
 end
 
+%% Split the data by delays
+tmpsignal   = zeros(Ndelays,Npixels);
+tmpnoise    = zeros(Ndelays,Npixels);
+
+for j=1:Ndelays
+    idxPix          = (1:Npixels) + (j-1).*Npixels;
+    cts(j)          = alldata(1+(j-1).*Npixels,6);
+    tmpsignal(j,:)  = alldata(idxPix,3);
+    tmpnoise(j,:)   = alldata(idxPix,5);
+end
+ 
+% signal = signal-signal(1,:);
+% 
+% maxPlt = 0.02.*max(signal(:));
+% minPlt = -maxPlt;
+% 
+% ctrs = linspace(minPlt,maxPlt,40);
+% contourf(cmprobe{1},delays,signal,ctrs,'EdgeColor','flat')
+% cmap = darkb2r(minPlt,maxPlt,40,2);
+% colormap(cmap);
+% caxis([minPlt,maxPlt])
+% ax=gca; ax.YScale='log';
+% colorbar;
+% 
+% plot(delays,mean(signal(:,185:210),2),'o')
+% ax.XScale='log';
 %% Read single scan data
-if dataStruct.chirpCorr == 0
-    Nscans          = round(size(alldata,1)/length(delays));
-    rawsignal{1}    = zeros(Ndelays,Npixels);
-    
-    % remove NaN lines due to comments at end of file
-    NaNidx          = sum(isnan(cmprobe{1}));
-    cmprobe{1}      = cmprobe{1}(1:end-NaNidx);
-    rawsignal{1}    = rawsignal{1}(:,1:end-NaNidx).*1e3; % convert to mOD
-    rawsignal{1}    = fillmissing(rawsignal{1}, 'linear');
-else
-    % Data is chirp-corrected, do NOT reload from files
-    rawsignal{1}    = dataStruct.rawsignal;
-    cmprobe{1}      = dataStruct.cmprobe;
-    delays          = dataStruct.delays;
-    Nscans          = 0;
-end
-
- % remove NaN lines due to comments at end of file
-    NaNidx          = sum(isnan(cmprobe{1}));
-    cmprobe{1}      = cmprobe{1}(1:end-NaNidx);
-    rawsignal{1}    = rawsignal{1}(:,1:end-NaNidx)*1e3; % convert to mOD
-    rawsignal{1}    = fillmissing(rawsignal{1}, 'linear');
-    
-if Nscans >= 1
-    scandata{1}         = zeros([size(rawsignal{1}) Nscans]);
-    scan_err{1}         = zeros([size(rawsignal{1}) Nscans]);
-    for s=1:Nscans
-        scandata{1}(:,:,s) = alldata((s-1)*Ndelays+(1:Ndelays),3:2:(2*Npixels+2))./1e3; % s-th set of delays (rows), odd columns
-        scan_err{1}(:,:,s) = alldata((s-1)*Ndelays+(1:Ndelays),4:2:(2*Npixels+2))./1e3; % s-th set of delays (rows), even columns
-    end
-    noise{1}                    = mean(scan_err{1},3); % in mOD
-    rawsignal{1}                = mean(scandata{1},3); % in mOD
-    scandata{1}(:,removePix,:)  = [];
-    scan_err{1}(:,removePix,:)  = [];
-    rawsignal{1}(:,removePix)   = [];
-    noise{1}(:,removePix)       = [];
-    cmprobe{1}(removePix)       = [];
-else
     Nscans      = NaN;
-    noise{1}    = zeros(size(rawsignal{1}));
-end
+    noise{1}    = tmpnoise;
+    rawsignal{1}= tmpsignal;
 
 %% Read the plot ranges
 mintime     = min(delays);
@@ -91,8 +76,8 @@ dataStruct.cmprobe     = cmprobe;
 dataStruct.rawsignal   = rawsignal;
 dataStruct.noise       = noise;
 dataStruct.plotranges  = plotranges;
-dataStruct.scandata    = scandata;
-dataStruct.scanNoise   = scan_err;
+dataStruct.scandata    = [];
+dataStruct.scanNoise   = [];
 
 % Calculate noise statistics
 dataStruct.AvgNoise    = mean(noise{1}(:),'omitnan');
@@ -117,5 +102,5 @@ end
     end
 dataStruct.corrdata{1}  = dataStruct.rawsignal{1} - dataStruct.bkg{1};
 
-dataStruct.timescale = 'ps';
+dataStruct.timescale = 'ns';
 fclose('all');

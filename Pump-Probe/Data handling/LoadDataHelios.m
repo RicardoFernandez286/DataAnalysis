@@ -40,7 +40,7 @@ else
 end
 
 if Nscans >= 1
-    scandata            = zeros([size(rawsignal) Nscans]);
+    scandata            = zeros([size(rawsignal{1}) Nscans]);
     for s=1:Nscans
         tempdata        = readmatrix([rootdir filesep scanNames{s}],'CommentStyle','%s')';
         NaNidx          = sum(isnan(tempdata(1,:)));
@@ -50,10 +50,10 @@ if Nscans >= 1
         tempscandata    = tempdata(2:end,2:(end-NaNidx));
         scandata(:,:,s) = fillmissing(tempscandata, 'linear')*1000;
     end
-    noise               = std(scandata,0,3);
+    noise{1}            = std(scandata,0,3);
 else
-    Nscans = NaN;
-    noise  = zeros(size(rawsignal));
+    Nscans  = NaN;
+    noise{1}= zeros(size(rawsignal{1}));
 end
 
 %% Read the plot ranges
@@ -76,8 +76,8 @@ dataStruct.noise       = noise;
 dataStruct.plotranges  = plotranges;
 
 % Calculate noise statistics
-dataStruct.AvgNoise    = mean(noise(:),'omitnan');
-dataStruct.MaxNoise    = max(noise(:));
+dataStruct.AvgNoise    = mean(noise{1}(:),'omitnan');
+dataStruct.MaxNoise    = max(noise{1}(:));
 dataStruct.SNR         = abs(round(zminmax/dataStruct.AvgNoise,3));
 
 % Number of scans

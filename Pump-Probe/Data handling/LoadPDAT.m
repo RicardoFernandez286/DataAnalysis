@@ -51,10 +51,10 @@ plotranges  = [mintime maxtime minwl maxwl minabs maxabs Ncontours];
 %% WRITE to dataStruct
 % Write the main variables
 dataStruct.delays      = delays;
-dataStruct.cmprobe     = cmprobe;
-dataStruct.rawsignal   = rawsignal;
-dataStruct.noise       = noise;
-dataStruct.plotranges  = plotranges;
+dataStruct.cmprobe     = {cmprobe};
+dataStruct.rawsignal   = {rawsignal};
+dataStruct.noise       = {noise};
+dataStruct.plotranges  = {plotranges};
 
 % Calculate noise statistics
 dataStruct.AvgNoise    = mean(noise(:),'omitnan');
@@ -70,14 +70,16 @@ if dataStruct.recalcBkg == 0
     dataStruct.mintimeBkg = dataStruct.delays(1);
     dataStruct.maxtimeBkg = dataStruct.delays(1);
 end
+    dataStruct.bkg      = {};
+    dataStruct.corrdata = {};
     Idx = findClosestId2Val(dataStruct.delays,[dataStruct.mintimeBkg dataStruct.maxtimeBkg]);
     % Do the background subtraction and change status in handles.rawcorr
     if Idx(2)==1
-        dataStruct.bkg  = dataStruct.rawsignal(1,:);
+        dataStruct.bkg{1}  = dataStruct.rawsignal{1}(1,:);
     else
-        dataStruct.bkg  = mean(dataStruct.rawsignal(Idx(1):Idx(2),:));
+        dataStruct.bkg{1}  = mean(dataStruct.rawsignal{1}(Idx(1):Idx(2),:));
     end
-dataStruct.corrdata     = dataStruct.rawsignal - dataStruct.bkg;
+dataStruct.corrdata{1}     = dataStruct.rawsignal{1} - dataStruct.bkg{1};
 
 dataStruct.timescale    = timescale;
 dataStruct.Xunits       = Xunits;

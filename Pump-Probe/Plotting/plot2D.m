@@ -171,7 +171,7 @@ switch TitleOnOff
         title(where,{datafilename;[rawcorr,' DATA';'']},'Interpreter','none')  
     case 'Noise'
         title(where,{datafilename;'NOISE PROFILE'},'Interpreter','none')
-        title(hcb,{'\delta\DeltaAbs';'(mOD)'},'FontWeight','bold','FontSize',10,'FontWeight','bold');
+        title(hcb,{'\delta\DeltaAbs';'(mOD)'},'FontWeight','bold','FontSize',12,'FontWeight','bold');
 end
 % Adjust the limits (if given)
 xlim(where,WLlim)
@@ -199,4 +199,4 @@ end
 where.Visible       = 'on';
 where.Box           = 'on';
 where.Layer         = 'top';
-where.TickLength    = [0.04 0.025];
+where.TickLength    = [0.03 0.025];

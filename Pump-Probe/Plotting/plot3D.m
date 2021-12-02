@@ -1,4 +1,4 @@
-function plot3D(app,Zdata,where,TitleOnOff,WhichDetector)
+function plot3D(app,Zdata,where,TitleOnOff,DET)
 % Description: This function will make a contour plot of transient data
 % Usage: handles = plot2D(dataStruct,Zdata,where,TitleOnOff)
 % Inputs:
@@ -16,9 +16,9 @@ function plot3D(app,Zdata,where,TitleOnOff,WhichDetector)
 dataStruct          = app.PP_Data;
 datafilename        = dataStruct.datafilename;
 delays              = dataStruct.delays;
-probe               = dataStruct.cmprobe;
+probe               = dataStruct.cmprobe{DET};
 rawcorr             = dataStruct.rawcorr;
-plotranges          = dataStruct.plotranges;
+plotranges          = dataStruct.plotranges{DET};
 
 % Read plot options from the GUI app
 plot_Ncontours      = app.PP_NContours.Value;
@@ -41,8 +41,8 @@ delaylim            = plotranges(1:2); %delaylim = [Min Max]
 WLlim               = plotranges(3:4); %WLlim = [Min Max]
 
 % Determine the plotting range
-minabs              = min(min(Zdata));
-maxabs              = max(max(Zdata));
+minabs              = min(min(Zdata{DET}));
+maxabs              = max(max(Zdata{DET}));
 maxDabs             = max([abs(minabs),abs(maxabs)]);
 
 switch TitleOnOff
@@ -66,9 +66,9 @@ end
 %% Do the plot
 X  = probe;
 Y  = delays;
-Z  = Zdata;
+Z  = Zdata{DET};
 
-if sum(Zdata(:),'omitnan') == 0
+if sum(Zdata{DET}(:),'omitnan') == 0
     return
 end
 
@@ -192,7 +192,7 @@ if plot_showcontours == 1
     
     plot_contours = [min_cut:step:neg_zero pos_zero:step:max_cut];
 
-    LineColor       = 'k';
+    LineColor     = 'k';
     hold(where,'on')
     contour(where,X,Y,Z,plot_contours,'LineColor',LineColor,'LineStyle',LineStyle,'LineWidth',0.1);
     hold(where,'off')

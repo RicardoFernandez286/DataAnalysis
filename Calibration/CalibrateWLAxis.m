@@ -68,6 +68,18 @@ for i=1:Ndet
             cutID       = sort(findClosestId2Val(RefX,[minRefX maxRefX]));
             RefX_cut    = RefX(cutID(1):cutID(2));
             RefY_cut    = RefY(cutID(1):cutID(2));
+            
+        case 3     % UniGE nsTA 
+            minRefX  = 315;
+            maxRefX  = 700;
+
+            cutID    = sort(findClosestId2Val(RefX,[minRefX maxRefX]));
+            [RefX_cut,srt_id] = sort(RefX(cutID(1):cutID(2)));
+            RefY_cut = RefY(cutID(1):cutID(2));
+            RefY_cut = RefY_cut(srt_id);
+
+            RefY     = RefY./max(RefY_cut);
+            RefY_cut = RefY_cut./max(RefY_cut);
     end
 
     %% Define Fit Functions
@@ -96,6 +108,10 @@ for i=1:Ndet
             p0 = [wp1  ppnm  1    0  ];
             LB = [1e3  1e-4  0.1  -1 ];
             UB = [1e4  0.25  10   1  ];
+        case 3
+            p0 = [310 1.05  0.6 -0.1 ];
+            LB = [100 0.1   0.1 -1];
+            UB = [400 2     10  1];
     end
 
     Pfit(i,:) = lsqnonlin(fit_fun,p0,LB,UB,options);
@@ -120,7 +136,7 @@ for i=1:Ndet
     end
 
     switch CalType
-        case 1
+        case {1,3}
             plot(ax,RefX,RefY,'k')
             hold(ax,'on');
             plot(ax,RefX_cut,plot_fun(Pfit(i,:)),'r','LineWidth',2)
