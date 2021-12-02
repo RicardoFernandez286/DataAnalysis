@@ -2,22 +2,22 @@
 © 2018-2020, Ricardo J. Fernández-Terán (Ricardo.Fernandez [at] chem.uzh.ch; Ricardo.FernandezTeran [at] gmail.com)
 
 # 1. Description and contents
-This project contains all the files that constitute two separate main graphical user interfaces (GUIs), which are now merged into a single window.
+This project contains all the files that constitute three separate main graphical user interfaces (GUIs), which are now merged into a single window.
 The interface was reprogrammed from the old GUIDE-based GUI to a new AppDesigner-based interface, which offers significant advantages.
 
-The first one, **DataAnalysis_GUI** is designed to process, analyse and plot time-resolved data from pump-probe experiments
-and time-resolved fluorescence spectra (obtained by combining several single-wavelength TCSPC measurements). Support for streak camera and general time-resolved data will be implemented in a future release.
+The first one, **Pump-Probe** is designed to process, analyse and plot time-resolved data from pump-probe experiments
+and time-resolved fluorescence spectra (obtained by combining several single-wavelength TCSPC measurements, support for fluorescence up-conversion spectroscopy will be implemented in a future release).
 
-The second one, **InterfDataAnalysis_GUI** is designed to process, phase, plot and analyse coherent two-dimensional IR (2D-IR) spectra acquired by spectral interferometry in the pump-probe geometry. The details of the setup used to acquire the data and the main processing algorithm are described in *J. Opt. Soc. Am. B **28**, 171-178 (2011)* [doi: 10.1364/JOSAB.28.000171](https://doi.org/10.1364/JOSAB.28.000171).
+The second one, **Interferometric 2D-IR** is designed to process, phase, plot and analyse coherent two-dimensional IR (2D-IR) spectra acquired by spectral interferometry in the pump-probe geometry. The details of the setup used to acquire the data and the main processing algorithm are described in *J. Opt. Soc. Am. B **28**, 171-178 (2011)* [doi: 10.1364/JOSAB.28.000171](https://doi.org/10.1364/JOSAB.28.000171). Additional loading/processing routines were implemented for 2D-IR using pulse shapers at the University of Zurich and the University of Sheffield. 
 
+Finally, **Spectrometer and Shaper calibration** is designed to help with the fundamental task of calibrating the spectrometers, both in the IR and UV-Vis regions. A blank probe spectrum, the spectrum of a solvent/filter and a reference spectrum (measured fith a calibrated UV-Vis or FT-IR instrument) need to be provided. Example files can be found in the /Calibration folder for both UV-Vis (Holmium filter) and FT-IR (dioxane and polystyrene).
 
 # 2. Basic requirements
 The first implementation of the program was done in MATLAB R2016a, but current development will always run in the latest release.
-The current version of the GUI **DOES NOT RUN** MATLAB versions older than R2019a.
-### 2.1 Current MATLAB version: R2020b
+The current version of the GUI **DOES NOT RUN** in MATLAB versions older than R2021a.
+### 2.1 Current MATLAB version: R2021b
 
-Both GUIs need a file, **"GUIoptions.txt"**, to be present in the same folder as the main App (NewGUI.mlapp).
-The file no longer needs to be placed in C: (which was a major drawback of the previous implementation).
+A settings file **"GUIoptions.txt"** needs to be present **in the same folder** as the main App (NewGUI.mlapp), in case the user wants to customise their starting datafolders.
 
 See the [About the GUIoptions.txt file](README.md#5-about-the-guioptionstxt-file) section below for more details.
 
