@@ -3,15 +3,20 @@ function data = LoadSpectrum(app,message)
 % Ricardo Fernandez-Teran / 09.11.2021 / v1.0a
 
 
-[datafile, datapath, idx] = uigetfile({'*.2D','UoS TRIR';'*.dat','UniGE TA';'*.dat','UniGe nsTA'},message);
+[datafile, datapath, TYPE] = uigetfile({'*.2D','UoS TRIR';'*.dat','UniGE TA';'*.dat','UniGe nsTA'},message);
 rootdir = app.rootdir;
 if isempty(rootdir)
   rootdir = pwd;
 end
+
+if TYPE == 0
+    return
+end
+
 currdir = pwd; 
 cd(rootdir);
 
-switch idx
+switch TYPE
     case 1 % Uni Sheffield TRIR
         DetSz   = [96 96 32 32]; % Sizes of [probe1 probe2 ref1 ref2] in pixels
         data    = cell(4,1);
@@ -20,9 +25,7 @@ switch idx
         for i=1:length(DetSz)
             idx =  (1:DetSz(i)) + sum(DetSz(1:i-1));
             data{i} = rawdata(idx);
-        end
-        app.CAL_data.CalType = 2;
-        
+        end      
         [~,fn,~]    = fileparts([datapath filesep datafile]);
         text        = readlines([datapath filesep fn '.LG']);
         g1_st       = strsplit(text{75},' '); % Det186 is 1st
@@ -41,12 +44,13 @@ switch idx
     case 2 % UniGE TA
         rawdata = readmatrix([datapath filesep datafile],'FileType','text','Delimiter','\t');
         data{1} = rawdata(:,3);
-        app.CAL_data.CalType = 1;
-        
-    case 3
+                
+    case 3 % UniGE nsTA
         rawdata = readmatrix([datapath filesep datafile],'FileType','text','Delimiter','\t');
         data{1} = rawdata(:,2);
-        app.CAL_data.CalType = 1;
+        
 end
+
+app.CAL_data.CalType = TYPE;
 
 cd(currdir);
