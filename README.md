@@ -75,17 +75,18 @@ The unchecked features are still work in progress, incomplete or missing.
 # 5. About the "GUIoptions.txt" file
 The contents of this file are defined as follows:
 ```
-defaultdir	<route to the default directory for pump-probe data>
+defaultPPdir	<route to the default directory for pump-probe data>
 defaultIRdir	<route to the default directory for FTIR data>
 default2DIRdir	<route to the default directory for 2D-IR data>
 defaultSPECdir	<route to the default directory for spectroelectrochemical data>
-defaultPPcolormap	<default colormap for the Pump-Probe data plots, can be: RdOr/Wh/Bl, DkRd/Wh/DkBl, Rd/Wh/Bl, Jet>
+defaultPPcolormap	<default colormap for the Pump-Probe data plots, can be: RdOr/Wh/Bl, DkRd/Wh/DkBl, Rd/Wh/Bl, Jet, Spectral>
 default2Dcolormap	<default colormap for the 2D-IR data plots, can be: RdOr/Wh/Bl, DkRd/Wh/DkBl, Rd/Wh/Bl, Jet>
-2DIRContourPlotVersion	<1 or 2 / version 2 is an attempt to improve the contour representations and to make nicer contour plots with black lines. v1 is recommended for now.>
+2DIRContourPlotVersion	<1 or 2 / version 2 is an attempt to improve the contour representations and to make nicer contour plots with black lines. v2 is recommended.>
 SelectKnownDataTypes	<true or false / will keep only datafolders containing "pp" or "2D" in their names in the corresponding tabs>
 AxisBreak	<limits to break the axis in a linear|log time scale - format: [start end] of the linear scale (first axis) **- TO BE IMPLEMENTED**> 
 BreakRatio	<size of the linear part in a linear|log time graph - format: x, with 0<x<1 **- TO BE IMPLEMENTED**>
 LinLogScale	<can be off or log. If set to log, will create a lin|log time graph, otherwise a lin|lin or log|log graph without break is created **- TO BE IMPLEMENTED**>
+fixScreen	<can be 0 or 1, attempt to fix GUI size on small screens. 0 is recommended.>
 ```
 
 # License
