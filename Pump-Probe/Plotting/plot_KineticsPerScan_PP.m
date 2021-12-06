@@ -5,6 +5,7 @@ datafilename    = dataStruct.datafilename;
 tempdir         = [app.rootdir filesep datafilename filesep 'temp'];
 tempdirOUT      = [app.rootdir filesep datafilename 'temp'];
 
+DET             = app.PP_ProbeDetSwitch.Value;
 interactive     = app.PP_InteractivemodeSwitch.Value;
 normalise       = app.PP_NormaliseCheckBox.Value;
 BinScans        = dataStruct.BinScans;
@@ -48,7 +49,7 @@ end
 % Get the values to find in the WAVELENGTH vector
 value   = dataStruct.SelTraces; % column 1= Wavelength = chosen x coordinate
 % k = index of the closest match for the selected trace
-k       = findClosestId2Val(dataStruct.cmprobe,value);
+k       = findClosestId2Val(dataStruct.cmprobe{DET},value);
 % Load the scan data depending on Lab 1 vs Lab 2
 switch app.PP_DataFormat.Value
    case 'Pump-Probe [Lab 2]'
@@ -166,7 +167,7 @@ axes2.Children(1).LineWidth     = 1.5;
 
 % Nice formatting
 data_title  = regexprep(dataStruct.datafilename, '\_', '\\\_');
-title(axes2,{data_title;['KINETICS PER SCAN AT ' num2str(round(dataStruct.cmprobe(k),0)) ' ' dataStruct.Xunits]},'Interpreter','tex')
+title(axes2,{data_title;['KINETICS PER SCAN AT ' num2str(round(dataStruct.cmprobe{DET}(k),0)) ' ' dataStruct.Xunits]},'Interpreter','tex')
 xlabel(axes2,['Delays',' (',dataStruct.timescale,')'],'FontSize',13,'FontWeight','bold')
 ylabel(axes2,label,'FontSize',13,'FontWeight','bold')
 axis(axes2,'tight');

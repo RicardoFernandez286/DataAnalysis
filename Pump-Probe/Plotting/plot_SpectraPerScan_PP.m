@@ -5,6 +5,8 @@ datafilename    = dataStruct.datafilename;
 tempdir         = [app.rootdir filesep datafilename filesep 'temp'];
 tempdirOUT      = [app.rootdir filesep datafilename 'temp'];
 
+DET             = app.PP_ProbeDetSwitch.Value;
+
 interactive     = app.PP_InteractivemodeSwitch.Value;
 normalise       = app.PP_NormaliseCheckBox.Value;
 BinScans        = dataStruct.BinScans;
@@ -75,7 +77,7 @@ switch app.PP_DataFormat.Value
         ending          = '_sp0_sm0_du0_';
         Nscans          = dataStruct.Nscans;
         RawDelays       = csvread([app.rootdir filesep datafilename filesep datafilename '_delays.csv']);
-        ScanData        = zeros(Nscans,length(dataStruct.cmprobe));
+        ScanData        = zeros(Nscans,length(dataStruct.cmprobe{DET}));
         for i=1:Nscans
             ScanNr              = strcat(tempdir,filesep,datafilename,'_signal',ending,num2str(i-1),'.csv');
             ScanNrch            = char(ScanNr);
@@ -109,8 +111,8 @@ end
 % Bin the scans if BinScans > 1
 if BinScans > 1
     i=1; s=1;
-    BinScanData=zeros(ceil(Nplots/BinScans),length(dataStruct.cmprobe));
-    while s < Nplots
+    BinScanData=zeros(ceil(Nplots/BinScans),length(dataStruct.cmprobe{DET}));
+    while s <= Nplots
         snew = s+BinScans;
         if snew > Nplots % Last bin
             m=s:Nplots;
@@ -157,7 +159,7 @@ axes(axes2);
 % Plot the data
 cm=colormap(othercolor('Mrainbow',Nplots));
 for n=1:Nplots
-   pl(n) = plot(axes2,dataStruct.cmprobe,ScanData(n,:),'color',cm(n,:));
+   pl(n) = plot(axes2,dataStruct.cmprobe{DET},ScanData(n,:),'color',cm(n,:));
    hold on
 end
 % Make the lines of the first and last scans thicker

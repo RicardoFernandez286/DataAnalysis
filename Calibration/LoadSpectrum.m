@@ -3,7 +3,7 @@ function data = LoadSpectrum(app,message)
 % Ricardo Fernandez-Teran / 09.11.2021 / v1.0a
 
 
-[datafile, datapath, TYPE] = uigetfile({'*.2D','UoS TRIR';'*.dat','UniGE TA';'*.dat','UniGe nsTA'},message);
+[datafile, datapath, TYPE] = uigetfile({'*.csv','UoS TRIR';'*.csv','UniGE TA';'*.csv','UniGE nsTA';'*ds0_intensity*.csv','UZH Lab 2'},message);
 rootdir = app.rootdir;
 if isempty(rootdir)
   rootdir = pwd;
@@ -48,7 +48,21 @@ switch TYPE
     case 3 % UniGE nsTA
         rawdata = readmatrix([datapath filesep datafile],'FileType','text','Delimiter','\t');
         data{1} = rawdata(:,2);
+    case 4 % UZH Lab 2
+        rawdata = readmatrix([datapath filesep datafile],'FileType','text','Delimiter','\t');
+        data{1} = rawdata(:,1);
         
+        [fp,~,~]    = fileparts(datapath);
+        [fp,fn,~]   = fileparts(fp);
+        text        = readlines([fp filesep fn filesep fn '_meta.txt']);
+        g1_st       = strsplit(text{20},' ');
+        w1_st       = strsplit(text{19},' ');
+        
+        Gratings(1) = str2double(g1_st{2});
+        CWL(1)      = str2double(w1_st{3});
+        
+        app.CAL_data.Gratings   = Gratings;
+        app.CAL_data.CWL        = CWL;
 end
 
 app.CAL_data.CalType = TYPE;

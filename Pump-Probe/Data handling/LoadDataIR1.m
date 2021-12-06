@@ -219,14 +219,14 @@ Ncontours       = 40;
 plotranges      = [mintime maxtime minwl maxwl minabs maxabs Ncontours];
 
 % Remove duplicate delays and average the data for repeated delays (new universal method - old way)
-% [delays,~,idx]  = unique(delays,'stable');
-% new_rawsignal   = zeros(length(delays),size(rawsignal,2));
-% new_noise       = zeros(length(delays),size(rawsignal,2));
-% 
-% for i=1:size(rawsignal,2)
-%     new_rawsignal(:,i)       = accumarray(idx,rawsignal(:,i),[],@mean); 
-%     new_noise(:,i)           = accumarray(idx,noise(:,i),[],@mean); 
-% end
+[delays,~,idx]  = unique(delays,'stable');
+new_rawsignal   = zeros(length(delays),size(rawsignal,2));
+new_noise       = zeros(length(delays),size(rawsignal,2));
+
+for i=1:size(rawsignal,2)
+    new_rawsignal(:,i)       = accumarray(idx,rawsignal(:,i),[],@mean); 
+    new_noise(:,i)           = accumarray(idx,noise(:,i),[],@mean); 
+end
 
 %%% Remove duplicate delays and average the data for repeated delays (new universal method - FASTER OCT 2019)
 %%% !!!!!
@@ -240,10 +240,10 @@ noise           = new_noise(sortID,:);
 
 %% Write to DataStructure
 dataStruct.delays       = delays;
-dataStruct.cmprobe      = cmprobe;
-dataStruct.rawsignal    = rawsignal;
-dataStruct.noise        = noise;
-dataStruct.plotranges   = plotranges;
+dataStruct.cmprobe      = {cmprobe};
+dataStruct.rawsignal    = {rawsignal};
+dataStruct.noise        = {noise};
+dataStruct.plotranges   = {plotranges};
 dataStruct.Nscans       = Nscans;
 dataStruct.tempdir      = tempdir;
 
@@ -252,6 +252,8 @@ dataStruct.AvgNoise     = mean(noise(:));
 dataStruct.MaxNoise     = max(noise(:));
 dataStruct.SNR          = abs(round(zminmax/dataStruct.AvgNoise,3));
 
+dataStruct.bkg          = {};
+dataStruct.corrdata     = {};
 
 % Set defaults for background subtraction subunit
 if dataStruct.recalcBkg == 0
@@ -262,11 +264,11 @@ end
     Idx = findClosestId2Val(dataStruct.delays,[dataStruct.mintimeBkg dataStruct.maxtimeBkg]);
     % Do the background subtraction and change status in handles.rawcorr
     if Idx(2)==1
-        dataStruct.bkg = dataStruct.rawsignal(1,:);
+        dataStruct.bkg{1} = dataStruct.rawsignal{1}(1,:);
     else
-        dataStruct.bkg = mean(dataStruct.rawsignal(Idx(1):Idx(2),:));
+        dataStruct.bkg{1} = mean(dataStruct.rawsignal{1}(Idx(1):Idx(2),:));
     end
-dataStruct.corrdata = dataStruct.rawsignal - dataStruct.bkg;
+dataStruct.corrdata{1} = dataStruct.rawsignal{1} - dataStruct.bkg{1};
     
 else
     assert(exist([filename '_delays.csv'],'file') ~= 0,'Selected directory does not contain a valid Pump-Probe (Lab 1 or Lab 4) dataset')

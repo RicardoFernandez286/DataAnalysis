@@ -30,14 +30,20 @@ for i=1:Ndet
 
     % If we're doing IR calibration, convert to nm since the grating is linear in nm
     % The X axis of the reference spectrum is converted to nm, and the Y experimental data is flipped around
-    if CalType == 1 
-        Gratings    = CAL_data.Gratings;
-        CWL         = CAL_data.CWL;
-        RefX        = 1e7./RefX;
-        MeasY       = flipud(MeasY);
+    switch CalType
+        case 1 % UoS 2DIR/TRIR
+            Gratings    = CAL_data.Gratings;
+            CWL         = CAL_data.CWL;
+            RefX        = 1e7./RefX;
+            MeasY       = flipud(MeasY);
+        case 4 % UZH Lab 2
+            Gratings    = CAL_data.Gratings;
+            CWL         = CAL_data.CWL;
+            RefX        = 1e7./RefX;
+            MeasY       = flipud(MeasY);
     end
 
-    %% Cut off relevant part of reference spectrum
+    %% Cut off relevant part of reference spectrum -- set initial guesses for fit parameters
     switch CalType
         case 1 % UoS 2DIR/TRIR
             switch Gratings(i)
@@ -79,6 +85,25 @@ for i=1:Ndet
 
             RefY     = RefY./max(RefY_cut);
             RefY_cut = RefY_cut./max(RefY_cut);
+        case 4     % UZH Lab 2
+            switch Gratings(i) 
+                case 100 % 100 l/mm
+                    minRefX = CWL(i) - 350;
+                    maxRefX = CWL(i) + 350;
+                    ppnm    = 0.137;             % pixels per nm = 1/resolution;
+                case 150 % 150 l/mm
+                    minRefX = CWL(i) - 150;
+                    maxRefX = CWL(i) + 150;
+                    ppnm    = 0.068;             % pixels per nm = 1/resolution;
+                case 300
+                    minRefX = CWL(i) - 100;
+                    maxRefX = CWL(i) + 100;
+                    ppnm    = 0.034;             % pixels per nm = 1/resolution;
+            end
+            wp1         = CWL(i) - 32/ppnm;      % lowest wavelength (nm) = CWL - Npix/2*resolution
+            cutID       = sort(findClosestId2Val(RefX,[minRefX maxRefX]));
+            RefX_cut    = RefX(cutID(1):cutID(2));
+            RefY_cut    = RefY(cutID(1):cutID(2));
     end
 
     %% Define Fit Functions
@@ -109,6 +134,12 @@ for i=1:Ndet
             UB = [400 2     10   1    1 1];
             ftol= 1e-6;
             stol= 1e-6;
+        case 4 % UZH Lab 2
+            p0 = [wp1  ppnm  1    -0.1  eps eps];
+            LB = [1e3  1e-4  0.1  -1    -1  -1 ];
+            UB = [1e4  0.25  10   1     1   1  ];
+            ftol= 5e-7;
+            stol= 5e-7;
     end
     
     mb = msgbox('Fit in progress!','Fitting...','help');
@@ -127,10 +158,11 @@ for i=1:Ndet
     delete(mb);
     % Pfit(i,:)=p0;
 
-    if CalType ~= 1
-        lam(:,i)    = MeasX/Pfit(i,2) + Pfit(i,1); 
-    else
-        lam(:,i)    = flipud(MeasX/Pfit(i,2) + Pfit(i,1));
+    switch CalType
+        case {1,4} % IR Setups UoS and UZH Lab 2
+            lam(:,i)    = flipud(MeasX/Pfit(i,2) + Pfit(i,1));
+        otherwise 
+            lam(:,i)    = MeasX/Pfit(i,2) + Pfit(i,1); 
     end
     cm(:,i)         = 1e7./lam(:,i);
 
@@ -146,7 +178,7 @@ for i=1:Ndet
     end
 
     switch CalType
-        case 1
+        case {1,4} % IR setups UoS and UZH Lab 2
             plot(ax,1e7./RefX,RefY,'k')
             hold(ax,'on');
             plot(ax,1e7./RefX_cut,plot_fun(Pfit(i,:)),'r','LineWidth',2)
