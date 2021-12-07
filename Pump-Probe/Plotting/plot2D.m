@@ -28,12 +28,10 @@ plot_percentwhites  = plot_Nwhites/plot_Ncontours;
 plot_showcontours   = app.PP_ShowContours_tick.Value;
 plot_filledcontours = app.PP_FilledContours_tick.Value;
 plot_scaleRange     = app.PP_PlotScaleSlider.Value/100;
-zlimits             = str2num(app.PP_DeltaAbsPlotRange.Value);
 symcolrange         = app.PP_SymmetricColourScale.Value;
 LineStyle           = app.PP_ContourFormat.Value;
 plot_colourscheme   = app.PP_ColourScheme.Value;
 
-DataFormat          = app.PP_DataFormat.Value;
 linlog_time         = dataStruct.linlog;
 
 %% Parse the plot ranges
@@ -183,7 +181,7 @@ where.YScale = linlog_time;
 %% Show the level lines every nth level, starting from zero
 if plot_showcontours == 1
     % Define the contours to plot
-    step = ((max_cut - min_cut)./plot_Ncontours).*plot_skiplevels;
+    step = round(((max_cut - min_cut)./plot_Ncontours).*plot_skiplevels);
 	neg_zero = plot_percentwhites*min_cut/100;
     pos_zero = plot_percentwhites*max_cut/100;
     
