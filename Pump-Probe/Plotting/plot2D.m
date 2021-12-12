@@ -135,6 +135,8 @@ switch plot_colourscheme
         cmap    = jet(n_tot);
     case 'Spectral'
         cmap    = flipud(othercolor('Spectral11',n_tot));
+    case 'Turbo'
+        cmap    = turbo(n_tot);
 end
 
 % Set the colormap

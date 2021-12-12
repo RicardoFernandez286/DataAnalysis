@@ -308,6 +308,8 @@ switch plot_colourscheme
         cmap    = darkb2r(min_cut,max_cut,n_tot,n_whites);
     case 'Jet'
         cmap    = jet(n_tot);
+    case 'Turbo'
+        cmap    = turbo(n_tot);
 end
 
 % Set the colormap
