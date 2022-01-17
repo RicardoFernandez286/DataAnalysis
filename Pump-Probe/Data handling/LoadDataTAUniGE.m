@@ -6,12 +6,16 @@ datafilename    = dataStruct.datafilename;
 %% Check that all files exist and read them
 fullName        = [rootdir filesep datafilename];
 
+%% Decide whether to flip the sign of the signal
+sign=+1;
+
 %% Read Data
 % Read the files if the directory is correctly populated
 text            = fscanf(fopen(fullName),'%c');
 head_n          = count(text,'%');
 
 alldata         = readmatrix(fullName,'FileType','text','NumHeaderLines',head_n,'CommentStyle','%s');
+alldata         = alldata.*sign;
 
 Npixels         = round(size(alldata,2)/2)-1;
 
