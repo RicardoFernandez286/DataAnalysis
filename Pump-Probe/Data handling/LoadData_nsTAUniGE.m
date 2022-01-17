@@ -45,12 +45,23 @@ for j=1:Ndelays
     tmpnoise(j,:)   = alldata(idxPix,5);
 end
 
+% figure;
+% plot(delays,cts);
+
 %% Remove points with zero counts
 rmvIdx              = (cts == 0);
 tmpsignal(rmvIdx,:) = [];
 tmpnoise(rmvIdx,:)  = [];
 delays(rmvIdx)      = [];
 Ndelays             = length(delays);
+
+% for p=1:Npixels
+%     tmpsignal(:,p)  = smooth(delays,tmpsignal(:,p));
+% end
+
+% for j=1:Ndelays
+%     tmpsignal(j,:)  = smooth(cmprobe{1},tmpsignal(j,:));
+% end
 
 %% Read single scan data
     Nscans      = NaN;
