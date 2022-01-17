@@ -15,8 +15,6 @@ text            = fscanf(fopen(fullName),'%c');
 head_n          = count(text,'%');
 
 alldata         = readmatrix(fullName,'FileType','text','NumHeaderLines',head_n,'CommentStyle','%s');
-alldata         = alldata.*sign;
-
 Npixels         = round(size(alldata,2)/2)-1;
 
 removePix       = sort([1:25 Npixels-(0:1:10)]);
@@ -25,6 +23,7 @@ removePix       = sort([1:25 Npixels-(0:1:10)]);
 delays          = unique((alldata(2:end,1)))*1e12; % convert to ps
 Ndelays         = length(delays);
 
+alldata         = alldata.*sign;
 %%%% remove NaN lines due to comments at end of file
 % NaNidx          = sum(isnan(cmprobe));
 if exist([rootdir filesep 'pix2lam.mat'],'file') ~= 0

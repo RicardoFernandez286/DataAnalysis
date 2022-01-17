@@ -15,8 +15,9 @@ text            = fscanf(fopen(fullName),'%c');
 head_n          = count(text,'%');
 
 alldata         = readmatrix(fullName,'FileType','text','NumHeaderLines',head_n,'CommentStyle','%s');
-alldata         = alldata.*sign;
 delays          = unique(alldata(:,1))*1e9; % convert to ns
+
+alldata         = alldata.*sign;
 Ndelays         = length(delays);
 Npixels         = size(alldata,1)./Ndelays;
 
