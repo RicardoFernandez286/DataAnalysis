@@ -3,7 +3,7 @@ function data = LoadSpectrum(app,message)
 % Ricardo Fernandez-Teran / 09.11.2021 / v1.0a
 
 
-[datafile, datapath, TYPE] = uigetfile({'*.csv','UoS TRIR';'*.csv','UniGE TA';'*.csv','UniGE nsTA';'*ds0_intensity*.csv','UZH Lab 2'},message);
+[datafile, datapath, TYPE] = uigetfile({'*.csv','UoS TRIR';'*.dat','UniGE TA';'*.dat','UniGE nsTA';'*ds0_intensity*.csv','UZH Lab 2'},message);
 rootdir = app.rootdir;
 if isempty(rootdir)
   rootdir = pwd;
