@@ -7,7 +7,7 @@ datafilename    = dataStruct.datafilename;
 fullName        = [rootdir filesep datafilename];
 
 %% Decide whether to flip the sign of the signal
-sign=+1;
+sign=-1;
 
 %% Read Data
 % Read the files if the directory is correctly populated
@@ -21,7 +21,9 @@ alldata         = alldata.*sign;
 Ndelays         = length(delays);
 Npixels         = size(alldata,1)./Ndelays;
 
-removePix       = sort([1:25 Npixels-(0:1:10)]);
+rmvIdx          = delays >= 1e4;
+delays(rmvIdx)  = [];
+Ndelays         = length(delays);
 
 %%%% remove NaN lines due to comments at end of file
 % NaNidx          = sum(isnan(cmprobe));
@@ -38,26 +40,18 @@ tmpnoise    = zeros(Ndelays,Npixels);
 
 for j=1:Ndelays
     idxPix          = (1:Npixels) + (j-1).*Npixels;
-    cts(j)          = alldata(1+(j-1).*Npixels,6);
+    cts(j)          = sign.*alldata(1+(j-1).*Npixels,6);
     tmpsignal(j,:)  = alldata(idxPix,3);
     tmpnoise(j,:)   = alldata(idxPix,5);
 end
- 
-% signal = signal-signal(1,:);
-% 
-% maxPlt = 0.02.*max(signal(:));
-% minPlt = -maxPlt;
-% 
-% ctrs = linspace(minPlt,maxPlt,40);
-% contourf(cmprobe{1},delays,signal,ctrs,'EdgeColor','flat')
-% cmap = darkb2r(minPlt,maxPlt,40,2);
-% colormap(cmap);
-% caxis([minPlt,maxPlt])
-% ax=gca; ax.YScale='log';
-% colorbar;
-% 
-% plot(delays,mean(signal(:,185:210),2),'o')
-% ax.XScale='log';
+
+%% Remove points with zero counts
+rmvIdx              = (cts == 0);
+tmpsignal(rmvIdx,:) = [];
+tmpnoise(rmvIdx,:)  = [];
+delays(rmvIdx)      = [];
+Ndelays             = length(delays);
+
 %% Read single scan data
     Nscans      = NaN;
     noise{1}    = tmpnoise;
