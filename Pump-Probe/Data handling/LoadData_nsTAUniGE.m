@@ -7,7 +7,7 @@ datafilename    = dataStruct.datafilename;
 fullName        = [rootdir filesep datafilename];
 
 %% Decide whether to flip the sign of the signal
-sign=-1;
+sign=+1;
 
 %% Read Data
 % Read the files if the directory is correctly populated
