@@ -1,4 +1,4 @@
-function dataStruct = LoadDataTAUniGE(dataStruct)
+function dataStruct = LoadDataTAUniGE(dataStruct,recalcScans)
 %% READ from dataStruct
 rootdir         = dataStruct.rootdir;
 datafilename    = dataStruct.datafilename;
@@ -44,18 +44,30 @@ if dataStruct.chirpCorr == 0
     rawsignal{1}    = rawsignal{1}(:,1:end-NaNidx).*1e3; % convert to mOD
     rawsignal{1}    = fillmissing(rawsignal{1}, 'linear');
 else
-    % Data is chirp-corrected, do NOT reload from files
-    rawsignal{1}    = dataStruct.rawsignal;
-    cmprobe{1}      = dataStruct.cmprobe;
+    % Data is chirp-corrected or scans recalculation, do NOT reload from files
+    rawsignal       = dataStruct.rawsignal;
+    noise           = dataStruct.noise;
+    cmprobe         = dataStruct.cmprobe;
     delays          = dataStruct.delays;
     Nscans          = 0;
 end
 
- % remove NaN lines due to comments at end of file
+if recalcScans == 1
+    rawsignal       = dataStruct.rawsignal;
+    noise           = dataStruct.noise;
+    cmprobe         = dataStruct.cmprobe;
+    delays          = dataStruct.delays;
+    Nscans          = 0;
+else
+    % remove NaN lines due to comments at end of file
     NaNidx          = sum(isnan(cmprobe{1}));
     cmprobe{1}      = cmprobe{1}(1:end-NaNidx);
     rawsignal{1}    = rawsignal{1}(:,1:end-NaNidx)*1e3; % convert to mOD
     rawsignal{1}    = fillmissing(rawsignal{1}, 'linear');
+    Nscans=9;
+end
+
+
     
 if Nscans >= 1
     scandata{1}         = zeros([size(rawsignal{1}) Nscans]);
@@ -74,6 +86,8 @@ if Nscans >= 1
 else
     Nscans      = NaN;
     noise{1}    = zeros(size(rawsignal{1}));
+    scandata    = [];
+    scan_err    = [];
 end
 
 %% Read the plot ranges

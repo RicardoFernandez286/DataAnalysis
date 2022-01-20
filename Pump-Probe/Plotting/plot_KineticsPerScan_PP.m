@@ -88,7 +88,7 @@ switch app.PP_DataFormat.Value
         end
 %         clear TempScanData;
     case 'UniGE TA'
-        ScanData = squeeze(dataStruct.scandata(:,k,:));
+        ScanData = squeeze(dataStruct.scandata{1}(:,k,:));
 end
 % Ask the user which scans to use if >15 scans
 if Nscans >= 15
@@ -158,12 +158,13 @@ axes(axes2);
 % Plot the data
 cm=colormap(axes2,othercolor('Mrainbow',Nplots));
 for n=1:Nplots
-   plot(axes2,dataStruct.delays,ScanData(:,n),'color',cm(n,:));
+   plot(axes2,dataStruct.delays,ScanData(:,n),'color',cm(n,:),'DisplayName',caption(n),'HandleVisibility','off');
+   plot(axes2,NaN,NaN,'color',cm(n,:),'LineWidth',3)
    hold(axes2,'on')
 end
 % Make the lines of the first and last scans thicker
-axes2.Children(end).LineWidth   = 1.5;
-axes2.Children(1).LineWidth     = 1.5;
+axes2.Children(end).LineWidth   = 2*axes2.Children(end).LineWidth;
+axes2.Children(1).LineWidth     = 2*axes2.Children(1).LineWidth;
 
 % Nice formatting
 data_title  = regexprep(dataStruct.datafilename, '\_', '\\\_');

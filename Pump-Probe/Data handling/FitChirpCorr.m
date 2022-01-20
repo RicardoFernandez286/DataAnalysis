@@ -21,7 +21,7 @@ switch dataStruct.rawcorr
 end
 
 %% Hardcoded settings
-ChirpEquation = 'Shaper';
+ChirpEquation = 'Cauchy'; % 'Cauchy' or 'Shaper';
 c0 = 2.99792458e+2;    % Speed of light in nm/fs
 plotpercent = 50;
 %% Read Probe fit ranges
@@ -132,17 +132,17 @@ switch mode
 end
 
 %%
-        % Need to work in THz and fs
-        Pfit(:,1) = Pfit(:,1).*1000;
-        delays    = delays.*1000;
-            
-        probeAxis = 1e7./probeAxis;
-        fitWL     = 1e7./fitWL;
-        
-        CWL       = mean([min(fitWL) max(fitWL)]);
-        
-        probeAxis = c0./probeAxis;
-        fitWL     = c0./fitWL;
+%         % Need to work in THz and fs
+%         Pfit(:,1) = Pfit(:,1).*1000;
+%         delays    = delays.*1000;
+%             
+%         probeAxis = 1e7./probeAxis;
+%         fitWL     = 1e7./fitWL;
+%         
+%         CWL       = mean([min(fitWL) max(fitWL)]);
+%         
+%         probeAxis = c0./probeAxis;
+%         fitWL     = c0./fitWL;
         
 
 %% Fit Chirp vs Lambda

@@ -90,7 +90,7 @@ switch app.PP_DataFormat.Value
         end
         clear TempScanData;
     case 'UniGE TA'
-        ScanData = squeeze(dataStruct.scandata(k,:,:))';
+        ScanData = squeeze(dataStruct.scandata{1}(k,:,:))';
 end
 
 % Ask the user which scans to use if >15 scans
