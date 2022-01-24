@@ -90,40 +90,51 @@ switch mode
     case 'Automatic'
         %%% Fit a Gaussian response and take the WL-dependent t0 parameter to do the chirp fit
         % 1D Gaussian with 1st and 2nd derivative
-        % Parameters: 1=t0  2=FWHM  3=Amplitude  4=Offset  5=Amp 1st deriv  6=Amp 2nd deriv
+        % Parameters: 1=t0  2=FWHM  3=Amplitude  4=Amp 1st deriv  5=Amp 2nd deriv   6 = Offset
         G0 = @(p,t) exp(-log(2).*((t-p(1))./p(2)).^2);
         G1 = @(p,t) -2.*log(2)./(p(2).^2).*(t-p(1)).*G0(p,t);
         G2 = @(p,t) 2.*log(2).*(-p(2).^2 + 2.*log(2).*(t-p(1)).^2)./(p(2).^4).*G0(p,t);
 
-        ArtFit = @(p,t) p(3) + p(4).*G0(p,t) + p(5).*G1(p,t) + p(6).*G2(p,t);
+        ArtFit = @(p,t) p(3).*G0(p,t) + p(4).*G1(p,t) + p(5).*G2(p,t) + p(6);
 
-        P0  = [0    0.1   10    0.1    0.1  0.1  ];
-        LB  = [-5   0     -50   -50  -50  -50  ];
-        UB  = [5    1     50    50   50   50   ];
+        P0  = [0.1  0.1   1     1    1    1     ];
+        LB  = [-5   0     -50   -50  -50  -50   ];
+        UB  = [5    1     50    50   50   50    ];
 
         % Prepare an array where we will store the results
         Pfit = zeros(NfitPix,length(P0));
         Dfit = zeros(Ndelays,NfitPix);
-
+    
         % Define fit options
         options     = optimoptions(@lsqcurvefit,...
                         'FunctionTolerance',5e-10,...
                         'MaxIterations',1e4,...
                         'MaxFunctionEvaluations',1e4,...
                         'steptolerance',5e-10,...
+                        'OptimalityTolerance',5e-10,...
                         'display','off');
-
+        
+        inclDeriv = questdlg('Include 1st and 2nd derivatives of the Gaussian IRF?','Artifact Fit Options','Yes','No','Cancel','No');
+                    
         % Do the fits
         wb = waitbar(0);            
         for j=1:NfitPix
             i=fitPixels(j);
             [P0(3),idM] = max(abs(Z(:,i)));
             P0(1)   = delays(idM);
-            UB(1)   = P0(1) + 0.2;
-            LB(1)   = P0(1) - 0.2;
-
-            UB(3:6)   = 10*P0(3);
-            LB(3:6)   = -10*P0(3);
+            UB(1)   = P0(1) + 1;
+            LB(1)   = P0(1) - 1;
+            UB(3:6) = 5*P0(3);
+            LB(3:6) = -5*P0(3); 
+            
+            % Do NOT include derivative terms (?)
+            switch inclDeriv
+                case 'No'
+                    LB(4:5) = 0;
+                    UB(4:5) = 0;
+                case 'Cancel'
+                    return
+            end
             Pfit(j,:) = lsqcurvefit(ArtFit,P0,delays,Z(:,i),LB,UB,options);
             Dfit(:,j) = ArtFit(Pfit(j,:),delays);
             waitbar(j/NfitPix,wb,['Fitting chirp correction... (' num2str(j) ' of ' num2str(NfitPix) ')'])
@@ -131,19 +142,15 @@ switch mode
         delete(wb);
 end
 
-%%
-%         % Need to work in THz and fs
-%         Pfit(:,1) = Pfit(:,1).*1000;
-%         delays    = delays.*1000;
-%             
-%         probeAxis = 1e7./probeAxis;
-%         fitWL     = 1e7./fitWL;
-%         
-%         CWL       = mean([min(fitWL) max(fitWL)]);
-%         
-%         probeAxis = c0./probeAxis;
-%         fitWL     = c0./fitWL;
-        
+%%% Diagnostic plot for fit
+% j=15;
+% figure(5)
+% plot(delays,Dfit(:,j),'-','LineWidth',2)
+% hold on
+% plot(delays,Z(:,fitPixels(j)),'o');
+% hold off;
+% 
+% Pfit(j,:)
 
 %% Fit Chirp vs Lambda
 
@@ -159,6 +166,18 @@ switch ChirpEquation
     case 'Shaper'
         % Fit dispersion using a Taylor expansion centred at w0 --- ONLY FOR PULSE SHAPER CALIBRATION
         % Parameters: 1=a 2=b 3=c; (4=d)  L = Wavelength in nm   W0 = central wavelength
+        
+        % Need to work in THz and fs
+        Pfit(:,1) = Pfit(:,1).*1000;
+        delays    = delays.*1000;
+            
+        probeAxis = 1e7./probeAxis;
+        fitWL     = 1e7./fitWL;
+        
+        CWL       = mean([min(fitWL) max(fitWL)]);
+        
+        probeAxis = c0./probeAxis;
+        fitWL     = c0./fitWL;
 
         % Expand around the central wavelength
         nu0     = c0./CWL;     
@@ -310,30 +329,36 @@ switch mode
         ax.TickLength = [0.02 0.02];
 end
 
-%% Save the chirp correction .mat file
-path_save = uigetdir(rootfolder,'Save Chirp Correction Parameters to...');
-fn_save = ['chirpCorr_' datestr(datetime('now'),'yyyymmdd-HHMMSS') '.mat'];
-try 
-    save([path_save filesep fn_save],'chirpFun','Cfit','fitPixels','fitWL','Pfit');
-    helpdlg(["Chirp correction file successfully saved to: "; [path_save filesep fn_save]],'Chirp Correction Saved!');
-catch ME
-    errordlg('Error saving chirp correction file','Error saving file');
+keepFit = questdlg('Are you happy with these results?','Happy?','Yes, keep them!','Nope :(','Nope :(');
+switch keepFit
+    case 'Nope :('
+        return
+    case 'Yes, keep them!'
+        % Save the chirp correction .mat file
+        path_save = uigetdir(rootfolder,'Save Chirp Correction Parameters to...');
+        fn_save = ['chirpCorr_' datestr(datetime('now'),'yyyymmdd-HHMMSS') '.mat'];
+        try 
+            save([path_save filesep fn_save],'chirpFun','Cfit','fitPixels','fitWL','Pfit');
+            helpdlg(["Chirp correction file successfully saved to: "; [path_save filesep fn_save]],'Chirp Correction Saved!');
+        catch ME
+            errordlg('Error saving chirp correction file','Error saving file');
+        end
+
+        % Copy variables to output structure
+        chirpSt.chirpFun    = chirpFun;
+        chirpSt.Cfit        = Cfit;
+        chirpSt.fitPixels   = fitPixels;
+        chirpSt.fitWL       = fitWL;
+        chirpSt.Pfit        = Pfit;
+        switch mode
+            case 'Automatic'
+                chirpSt.meanIRF     = meanIRF;
+            otherwise
+                chirpSt.meanIRF     = NaN;
+        end
 end
 
-%% Copy variables to output structure
-chirpSt.chirpFun    = chirpFun;
-chirpSt.Cfit        = Cfit;
-chirpSt.fitPixels   = fitPixels;
-chirpSt.fitWL       = fitWL;
-chirpSt.Pfit        = Pfit;
-switch mode
-    case 'Automatic'
-        chirpSt.meanIRF     = meanIRF;
-    otherwise
-        chirpSt.meanIRF     = NaN;
 end
-end
-
 
 function [dataStruct,aborted] = SelectTracesCH(dataStruct,doSort,varargin)
 % Output is a sorted (or not) vector, dataStruct.SelTraces, of the selected (X,Y) points via interactive input through the mouse.
