@@ -35,7 +35,7 @@ end
 
 %% Read single scan data
 if dataStruct.chirpCorr == 0
-    Nscans          = round(size(alldata,1)/length(delays));
+    Nscans          = floor(size(alldata,1)/length(delays));
     rawsignal{1}    = zeros(Ndelays,Npixels);
     
     % remove NaN lines due to comments at end of file
@@ -64,7 +64,6 @@ else
     cmprobe{1}      = cmprobe{1}(1:end-NaNidx);
     rawsignal{1}    = rawsignal{1}(:,1:end-NaNidx)*1e3; % convert to mOD
     rawsignal{1}    = fillmissing(rawsignal{1}, 'linear');
-    Nscans=9;
 end
 
 
