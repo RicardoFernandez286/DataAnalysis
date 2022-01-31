@@ -39,10 +39,10 @@ switch interactive
     case 'Off'
         dataStruct.SelTraces = inputdlg('Enter ONE probe wavelength to plot:',...
              'Input desired probe frequency:', [1 50]);
-        dataStruct.SelTraces = str2double(dataStruct.SelTraces{:})';
         if isempty(dataStruct.SelTraces)
             return
         end
+        dataStruct.SelTraces = str2double(dataStruct.SelTraces{:})';
 end
 
 % Once we have the point, look for the index

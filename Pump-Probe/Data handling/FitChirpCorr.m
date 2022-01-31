@@ -20,10 +20,11 @@ switch dataStruct.rawcorr
         Z = dataStruct.rawsignal{k};
 end
 
+chirpSt = [];
 %% Hardcoded settings
-ChirpEquation = 'Cauchy'; % 'Cauchy' or 'Shaper';
-c0 = 2.99792458e+2;    % Speed of light in nm/fs
-plotpercent = 50;
+ChirpEquation   = 'Cauchy'; % 'Cauchy' or 'Shaper';
+c0              = 2.99792458e+2;    % Speed of light in nm/fs
+plotpercent     = 50;
 %% Read Probe fit ranges
 % probeRanges = [360 380 415 645];
 % probeRanges = [0 1000];
@@ -114,8 +115,16 @@ switch mode
                         'OptimalityTolerance',5e-10,...
                         'display','off');
         
-        inclDeriv = questdlg('Include 1st and 2nd derivatives of the Gaussian IRF?','Artifact Fit Options','Yes','No','Cancel','No');
-                    
+        qf = uifigure;
+        qf.Position(3:4) = [650 170];
+        inclDeriv = uiconfirm(qf,'Include 1st and 2nd derivatives of the Gaussian IRF?','Artifact Fit Options','Options',{'No';'1st Derivative';'2nd Derivative';'1st+2nd Derivatives'},'DefaultOption',1,'Icon','question');
+        delete(qf);
+
+        if strcmp(inclDeriv,'Cancel')
+            figure(app.DataAnalysisGUI_UIFigure);
+            return
+        end
+
         % Do the fits
         wb = waitbar(0);            
         for j=1:NfitPix
@@ -124,16 +133,20 @@ switch mode
             P0(1)   = delays(idM);
             UB(1)   = P0(1) + 1;
             LB(1)   = P0(1) - 1;
-            UB(3:6) = 5*P0(3);
-            LB(3:6) = -5*P0(3); 
+            UB(3:6) = 10*P0(3);
+            LB(3:6) = -10*P0(3); 
             
             % Do NOT include derivative terms (?)
             switch inclDeriv
                 case 'No'
                     LB(4:5) = 0;
                     UB(4:5) = 0;
-                case 'Cancel'
-                    return
+                case '1st Derivative'
+                    UB(5)   = 0;
+                    LB(5)   = 0;
+                case '2nd Derivative'
+                    UB(4)   = 0;
+                    LB(4)   = 0;
             end
             Pfit(j,:) = lsqcurvefit(ArtFit,P0,delays,Z(:,i),LB,UB,options);
             Dfit(:,j) = ArtFit(Pfit(j,:),delays);
@@ -142,8 +155,8 @@ switch mode
         delete(wb);
 end
 
-%%% Diagnostic plot for fit
-% j=15;
+%% Diagnostic plot for fit
+% j=80;
 % figure(5)
 % plot(delays,Dfit(:,j),'-','LineWidth',2)
 % hold on
@@ -197,8 +210,16 @@ end
                         'steptolerance',1e-10,...
                         'display','off');
 %                       'typicalX',C0,...
+        
+        opt2            = optimset(@lsqcurvefit);
+        opt2.TolFun     = 1e-10;
+        opt2.MaxIter    = 5e4;
+        opt2.MaxFunEvals= 5e4;
+        opt2.TolX       = 1e-10;
+        opt2.Display    = 'off';
 
-Cfit    = lsqcurvefit(chirpFun,C0,fitWL,Pfit(:,1),LB,UB,options);
+% Cfit    = lsqcurvefit(chirpFun,C0,fitWL,Pfit(:,1),LB,UB,options);
+Cfit    = robustlsqcurvefit(chirpFun,C0,fitWL,Pfit(:,1),LB,UB,'bisquare',opt2);
 % Cfit = C0;
 
 % Plot Everything
@@ -226,12 +247,12 @@ hold(ax,'off');
 
 switch ChirpEquation
     case 'Cauchy'
-        ylim(ax,[min(Pfit(:,1))-0.25 max(Pfit(:,1))+0.25])
+        ylim(ax,[mean(Pfit(:,1))-2 mean(Pfit(:,1))+2]) % time is in ps
         title(ax,'Fitted Dispersion Curve','FontWeight','bold');
         ylabel(ax,'Delay (ps)','FontWeight','bold');
         xlabel(ax,'Wavelength (nm)','FontWeight','bold');
     case 'Shaper'
-        ylim(ax,[min(Pfit(:,1))-250 max(Pfit(:,1))+250])
+        ylim(ax,[min(Pfit(:,1))-250 max(Pfit(:,1))+250]) % time is in fs
         title(ax,'Fitted Dispersion Curve','FontWeight','bold');
         ylabel(ax,'Delay (fs)','FontWeight','bold');
         xlabel(ax,'Frequency (THz)','FontWeight','bold');
@@ -263,12 +284,13 @@ ax2 = axes('parent',fh);
 
 ax.Position = [0.15 0.46 0.7750 0.4612];
 ax2.Position= [0.15 0.15 0.7750 0.2528];
-       
+
+% Multiply residuals (delta t_0) to adjust time scales (always plot in fs)
 switch ChirpEquation
     case 'Cauchy'
-        factorRes   = 1000;
+        factorRes   = 1000; % ps to fs
     case 'Shaper'
-        factorRes   = 1;
+        factorRes   = 1; % fs
 end
 
 res = factorRes.*(Pfit(:,1)-chirpFun(Cfit,fitWL));
@@ -281,7 +303,8 @@ switch ChirpEquation
         ylim(ax,[min(Pfit(:,1))-0.25 max(Pfit(:,1))+0.25])
         xlabel(ax2,'Wavelength (nm)','FontWeight','bold');
         ylabel(ax2,'{\Delta}{t_{0}}^{res} (fs)','FontWeight','bold');
-        ylim(ax2,[-50,50]);
+        ylim(ax2,[-50,50]); % Always plot +/- 50 fs delta t_0
+        xlim(ax,[min(probeAxis) max(probeAxis)])
     case 'Shaper'
 %         ylim(ax,[min(Pfit(:,1))-250 max(Pfit(:,1))+250])
         title(ax,'Fitted Dispersion Curve','FontWeight','bold');
@@ -328,6 +351,9 @@ switch mode
         ax.FontSize = 16;
         ax.TickLength = [0.02 0.02];
 end
+
+f = msgbox('Fit done! Please verify the results, then click OK.');
+uiwait(f);
 
 keepFit = questdlg('Are you happy with these results?','Happy?','Yes, keep them!','Nope :(','Nope :(');
 switch keepFit

@@ -40,10 +40,10 @@ switch interactive
     case 'Off'
         dataStruct.SelTraces = inputdlg('Enter ONE delay to plot:',...
              'Input desired delay:', [1 20]);
-        dataStruct.SelTraces = str2double(char(dataStruct.SelTraces));
         if isempty(dataStruct.SelTraces)
             return
         end
+        dataStruct.SelTraces = str2double(char(dataStruct.SelTraces));
 end
 % Once we have the point, look for the index
 % Get the values to find in the TIME vector
