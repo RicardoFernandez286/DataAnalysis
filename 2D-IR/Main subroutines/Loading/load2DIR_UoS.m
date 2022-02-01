@@ -108,7 +108,15 @@ end
 
 Mcomplete   = (exist([filename '.2D'],'file') ~= 0);
 
-[t2delays,t2idx]  = sort(t2delays);
+if Mcomplete == 1 %if measurement is completed
+    [t2delays,t2idx]  = sort(t2delays);
+else
+    [t2delays,~]    = sort(t2delays);
+    t2delays        = t2delays(delIdx);
+    Ndelays         = Ndone;
+    [t2delays,t2idx]= sort(t2delays);
+end
+
 
 % If there is an w0 file in the current ROOTDIR, use it to set the rotating frame frequency.
 % Otherwise, plot relative to w0
