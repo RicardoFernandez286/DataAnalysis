@@ -165,7 +165,7 @@ Time_label  = ['Delays (' dataStruct.timescale ')'];
 xlabel(where,Probe_label,'FontWeight','bold','Interpreter','tex');
 ylabel(where,Time_label,'FontWeight','bold','Interpreter','tex');
 
-hline = refline(where,0,0); hline.Color = [0.5 0.5 0.5];
+hline = yline(where,0); hline.Color = [0.5 0.5 0.5];
 switch TitleOnOff
     case 'On'
         title(where,{datafilename;[rawcorr,' DATA';'']},'Interpreter','none')  
