@@ -65,9 +65,9 @@ Ndelays             = length(delays);
 % end
 
 %% Read single scan data
-    Nscans      = NaN;
-    noise{1}    = tmpnoise;
-    rawsignal{1}= tmpsignal;
+Nscans      = NaN;
+noise{1}    = tmpnoise;
+rawsignal{1}= tmpsignal;
 
 %% Read the plot ranges
 mintime     = min(delays);
