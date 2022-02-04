@@ -21,9 +21,10 @@ alldata         = alldata.*sign;
 Ndelays         = length(delays);
 Npixels         = size(alldata,1)./Ndelays;
 
-rmvIdx          = delays >= 1e4;
-delays(rmvIdx)  = [];
-Ndelays         = length(delays);
+%%% Remove data after 10 microseconds
+% rmvIdx          = delays >= 1e4;
+% delays(rmvIdx)  = [];
+% Ndelays         = length(delays);
 
 %%%% remove NaN lines due to comments at end of file
 % NaNidx          = sum(isnan(cmprobe));
