@@ -157,11 +157,12 @@ axes(axes2);
 
 % Plot the data
 cm=colormap(axes2,othercolor('Mrainbow',Nplots));
+hold(axes2,'on')
 for n=1:Nplots
    plot(axes2,dataStruct.delays,ScanData(:,n),'color',cm(n,:),'DisplayName',caption(n),'HandleVisibility','off');
    plot(axes2,NaN,NaN,'color',cm(n,:),'LineWidth',3)
-   hold(axes2,'on')
 end
+hold(axes2,'off')
 % Make the lines of the first and last scans thicker
 axes2.Children(end).LineWidth   = 2*axes2.Children(end).LineWidth;
 axes2.Children(1).LineWidth     = 2*axes2.Children(1).LineWidth;
