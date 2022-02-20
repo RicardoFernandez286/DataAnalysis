@@ -1,6 +1,6 @@
 function [Dbest,res,CConc,Sfit] = fitHandler(doFit,PP_Data,KineticModel,ExtraPlots,Model_pFID)
 
-playSounds = 0;
+playSounds = 1;
 %% Disable some warnings
 warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
 warning('off','MATLAB:Axes:NegativeDataInLogAxis');
