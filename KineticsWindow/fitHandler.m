@@ -1,6 +1,5 @@
 function [Dbest,res,CConc,Sfit] = fitHandler(doFit,PP_Data,KineticModel,ExtraPlots,Model_pFID)
 
-playSounds = 1;
 %% Disable some warnings
 warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
 warning('off','MATLAB:Axes:NegativeDataInLogAxis');
@@ -83,17 +82,6 @@ if doFit == 1
     [~,Dbest,CConc,Sfit] = FitFunc(pFit,t,Kmat_Fun,C0,Dexp,GauIRF,FixP,IsFixTau);
     res     = Dexp-Dbest;
     chi2    = resnorm./(numel(res)-length(pFit)-Nfix-1);
-    
-    if playSounds==1
-        if exitflag > 0
-            load handel.mat
-            Y=y(750:19000);
-            sound(Y);
-        else
-            load gong.mat;
-            sound(y);
-        end
-    end
 else
     pFit    = p0_all;
     [~,Dbest,CConc,Sfit] = FitFunc(pFit,t,Kmat_Fun,C0,Dexp,GauIRF,FixP,IsFixTau);
@@ -338,8 +326,8 @@ function [res,Dfit,CConc,Sfit] = FitFunc(p,t,Kmodel,C0,Dexp,GauIRF,FixP,IsFixTau
 
     if GauIRF == 1
         FWHM    = p(2);
-        IRFfnc  = @(T,T0,W) (2./W)*sqrt(log(2)/pi)*exp(-4*log(2).*((T-T0)./W).^2)';
         CConc   = IRF_Kmat(t,Kmat,C0,FWHM,t0);
+%         IRFfnc  = @(T,T0,W) (2./W)*sqrt(log(2)/pi)*exp(-4*log(2).*((T-T0)./W).^2)';
 %         CConc   = IRFconvol(IRFfnc,t,t0,FWHM,Conc_fn); 
     else
         % Heaviside step function, usual definition with H(0) = 1/2
@@ -352,11 +340,6 @@ function [res,Dfit,CConc,Sfit] = FitFunc(p,t,Kmodel,C0,Dexp,GauIRF,FixP,IsFixTau
     Sfit    = CConc\Dexp;
     Dfit    = CConc*Sfit;
     
-    % Calculate sum of squares of residuals (SSR) and non-negative SAS penalty function (NNR)
-    % Set the pre-factor of the NNR to 0 to disable it. See manuscript and SI for details.
-    NNR     = sum(Sfit(Sfit<0));
-    % Tuning parameter for penalised least-squares fit
-    GAMMA   = 0; 
-    % Penalised norm of residuals (see SI for discussion)
+    % Calculate Residuals
     res     = Dexp-Dfit;
 end
