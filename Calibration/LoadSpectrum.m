@@ -2,8 +2,24 @@ function data = LoadSpectrum(app,message)
 % This subroutine loads a probe spectrum for further absorbance calculations
 % Ricardo Fernandez-Teran / 09.11.2021 / v1.0a
 
+if ispc
+    [datafile, datapath, TYPE] = uigetfile({'*.2D','UoS TRIR';'*.dat','UniGE TA';'*.dat','UniGE nsTA';'*ds0_intensity*.csv','UZH Lab 2'},message);
+else
+    [datafile, datapath, TYPE] = uigetfile('*.*');
+    
+    qf = uifigure;
+    qf.Position(3:4) = [405 170];
+    calType = uiconfirm(qf,'Select Calibration Type:','Calibration Type','Options',{'UoS TRIR';'UniGE TA';'UniGE nsTA';'UZH Lab 2'},'DefaultOption',1,'Icon','question');
+    delete(qf);
 
-[datafile, datapath, TYPE] = uigetfile({'*.2D','UoS TRIR';'*.dat','UniGE TA';'*.dat','UniGE nsTA';'*ds0_intensity*.csv','UZH Lab 2'},message);
+    switch calType
+        case 'UoS TRIR';    TYPE = 1;
+        case 'UniGE TA';    TYPE = 2;
+        case 'UniGE nsTA';  TYPE = 3;
+        case 'UZH Lab 2';   TYPE = 4;
+    end
+end
+
 rootdir = app.rootdir;
 if isempty(rootdir)
   rootdir = pwd;
