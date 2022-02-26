@@ -37,7 +37,7 @@ G = digraph(BMat',nodenames,'omitselfloops');
 fh=figure(1);
 clf(fh);
 fh.Name = 'Kinetic Network Graph';
-fh.NumberTitle = 'off';
+movegui(fh,'west')
 fh.Color='w';
 fh.Position(3:4) = [390 420];
 

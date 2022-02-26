@@ -5,6 +5,7 @@ warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
 warning('off','MATLAB:Axes:NegativeDataInLogAxis');
 warning('off','MATLAB:singularMatrix');
 warning('off','MATLAB:illConditionedMatrix');
+
 %% Extract IRF parameters and convert to fit parameters and boundaries
 GauIRF  = KineticModel.IRF.GauIRF;  % Decide whether to do Gaussian IRF or not (otherwise Heaviside)
 t0_param= KineticModel.IRF.t0;      % Val UB LB
@@ -103,8 +104,11 @@ fprintf('*****************\n');
 %% Plot results
 %%% Plot the concentration profiles and SAS
 fhA     = figure(3);
+fhA.Name= 'SAS and Temporal Evolution (Concentration Profiles)';
 clf(fhA);
 fhA.Position(3:4) = [700 1060];
+movegui(fhA,'onscreen')
+
 axA = axes('parent',fhA);
 
 FontSize = 16;
@@ -205,6 +209,7 @@ ylabel(ax,'Amplitude (mOD)','FontWeight','bold')
 ax.TickLength   = [0.02 0.02];
 % ax.TickDir      = 'both';
 
+
 if ExtraPlots == 0
     return
 end
@@ -212,7 +217,7 @@ end
 %% Contour plots of the dataset, fit and residuals
 fhB     = figure(4);
 fhB.Name= 'Data, Fit and Residuals (Contour Plots)';
-fhB.NumberTitle = 'off';
+movegui(fhB,'onscreen')
 
 clf(fhB);
 tiledlayout(fhB,1,3,'padding','compact');
@@ -307,6 +312,7 @@ end
 
 %% To-do:
 % Model_pFID
+% Ask about initial concentrations
 
 
 %%%%%%%%%%%%%%%%% EOF
