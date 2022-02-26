@@ -218,8 +218,9 @@ end
 fhB     = figure(4);
 fhB.Name= 'Data, Fit and Residuals (Contour Plots)';
 movegui(fhB,'onscreen')
-
 clf(fhB);
+
+figure(fhB);
 tiledlayout(fhB,1,3,'padding','compact');
 
 tplot   = t-pFit(1);    % Shift time axis such that tplot = 0 at t0
