@@ -217,6 +217,8 @@ end
 %% Contour plots of the dataset, fit and residuals
 fhB     = figure(4);
 fhB.Name= 'Data, Fit and Residuals (Contour Plots)';
+fhB.Position(3:4) = [1430 420]; % Resize the figure to a wide shape
+
 movegui(fhB,'onscreen')
 clf(fhB);
 
@@ -304,9 +306,6 @@ ax3.TickLength = [0.02 0.02];
 title(cb1,'Abs.','FontWeight','bold')
 title(cb2,'Abs.','FontWeight','bold')
 title(cb3,'Abs.','FontWeight','bold')
-
-% Resize the figure to a wide shape
-fhB.Position(3:4) = [1430 420];
 
 %%%%%% END OF FILE
 end
