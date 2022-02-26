@@ -102,10 +102,11 @@ fprintf('\nchi^2 = %.3g\n',chi2);
 fprintf('*****************\n');
 
 %% Plot results
+drawnow;
 %%% Plot the concentration profiles and SAS
 fhA     = figure(3);
-fhA.Name= 'SAS and Temporal Evolution (Concentration Profiles)';
 clf(fhA);
+fhA.Name= 'SAS and Temporal Evolution (Concentration Profiles)';
 fhA.Position(3:4) = [700 1060];
 movegui(fhA,'onscreen')
 
@@ -209,6 +210,7 @@ ylabel(ax,'Amplitude (mOD)','FontWeight','bold')
 ax.TickLength   = [0.02 0.02];
 % ax.TickDir      = 'both';
 
+drawnow;
 
 if ExtraPlots == 0
     return
@@ -216,11 +218,10 @@ end
 
 %% Contour plots of the dataset, fit and residuals
 fhB     = figure(4);
+clf(fhB);
 fhB.Name= 'Data, Fit and Residuals (Contour Plots)';
 fhB.Position(3:4) = [1430 420]; % Resize the figure to a wide shape
-
 movegui(fhB,'onscreen')
-clf(fhB);
 
 figure(fhB);
 tiledlayout(fhB,1,3,'padding','compact');
@@ -306,6 +307,8 @@ ax3.TickLength = [0.02 0.02];
 title(cb1,'Abs.','FontWeight','bold')
 title(cb2,'Abs.','FontWeight','bold')
 title(cb3,'Abs.','FontWeight','bold')
+
+drawnow;
 
 %%%%%% END OF FILE
 end
