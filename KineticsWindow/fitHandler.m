@@ -5,6 +5,7 @@ warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
 warning('off','MATLAB:Axes:NegativeDataInLogAxis');
 warning('off','MATLAB:singularMatrix');
 warning('off','MATLAB:illConditionedMatrix');
+warning('off','MATLAB:nearlySingularMatrix');
 
 %% Extract IRF parameters and convert to fit parameters and boundaries
 GauIRF  = KineticModel.IRF.GauIRF;  % Decide whether to do Gaussian IRF or not (otherwise Heaviside)
