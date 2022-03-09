@@ -23,15 +23,15 @@ else
 end
 
 %% Extract Kmat function and main parameters from kinetic model
-Kmat_Fun = KineticModel.Kmat_Fun;
-% numC     = KineticModel.numC;
-% numTaus  = KineticModel.numTaus;
-C0       = KineticModel.C0;
-modelType= KineticModel.modelType;
+Kmat_Fun    = KineticModel.Kmat_Fun;
+% numC        = KineticModel.numC;
+% numTaus     = KineticModel.numTaus;
+C0          = KineticModel.C0;
+modelType   = KineticModel.modelType;
 %% Convert Rate table to fit parameters and boundaries
-Tau0_tbl = cell2mat(KineticModel.Tau0(:,1:3));  % Numerical (i.e. tau values)
-IsFixTau = cell2mat(KineticModel.Tau0(:,4));    % Logical (fix or not)
-Nfix     = sum(IsFixTau);
+Tau0_tbl    = cell2mat(KineticModel.Tau0(:,1:3));  % Numerical (i.e. tau values)
+IsFixTau    = cell2mat(KineticModel.Tau0(:,4));    % Logical (fix or not)
+Nfix        = sum(IsFixTau);
 
 if Nfix == 0
     p0_Tau   = Tau0_tbl(:,1)';
@@ -103,9 +103,13 @@ end
 %% Display fit results in command window
 fprintf('\n=============\nFit Results:\n=============\n')
 fprintf('t0   = %.3f ± %.3f \n',pFit(1),pErr(1))
-fprintf('FWHM = %.3f ± %.3f \n\n',pFit(2),pErr(2))
+if GauIRF == 1
+    fprintf('FWHM = %.3f ± %.3f \n\n',pFit(2),pErr(2))
+else
+    fprintf('Delta-shaped IRF assumed. \n\n')
+end
 
-for i=3:length(pFit)
+for i=(2+GauIRF):length(pFit)
     fprintf('k%i = %.3e ; tau = %.3f ± %.3f \n',i-2,1./pFit(i),pFit(i),pErr(i))
 end
 fprintf('\nchi^2 = %.3g\n',chi2);
@@ -139,7 +143,7 @@ for i=1:nC
     plot(ax,t,CConc(:,i),'LineWidth',2,'Color',cmapR(i,:),'DisplayName',char(64+i));
 end
 hold(ax,'off')
-title(ax,'Concentration Profiles (a.u.)');
+title(ax,'Concentration Profiles');
 xline(ax,pFit(1));
 yline(ax,0);
 axis(ax,'tight');
