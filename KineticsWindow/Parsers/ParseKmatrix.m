@@ -14,7 +14,9 @@ switch modelIdx
         Kfun_str = '[-k(1) k(2) 0 ; k(1) -(k(2)+k(3)) 0; 0 k(3) -k(4)]';
     case 6 % 'A <=> B; B<=>C; C ->';
         Kfun_str = '[-k(1) k(2) 0; k(1) -(k(2)+k(3)) k(4); 0 k(3) -(k(4)+k(5))]'; 
-    case 7 % Custom model
+    case 7 % 'A -> B; B<=>C; B -> ; C ->'
+        Kfun_str = '[-k(1) 0  0; k(1) -(k(2)+k(3)) k(4); 0 k(2) -(k(4)+k(5))]';
+    case 8 % Custom model
         prompt   = 'Enter K matrix in functional form [i.e. as a function of a vector "k" containing the taus]:';
         title    = 'Define K matrix for target model';
         dims     = [10 100];

@@ -84,20 +84,29 @@ if doFit == 1
     [~,Dbest,CConc,Sfit] = FitFunc(pFit,t,Kmat_Fun,C0,Dexp,GauIRF,FixP,IsFixTau);
     res     = Dexp-Dbest;
     chi2    = resnorm./(numel(res)-length(pFit)-Nfix-1);
+
+    % First, calculate covariance matrix from the Jacobian
+    covB = chi2*inv(J.'*J);
+    % This calculates the 95 % confidence intervals
+    ci   = nlparci(pFit,res,'covar',covB);
+    % Take errors as the difference between the parameter and the lower ci
+    pErr = diff(ci,1,2)./2;
+
 else
     pFit    = p0_all;
     [~,Dbest,CConc,Sfit] = FitFunc(pFit,t,Kmat_Fun,C0,Dexp,GauIRF,FixP,IsFixTau);
     res     = Dexp-Dbest;
     chi2    = NaN;
+    pErr    = NaN(size(pFit));
 end
 
 %% Display fit results in command window
 fprintf('\n=============\nFit Results:\n=============\n')
-fprintf('t0   = %.3f \n',pFit(1))
-fprintf('FWHM = %.3f \n\n',pFit(2))
+fprintf('t0   = %.3f ± %.3f \n',pFit(1),pErr(1))
+fprintf('FWHM = %.3f ± %.3f \n\n',pFit(2),pErr(2))
 
 for i=3:length(pFit)
-    fprintf('k%i = %.3e ; tau = %.3f\n',i-2,1./pFit(i),pFit(i))
+    fprintf('k%i = %.3e ; tau = %.3f ± %.3f \n',i-2,1./pFit(i),pFit(i),pErr(i))
 end
 fprintf('\nchi^2 = %.3g\n',chi2);
 fprintf('*****************\n');
