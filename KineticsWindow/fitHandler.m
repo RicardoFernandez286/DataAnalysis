@@ -118,13 +118,13 @@ fprintf('*****************\n');
 %% Plot results
 drawnow;
 %%% Plot the concentration profiles and SAS
-fhA     = figure(3);
-clf(fhA);
-fhA.Name= 'SAS and Temporal Evolution (Concentration Profiles)';
-fhA.Position(3:4) = [700 1060];
-movegui(fhA,'onscreen')
-
-axA = axes('parent',fhA);
+% fhA     = figure(3);
+% clf(fhA);
+% fhA.Name= 'SAS and Temporal Evolution (Concentration Profiles)';
+% fhA.Position(3:4) = [700 1060];
+% movegui(fhA,'onscreen')
+% 
+% axA = axes('parent',fhA);
 
 FontSize = 16;
 
@@ -137,7 +137,14 @@ end
 
 
 % Concentration profiles
-ax = subplot(2,1,1,axA);
+% ax = subplot(2,1,1,axA);
+fhA1     = figure(3);
+clf(fhA1);
+fhA1.Name= 'Temporal Evolution (Concentration Profiles)';
+fhA1.Position(3:4) = [700 410];
+movegui(fhA1,'onscreen')
+
+ax = axes('parent',fhA1);
 hold(ax,'on')
 for i=1:nC
     plot(ax,t,CConc(:,i),'LineWidth',2,'Color',cmapR(i,:),'DisplayName',char(64+i));
@@ -162,7 +169,14 @@ ax.TickLength   = [0.02 0.02];
 % ax.TickDir      = 'both';
 
 % SAS
-ax = subplot(2,1,2);
+% ax = subplot(2,1,2);
+fhA2     = figure(4);
+clf(fhA2);
+fhA2.Position(3:4) = [700 410];
+movegui(fhA2,'onscreen')
+
+ax = axes('parent',fhA2);
+
 switch modelType
     case 'Parallel'
         SpectraTitle = 'Decay-Associated Spectra';
@@ -170,11 +184,15 @@ switch modelType
         SpectraTitle = 'Species-Associated Spectra';
 end
 
+fhA2.Name= SpectraTitle;
 hold(ax,'on')
 
 FitTaus = pFit((2+GauIRF):end);
-TAU_fit(IsFixTau)  = FixP;
-TAU_fit(~IsFixTau) = FitTaus;
+ErrTaus = pErr((2+GauIRF):end);
+TAU_fit(IsFixTau)   = FixP;
+TAU_fit(~IsFixTau)  = FitTaus;
+TAU_err(IsFixTau)  = 0;
+TAU_err(~IsFixTau) = ErrTaus;
 
 for i=1:nC
     % Convert Tau to a readable format (can handle tau < 1 s)
@@ -183,26 +201,31 @@ for i=1:nC
     newExp   = 3.*floor(floor(log10(TAU_plot))'./3);
     powS     = powS + newExp;
     TAU_plot = TAU_plot.*10.^(-newExp);
+    ERR_plot = TAU_err(i).*10.^(-newExp);
     tS_plot  = setTimescale(powS);
 
     switch modelType
         case 'Parallel'
             if ~isinf(TAU_fit(i))
-                name = ['\tau_{' char(64+i) '} = ' num2str(TAU_plot,'%4.3g') ' ' tS_plot];
+                name = ['\tau_{' char(64+i) '} = ' num2str(TAU_plot,'%4.3g')];
             else
                 name = ['\tau_{' char(64+i) '} = \infty'];
             end
             if IsFixTau(i)
                 name = [name '*']; %#ok<*AGROW> 
+            else
+                name = [name '\pm' num2str(ERR_plot,'%4.1g') ' ' tS_plot];
             end
         case 'Sequential'
             if ~isinf(TAU_fit(i))
-                name = ['\tau_{' num2str(i) '} = ' num2str(TAU_plot,'%4.3g') ' ' tS_plot];
+                name = ['\tau_{' num2str(i) '} = ' num2str(TAU_plot,'%4.3g')];
             else
                 name = ['\tau_{' num2str(i) '} = \infty'];
             end
             if IsFixTau(i)
-                name = [name '*'];
+                name = [name ' ' tS_plot '*']; 
+            else
+                name = [name '\pm' num2str(ERR_plot,'%4.1g') ' ' tS_plot];
             end
         otherwise
             name = char(64+i);
@@ -218,7 +241,7 @@ xlim(ax,'tight');
 ax.Box = 'on';
 ax.FontSize = FontSize;
 
-xlabel(ax,[probelabel '(' Xunits ')'],'FontWeight','bold')
+xlabel(ax,[probelabel ' (' Xunits ')'],'FontWeight','bold')
 ylabel(ax,'Amplitude (mOD)','FontWeight','bold')
 
 ax.TickLength   = [0.02 0.02];
@@ -231,7 +254,7 @@ if ExtraPlots == 0
 end
 
 %% Contour plots of the dataset, fit and residuals
-fhB     = figure(4);
+fhB     = figure(5);
 clf(fhB);
 fhB.Name= 'Data, Fit and Residuals (Contour Plots)';
 fhB.Position(3:4) = [1430 420]; % Resize the figure to a wide shape
