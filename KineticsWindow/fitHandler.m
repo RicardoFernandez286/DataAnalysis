@@ -109,10 +109,25 @@ else
     fprintf('Delta-shaped IRF assumed. \n\n')
 end
 
-for i=(2+GauIRF):length(pFit)
-    fprintf('k%i = %.3e ; tau = %.3f ± %.3f \n',i-2,1./pFit(i),pFit(i),pErr(i))
+FitTaus             = pFit((2+GauIRF):end);
+ErrTaus             = pErr((2+GauIRF):end);
+TAU_fit(IsFixTau)   = FixP;
+TAU_fit(~IsFixTau)  = FitTaus;
+TAU_err(IsFixTau)   = NaN;
+TAU_err(~IsFixTau)  = ErrTaus;
+Ntaus               = length(TAU_fit);
+
+for i=1:Ntaus
+    if IsFixTau(i)
+        fprintf('k%i = %.3e ; tau%i = %.3f %s**\n',i,1./TAU_fit(i),i,TAU_fit(i),timescale)
+    else
+        fprintf('k%i = %.3e ; tau%i = %.3f ± %.3f %s\n',i,1./TAU_fit(i),i,TAU_fit(i),TAU_err(i),timescale)
+    end
 end
-fprintf('\nchi^2 = %.3g\n',chi2);
+if sum(IsFixTau) > 0
+    fprintf('\n# of fixed Time Constants: %i\n',sum(IsFixTau));
+end
+fprintf('chi^2 = %.3g\n',chi2);
 fprintf('*****************\n');
 
 %% Plot results
@@ -187,13 +202,6 @@ end
 fhA2.Name= SpectraTitle;
 hold(ax,'on')
 
-FitTaus = pFit((2+GauIRF):end);
-ErrTaus = pErr((2+GauIRF):end);
-TAU_fit(IsFixTau)   = FixP;
-TAU_fit(~IsFixTau)  = FitTaus;
-TAU_err(IsFixTau)  = 0;
-TAU_err(~IsFixTau) = ErrTaus;
-
 for i=1:nC
     % Convert Tau to a readable format (can handle tau < 1 s)
     TAU_plot = TAU_fit(i);
@@ -203,6 +211,10 @@ for i=1:nC
     TAU_plot = TAU_plot.*10.^(-newExp);
     ERR_plot = TAU_err(i).*10.^(-newExp);
     tS_plot  = setTimescale(powS);
+    
+    if isinf(TAU_fit(i))
+        tS_plot = '';
+    end
 
     switch modelType
         case 'Parallel'
@@ -212,9 +224,9 @@ for i=1:nC
                 name = ['\tau_{' char(64+i) '} = \infty'];
             end
             if IsFixTau(i)
-                name = [name '*']; %#ok<*AGROW> 
+                name = [name ' ' tS_plot '*']; %#ok<*AGROW> 
             else
-                name = [name '\pm' num2str(ERR_plot,'%4.1g') ' ' tS_plot];
+                name = [name '\pm' num2str(round(ERR_plot,1,'significant'),'%2.2g') ' ' tS_plot];
             end
         case 'Sequential'
             if ~isinf(TAU_fit(i))
@@ -225,7 +237,7 @@ for i=1:nC
             if IsFixTau(i)
                 name = [name ' ' tS_plot '*']; 
             else
-                name = [name '\pm' num2str(ERR_plot,'%4.1g') ' ' tS_plot];
+                name = [name '\pm' num2str(round(ERR_plot,1,'significant'),'%2.2g') ' ' tS_plot];
             end
         otherwise
             name = char(64+i);
