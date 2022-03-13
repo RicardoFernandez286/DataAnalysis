@@ -46,7 +46,7 @@ zminmax     = round(max([abs(minabs) abs(maxabs)]),3);
 minwl       = min(cmprobe);
 maxwl       = max(cmprobe);
 Ncontours   = 40; % 40 contours by default is OK
-plotranges  = [mintime maxtime minwl maxwl minabs maxabs Ncontours];
+plotranges  = [0.01 maxtime minwl maxwl minabs maxabs Ncontours];
 
 %% WRITE to dataStruct
 % Write the main variables

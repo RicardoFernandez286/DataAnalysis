@@ -47,7 +47,7 @@ if FileName ~= 0
             end
         case 1
             try
-                IRdata  = readmatrix(SteadyIRfile,'Delimiter','\t');
+                IRdata  = readmatrix(SteadyIRfile);
             catch err
                 try
                     IRdata  = readmatrix(SteadyIRfile,'Delimiter',',');
