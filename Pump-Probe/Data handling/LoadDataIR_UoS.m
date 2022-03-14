@@ -6,29 +6,16 @@ datafilename= dataStruct.datafilename;
 
 DetSz       = [96 96 32 32]; % Sizes of [probe1 probe2 ref1 ref2] in pixels
 
+SortScans = 1;
+
 % Get files
 datadir     = [rootdir filesep datafilename];
 datadir_fl  = dir(datadir);
 datadir_fn  = {datadir_fl.name};
 
-[~,fn,~]    = fileparts(datadir_fn{contains(datadir_fn(:),'.LG','IgnoreCase',1)});
+[~,fn,~]    = fileparts(datadir_fn{contains(datadir_fn(:),'.DT','IgnoreCase',1)});
 
 filename    = [rootdir filesep datafilename filesep fn];
-
-% Read Spectrograph Information
-text        = readlines([filename '.LG']);
-g1_st       = strsplit(text{75},' '); % Det186 is 1st
-w1_st       = strsplit(text{77},' ');
-g2_st       = strsplit(text{67},' '); % Det185 is 2nd
-w2_st       = strsplit(text{69},' ');
-
-Gratings(1) = str2double(g1_st{end});
-CWL(1)      = str2double(w1_st{end});
-Gratings(2) = str2double(g2_st{end});
-CWL(2)      = str2double(w2_st{end});
-
-probe_calib = 0;
-est_probe   = cell(1,2);
 
 % If there is a calibrated WL file in the current EXPDIR, use it
 wavenumberfile  = 'CalibratedProbe.csv';
@@ -40,21 +27,36 @@ elseif exist([rootdir filesep wavenumberfile],'file') == 2
     probe_calib = 2;
     tmp_probe   = readmatrix([rootdir filesep wavenumberfile]);
 else
-    tmp_probe   = [];
-end
+    % Read Spectrograph Information
+    text        = readlines([filename '.LG']);
+    g1_st       = strsplit(text{75},' '); % Det186 is 1st
+    w1_st       = strsplit(text{77},' ');
+    g2_st       = strsplit(text{67},' '); % Det185 is 2nd
+    w2_st       = strsplit(text{69},' ');
+    
+    Gratings(1) = str2double(g1_st{end});
+    CWL(1)      = str2double(w1_st{end});
+    Gratings(2) = str2double(g2_st{end});
+    CWL(2)      = str2double(w2_st{end});
+    
+    probe_calib = 0;
+    est_probe   = cell(1,2);
 
-% Estimate probe axis, arbitrary calibration factors
-for i=1:2
-    switch Gratings(i)
-        case 0 % 120 l/mm
-            ppnm    = 0.168;
-        case 1 % 100 l/mm
-            ppnm    = 0.14;
-        case 2 % 50 l/mm
-            ppnm    = 0.068;
+    % Estimate probe axis, arbitrary calibration factors
+    for i=1:2
+        switch Gratings(i)
+            case 0 % 120 l/mm
+                ppnm    = 0.168;
+            case 1 % 100 l/mm
+                ppnm    = 0.14;
+            case 2 % 50 l/mm
+                ppnm    = 0.068;
+        end
+        pix = flip(1:DetSz(i));
+        est_probe{i} = 1e7./(pix./ppnm + CWL(i)+60 - DetSz(i)./2./ppnm);
     end
-    pix = flip(1:DetSz(i));
-    est_probe{i} = 1e7./(pix./ppnm + CWL(i)+60 - DetSz(i)./2./ppnm);
+
+    tmp_probe   = [];
 end
 
 %% Read the file
@@ -72,13 +74,33 @@ end
 Ndelays         = length(delays);
 rawsignal       = cell(2,1);
 plotranges      = cell(2,1);
+noise           = cell(2,1);
+scandata        = cell(2,1);
+
 %% Split Data into two detectors
 for j=1:2
     idx = (1:DetSz(j)) + sum(DetSz(1:j-1));
-    rawsignal{j} = rawdata(:,idx);
+    rawsignal{j}    = rawdata(:,idx);
+
+    if SortScans==1 % Take care of different scans in same file
+        dT              = [diff(delays); 0];
+        newScanIdx      = [0; find(dT<0)];
+        Nscans          = length(newScanIdx);
+        Ndelays         = length(delays)./Nscans;
+        
+        for i=1:Nscans
+            idxS = (1:Ndelays) + newScanIdx(i);
+            scandata{j}(:,:,i) = rawsignal{j}(idxS,:);
+%             scannoise{j}(:,:,i) = zeros(size(scandata{j}(:,:,i)));
+        end
+        rawsignal{j} = mean(scandata{j},3); % mean across scans
+    else
+        Nscans = NaN;
+        scandata = [];
+    end
 
     % Noise and ranges
-    noise           = zeros(size(rawsignal));
+    noise{j}        = zeros(size(rawsignal{j}));
     % Read the plot ranges
     mintime         = min(delays);
     maxtime         = max(delays);
@@ -90,6 +112,13 @@ for j=1:2
     Ncontours       = 40; % 40 contours by default is OK
     plotranges{j}   = [mintime maxtime minwl maxwl minabs maxabs Ncontours];
 end
+
+for i=1:Nscans
+    delays_S(:,i)       = delays(idxS);
+end
+delays = mean(delays_S,2);
+
+
 %% WRITE to dataStruct
 % Write the main variables
 dataStruct.delays       = delays;
@@ -99,12 +128,16 @@ dataStruct.noise        = noise;
 dataStruct.plotranges   = plotranges;
 
 % Calculate noise statistics
-dataStruct.AvgNoise     = mean(noise(:));
-dataStruct.MaxNoise     = max(noise(:));
+dataStruct.AvgNoise     = mean(noise{2}(:));
+dataStruct.MaxNoise     = max(noise{1}(:));
 dataStruct.SNR          = abs(round(zminmax/dataStruct.AvgNoise,3));
 
 % Number of scans
-   dataStruct.Nscans    = NaN;
+dataStruct.Nscans       = Nscans;
+dataStruct.scandata     = scandata;
+dataStruct.scanNoise    = scandata;
+
+%%%%% CONTINUE HERE
 
 for j=1:2
 % Background Subtraction

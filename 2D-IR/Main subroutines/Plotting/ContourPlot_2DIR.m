@@ -139,9 +139,9 @@ PumpSpectrum        = PumpSpectrum{m,k}(1:L,:);
 switch cut
     case 1
         cut_method = 'Axis';
-%     case 0
-%         cut_method = 'Intensity';
-    case {2,0}
+    case 2
+        cut_method = 'Intensity';
+    case 0
         cut_method = 'Uncalibrated';
 end
 
@@ -370,6 +370,8 @@ switch plot_axislegend
 end
 
 % Show population delay text in upper-left corner
+t2_delay_ps = round(t2_delay_ps,3);
+
 if abs(t2_delay_ps) < 1
     timescale   = 'fs';
     t2_delay_ps = t2_delay_ps*1000;
@@ -380,6 +382,13 @@ else
     timescale   = 'ps';
 end
 t2_delay_ps = num2str(t2_delay_ps,'%.3g');
+
+%     powS     = getTimescale('ps');
+%     newExp   = 3.*floor(round(log10(t2_delay_ps))'./3);
+%     powS     = powS + newExp;
+%     TAU_plot = TAU_plot.*10.^(-newExp);
+%     tS_plot  = setTimescale(powS);
+
 
 if Transient2D
     if abs(UV_delay_ps) < 1

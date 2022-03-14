@@ -89,6 +89,8 @@ switch app.PP_DataFormat.Value
 %         clear TempScanData;
     case 'UniGE TA'
         ScanData = squeeze(dataStruct.scandata{1}(:,k,:));
+    case 'TRIR (Sheffield)'
+        ScanData = squeeze(dataStruct.scandata{DET}(:,k,:));
 end
 % Ask the user which scans to use if >15 scans
 if Nscans >= 15
