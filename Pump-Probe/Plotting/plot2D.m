@@ -73,7 +73,7 @@ if sum(Zdata{k}(:),'omitnan') == 0
     return
 end
 
-if numel(Zdata{k}) <= 2048*10
+if numel(Zdata{k}) <= 2048*1000
     if plot_filledcontours == 1
         contourf(where,X,Y,Z,plot_contours,'LineStyle','-','LineColor','flat');
     else

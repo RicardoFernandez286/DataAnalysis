@@ -299,14 +299,14 @@ ctrs_r  = linspace(zoomR*minZres,zoomR*maxZres,NCtrs+1);
 ax1 = nexttile;
 contourf(ax1,WL,tplot,Dexp,ctrs,'EdgeColor','flat'); cb1 = colorbar;
 colormap(ax1,darkb2r(zoomF*minZ,zoomF*maxZ,NCtrs,2));
-caxis(ax1,zoomF*[minZ maxZ]);
+clim(ax1,zoomF*[minZ maxZ]);
 ax1.YScale = linlog;
 
 % Plot the fit
 ax2 = nexttile;
 contourf(ax2,WL,tplot,Dbest,ctrs,'EdgeColor','flat'); cb2 = colorbar;
 colormap(ax2,darkb2r(zoomF*minZ,zoomF*maxZ,NCtrs,2));
-caxis(ax2,zoomF*[minZ maxZ]);
+clim(ax2,zoomF*[minZ maxZ]);
 title(ax2,'Fit','FontSize',18);
 ax2.YScale = linlog;
 
@@ -314,7 +314,7 @@ ax2.YScale = linlog;
 ax3 = nexttile;
 contourf(ax3,WL,tplot,res,ctrs_r,'EdgeColor','flat'); cb3 = colorbar;
 colormap(ax3,darkb2r(zoomR*minZres,zoomR*maxZres,NCtrs,2));
-caxis(ax3,zoomR*[minZres maxZres]);
+clim(ax3,zoomR*[minZres maxZres]);
 ax3.YScale = linlog;
 
 % Link the axes of the three plots

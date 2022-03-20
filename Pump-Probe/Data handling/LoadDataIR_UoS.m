@@ -1,4 +1,4 @@
-function dataStruct = LoadDataIR_UoS(dataStruct,varargin)
+function dataStruct = LoadDataIR_UoS(dataStruct,recalcScans)
 %% READ from dataStruct
 % Get stuff from dataStruct
 rootdir     = dataStruct.rootdir;
@@ -6,7 +6,7 @@ datafilename= dataStruct.datafilename;
 
 DetSz       = [96 96 32 32]; % Sizes of [probe1 probe2 ref1 ref2] in pixels
 
-SortScans = 1;
+SortScans   = 1;
 
 % Get files
 datadir     = [rootdir filesep datafilename];
@@ -76,29 +76,47 @@ rawsignal       = cell(2,1);
 plotranges      = cell(2,1);
 noise           = cell(2,1);
 scandata        = cell(2,1);
+scannoise       = cell(2,1);
 
-%% Split Data into two detectors
-for j=1:2
-    idx = (1:DetSz(j)) + sum(DetSz(1:j-1));
-    rawsignal{j}    = rawdata(:,idx);
-
-    if SortScans==1 % Take care of different scans in same file
-        dT              = [diff(delays); 0];
-        newScanIdx      = [0; find(dT<0)];
-        Nscans          = length(newScanIdx);
-        Ndelays         = length(delays)./Nscans;
-        
-        for i=1:Nscans
-            idxS = (1:Ndelays) + newScanIdx(i);
-            scandata{j}(:,:,i) = rawsignal{j}(idxS,:);
-%             scannoise{j}(:,:,i) = zeros(size(scandata{j}(:,:,i)));
+if recalcScans == 1
+    rawsignal       = dataStruct.rawsignal;
+    noise           = dataStruct.noise;
+    cmprobe         = dataStruct.cmprobe;
+    delays          = dataStruct.delays;
+    Nscans          = 0;
+else
+    %% Split Data into two detectors
+    for j=1:2
+        idx = (1:DetSz(j)) + sum(DetSz(1:j-1));
+        rawsignal{j}    = rawdata(:,idx);
+    
+        if SortScans==1 % Take care of different scans in same file
+            dT              = [diff(delays); 0];
+            newScanIdx      = [0; find(dT<0)];
+            Nscans          = length(newScanIdx);
+            Ndelays         = length(delays)./Nscans;
+            
+            for i=1:Nscans
+                idxS = (1:Ndelays) + newScanIdx(i);
+                scandata{j}(:,:,i)  = rawsignal{j}(idxS,:);
+                scannoise{j}(:,:,i) = zeros(size(rawsignal{j}(idxS,:)));
+            end
+            rawsignal{j} = mean(scandata{j},3); % mean across scans
+        else
+            Nscans      = NaN;
+            scandata    = [];
+            scannoise   = [];
         end
-        rawsignal{j} = mean(scandata{j},3); % mean across scans
-    else
-        Nscans = NaN;
-        scandata = [];
     end
+   
+    delays_S = zeros(length(idxS),Nscans);
+    for i=1:Nscans
+        delays_S(:,i)       = delays(idxS);
+    end
+    delays = mean(delays_S,2);
+end
 
+for j=1:2
     % Noise and ranges
     noise{j}        = zeros(size(rawsignal{j}));
     % Read the plot ranges
@@ -112,12 +130,6 @@ for j=1:2
     Ncontours       = 40; % 40 contours by default is OK
     plotranges{j}   = [mintime maxtime minwl maxwl minabs maxabs Ncontours];
 end
-
-for i=1:Nscans
-    delays_S(:,i)       = delays(idxS);
-end
-delays = mean(delays_S,2);
-
 
 %% WRITE to dataStruct
 % Write the main variables
@@ -137,23 +149,28 @@ dataStruct.Nscans       = Nscans;
 dataStruct.scandata     = scandata;
 dataStruct.scanNoise    = scandata;
 
-%%%%% CONTINUE HERE
+% Set timescale
+dataStruct.timescale    = 'ps';
+
+%% Background correction
+if recalcScans == 1
+    dataStruct.recalcBkg = 0;
+end
 
 for j=1:2
-% Background Subtraction
-if dataStruct.recalcBkg == 0
-    % Subtract the first negative delay from all the dataset by default - otherwise take the inputs
-    dataStruct.mintimeBkg = dataStruct.delays(1);
-    dataStruct.maxtimeBkg = dataStruct.delays(1);
-end
-    Idx = findClosestId2Val(dataStruct.delays,[dataStruct.mintimeBkg dataStruct.maxtimeBkg]);
-    % Do the background subtraction and change status in handles.rawcorr
-    if Idx(2)==1
-        dataStruct.bkg{j} = dataStruct.rawsignal{j}(1,:);
-    else
-        dataStruct.bkg{j} = mean(dataStruct.rawsignal{j}(Idx(1):Idx(2),:));
+    % Background Subtraction
+    if dataStruct.recalcBkg == 0
+        % Subtract the first negative delay from all the dataset by default - otherwise take the inputs
+        dataStruct.mintimeBkg = dataStruct.delays(1);
+        dataStruct.maxtimeBkg = dataStruct.delays(1);
     end
-dataStruct.corrdata{j} = dataStruct.rawsignal{j} - dataStruct.bkg{j};
+        Idx = findClosestId2Val(dataStruct.delays,[dataStruct.mintimeBkg dataStruct.maxtimeBkg]);
+        % Do the background subtraction and change status in handles.rawcorr
+        if Idx(2)==1
+            dataStruct.bkg{j} = dataStruct.rawsignal{j}(1,:);
+        else
+            dataStruct.bkg{j} = mean(dataStruct.rawsignal{j}(Idx(1):Idx(2),:));
+        end
+    dataStruct.corrdata{j} = dataStruct.rawsignal{j} - dataStruct.bkg{j};
 end
 
-dataStruct.timescale = 'ps';
