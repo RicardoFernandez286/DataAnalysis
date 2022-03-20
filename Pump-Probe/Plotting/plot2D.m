@@ -144,7 +144,7 @@ colormap(where,cmap);
 shading(where,'flat');
 
 % Set color axis limits
-caxis(where,[min_cut,max_cut]);
+clim(where,[min_cut,max_cut]);
 
 % Show the colorbar
 hcb=colorbar(where);

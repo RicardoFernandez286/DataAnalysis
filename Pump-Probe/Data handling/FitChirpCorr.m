@@ -59,7 +59,7 @@ switch mode
         contourf(ax,probeAxis,delays,Z,ctrs,'EdgeColor','flat');
         
         colormap(darkb2r(minPl,maxPl,40,2));
-        caxis(ax,[minPl,maxPl]);
+        clim(ax,[minPl,maxPl]);
         colorbar(ax);
         
         ylim([-20,20]); % Set this preliminary zoom level in case the data contains longer delays
@@ -237,7 +237,7 @@ ax      = axes('parent',fh);
 
 contourf(ax,probeAxis,delays,WHAT,ctrs,'EdgeColor','flat');
 colormap(darkb2r(minPl,maxPl,40,2));
-caxis([minPl,maxPl]);
+clim([minPl,maxPl]);
 colorbar;
 
 hold(ax,'on');
