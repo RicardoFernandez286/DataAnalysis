@@ -15,14 +15,15 @@ Finally, **Spectrometer and Shaper calibration** is designed to help with the fu
 # 2. Basic requirements
 The first implementation of the program was done in MATLAB R2016a, but current development will always run in the latest release.
 The current version of the GUI **DOES NOT RUN** in MATLAB versions older than R2021a.
-### 2.1 Current MATLAB version: R2021b
+There are some unexpected bugs in the MacOS version of MATLAB, so please report them to find a workaround in case something does not work properly.
+### 2.1 Current MATLAB version: R2022a
 
 A settings file **"GUIoptions.txt"** needs to be present **in the same folder** as the main App (NewGUI.mlapp), in case the user wants to customise their starting datafolders.
 
 See the [About the GUIoptions.txt file](README.md#5-about-the-guioptionstxt-file) section below for more details.
 
 ### 2.2 Initial setup
-To correctly run the scripts for the first time, download all folders and files and add them (including all subfolders) to the MATLAB path.
+To correctly run the scripts for the first time, download all folders and files and add them (including **all subfolders**) to the MATLAB path.
 **IMPORTANT INFO IF UPDATING:**
 If updating from previous versions of the GUI, clean the MATLAB path of the "Data Analysis GUI" subfolders and reload it. Many things have changed since then...
 
