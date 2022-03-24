@@ -88,7 +88,7 @@ defaultPPcolormap	<select default colour map for pump-probe>
 default2Dcolormap	<select default colour map for 2D-IR>
 2DIRContourPlotVersion	<1 or 2; 2 is recommended (newer way to plot contours)>
 SelectKnownDataTypes	<true or false; select true to filter out datasets by "known" names (e.g. 2D, etc.)>
-SSpecPlotSizePercent	<size of the steady-state plot in % of the transient plot. Does not change size of transient plot; recom
+SSpecPlotSizePercent	<size of the steady-state plot in % of the transient plot. Does not change size of transient plot; recommended
 = 60>
 SSpecPlotFillArea	<1 or 0; 1 to fill the steady-state spectrum with an area plot>
 SSpecPlotFillAreaCol	<RGB triplet in [0,1]  range; colour of the area plot for steady-state spectrum>
