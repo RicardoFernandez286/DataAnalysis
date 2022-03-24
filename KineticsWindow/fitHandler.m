@@ -278,7 +278,7 @@ tiledlayout(fhB,1,3,'padding','compact');
 tplot   = t-pFit(1);    % Shift time axis such that tplot = 0 at t0
 
 zoomF   = 100/100;      % A zoom factor for the Z scale of the data
-zoomR   = 10/100;       % A zoom factor for the Z scale of the residuals
+zoomR   = 50/100;       % A zoom factor for the Z scale of the residuals
 NCtrs   = 40;           % Number of contours to plot
 
 % Get minimum and maximum absorbance of the dataset
@@ -353,9 +353,9 @@ ax2.TickLength = [0.02 0.02];
 ax3.TickLength = [0.02 0.02];
 
 % Add title to the colorbars
-title(cb1,'Abs.','FontWeight','bold')
-title(cb2,'Abs.','FontWeight','bold')
-title(cb3,'Abs.','FontWeight','bold')
+title(cb1,{'\DeltaAbs (mOD)'})
+title(cb2,{'\DeltaAbs';'(mOD)'})
+title(cb3,{'\DeltaAbs';'(mOD)'})
 
 drawnow;
 

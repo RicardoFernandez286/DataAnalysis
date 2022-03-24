@@ -34,21 +34,22 @@ The initial screen contains buttons for all the features (which are disabled by 
 The program has the following features:
 - [x] 2D (contour) and 3D (surface) Plotting of the transient absorption/time-resolved emission data.
 - [x] Automated background and offset subtraction.
-- [x] Shifting of time/wavelength vectors for calibration.
+- [x] Shifting of time zero.
 - [x] Plotting of individual (selected) kinetic traces at a given wavelength.
 - [x] Plotting of individual (selected) spectral traces at a given delay time.
 - [x] Normalisation and plotting of normalised kinetic/spectral traces.
-- [x] Plotting of the evolution of kinetic or spectral traces as a function of the scan number (to check signal stability) with binning.
+- [x] Plotting of the evolution of kinetic or spectral traces as a function of the scan number (to check signal stability) **with binning options**.
 - [x] Plotting of the change in kinetic or spectral traces as a function of the concentration or pump energy.
 - [x] Singular value decomposition of the time-resolved data and global fitting of the SVD components.
 - [x] Compatibility with the Bruker OPUS files from FTIR spectrometers (to show steady-state data together with transient absorption).
-- [x] Fitting of multi-exponential (up to 4) kinetics with (or without) a Gaussian IRF.
-- [x] Fitting of up to 4 stretched exponential kinetics.
-- [ ] Information about the fits, calculation of the relevant statistical parameters, GooF, etc.
-- [x] Removal of time-dependent offset from the data, defined as a spectral average or by averaging over a user-selected region.
-- [x] Plotting the kinetic trace of the difference in transient absorption/time-resolved emission between two wavelengths.
+- [x] Compatibility with general steady-state data (UV-Vis and FTIR), to show it together with transient absorption data.
+- [x] Singular Value Decomposition (SVD) and Global Fit based on selected SVD components.
+- [x] Spectrokinetic fit based on <Ref.>
+- [x] Automated and manual chirp correction for visible TA data.
+- [ ] Automated and manual chirp correction for mid-IR pulse shaper optimisation.
+- [x] Automated spectrometer and pulse shaper calibration routines (fit stretching factor, offset and baseline to known spectrum, for both UV-Vis and mid-IR).
 
-The unchecked features are still work in progress, incomplete or missing.
+The unchecked features are still work in progress, incomplete or missing. Any help or comments would be kindly appreciated
 
 # 4. 2D-IR data analysis routine
 The 2D-IR data analysis routine can be called by running the `InterfDataAnalysis_GUI` command from the MATLAB command line.
@@ -76,27 +77,40 @@ The unchecked features are still work in progress, incomplete or missing.
 # 5. About the "GUIoptions.txt" file
 The contents of this file are defined as follows:
 ```
-defaultPPdir	<route to the default directory for pump-probe data>
-defaultIRdir	<route to the default directory for FTIR data>
-default2DIRdir	<route to the default directory for 2D-IR data>
-defaultSPECdir	<route to the default directory for spectroelectrochemical data>
-defaultPPcolormap	<default colormap for the Pump-Probe data plots, can be: RdOr/Wh/Bl, DkRd/Wh/DkBl, Rd/Wh/Bl, Jet, Spectral>
-default2Dcolormap	<default colormap for the 2D-IR data plots, can be: RdOr/Wh/Bl, DkRd/Wh/DkBl, Rd/Wh/Bl, Jet>
-2DIRContourPlotVersion	<1 or 2 / version 2 is an attempt to improve the contour representations and to make nicer contour plots with black lines. v2 is recommended.>
-SelectKnownDataTypes	<true or false / will keep only datafolders containing "pp" or "2D" in their names in the corresponding tabs>
-AxisBreak	<limits to break the axis in a linear|log time scale - format: [start end] of the linear scale (first axis) **- TO BE IMPLEMENTED**> 
-BreakRatio	<size of the linear part in a linear|log time graph - format: x, with 0<x<1 **- TO BE IMPLEMENTED**>
-LinLogScale	<can be off or log. If set to log, will create a lin|log time graph, otherwise a lin|lin or log|log graph without break is created **- TO BE IMPLEMENTED**>
-fixScreen	<can be 0 or 1, attempt to fix GUI size on small screens. 0 is recommended.>
+defaultTRIRdir	<route to the default TRIR folder>
+defaultTAdir	<route to the default electronic TA folder>
+defaultSSdir	<route to the default steady-state folder>
+defaultFLUPSdir	<route to the default FLUPS folder>
+default2DIRdir	<route to the default 2D-IR folder>
+defaultSPECdir	<route to the default SEC folder>
+defaultPPtype	<indicate the default (starting) data format selected in the Pump-Probe tab>
+defaultPPcolormap	<select default colour map for pump-probe>
+default2Dcolormap	<select default colour map for 2D-IR>
+2DIRContourPlotVersion	<1 or 2; 2 is recommended (newer way to plot contours)>
+SelectKnownDataTypes	<true or false; select true to filter out datasets by "known" names (e.g. 2D, etc.)>
+SSpecPlotSizePercent	<size of the steady-state plot in % of the transient plot. Does not change size of transient plot; recom
+= 60>
+SSpecPlotFillArea	<1 or 0; 1 to fill the steady-state spectrum with an area plot>
+SSpecPlotFillAreaCol	<RGB triplet in [0,1]  range; colour of the area plot for steady-state spectrum>
+AxisBreak	<limits of the linear part of a lin-log kinetic plot- TO BE IMPLEMENTED>
+BreakRatio	<relative size of the linear part of a lin-log kinetic plot- TO BE IMPLEMENTED>
+LinLogScale	<lin or log; starting format of the pump-probe time axis>
+fixScreen	<1 or 0; an attempt to fix the GUI so it fits in smaller screens>
 ```
 
 # License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
 
 # Acknowledgments
-* Prof. Dr. Peter Hamm (for mentoring and helpful discussions).
-* Dr. Jan Helbing (for helpful discussions).
-* Andrea Pasti (for using this software, helpful discussions and for finding bugs).
-* Gökçen Tek (for using this software, helpful discussions and for finding bugs).
-* Dr. Kerstin Oppelt (for using this software, helpful discussions and for finding bugs).
+I would like to thank my mentors:
+* Prof. Dr. Peter Hamm (UZH)
+* Dr. Jan Helbing (UZH)
+
+And I would like to thank the users for finding bugs, requesting features and playing with the software overall:
+* Jeannette Ruf (UZH)
+* Dr. Gökçen Tek (UZH)
+* Dr. Kerstin Oppelt (UZH)
+* Dr. James D. Shipp (UoS)
+* Martin V. Appleby (UoS)
+* Estefanía Sucre-Rosales (UniGE)
 
