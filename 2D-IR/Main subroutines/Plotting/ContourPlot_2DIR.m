@@ -223,12 +223,12 @@ case 'Vertical' % Old way
             Z  = interp2(X,Y,Z,Xi,Yi,'bicubic');
         end
         % Save axes labels
-        omegaX = '\omega_{3} (cm^{-1})';
-        omegaY = '\omega_{1} (cm^{-1})';
-        PP_x = 'Probe frequency (cm^{-1})';
-        PP_y = 'Pump frequency (cm^{-1})';
-        omegaPP_x = '\omega_{probe} (cm^{-1})';
-        omegaPP_y = '\omega_{pump} (cm^{-1})';
+        omegaX      = '\omega_{3} (cm^{-1})';
+        omegaY      = '\omega_{1} (cm^{-1})';
+        PP_x        = 'Probe frequency (cm^{-1})';
+        PP_y        = 'Pump frequency (cm^{-1})';
+        omegaPP_x   = '\omega_{probe} (cm^{-1})';
+        omegaPP_y   = '\omega_{pump} (cm^{-1})';
 case 'Horizontal' % New way
       % Save XYZ
         X = PumpAxis{m,k};
@@ -240,12 +240,12 @@ case 'Horizontal' % New way
             Z  = interp2(X,Y,Z,Xi,Yi,'bicubic');
         end
       % Save axes labels
-        omegaX = '\omega_{1} (cm^{-1})';
-        omegaY = '\omega_{3} (cm^{-1})';
-        PP_x = 'Pump frequency (cm^{-1})';
-        PP_y = 'Probe frequency (cm^{-1})';
-        omegaPP_x = '\omega_{pump} (cm^{-1})';
-        omegaPP_y = '\omega_{probe} (cm^{-1})';
+        omegaX      = '\omega_{1} (cm^{-1})';
+        omegaY      = '\omega_{3} (cm^{-1})';
+        PP_x        = 'Pump frequency (cm^{-1})';
+        PP_y        = 'Probe frequency (cm^{-1})';
+        omegaPP_x   = '\omega_{pump} (cm^{-1})';
+        omegaPP_y   = '\omega_{probe} (cm^{-1})';
 end
 
 % Make the contour plot
