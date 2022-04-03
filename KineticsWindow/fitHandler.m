@@ -202,6 +202,12 @@ end
 fhA2.Name= SpectraTitle;
 hold(ax,'on')
 
+% Automatically detect discontinuities in the probe axis (e.g. masked pump scatter)
+% and plot them accordingly
+dProbe          = diff(WL) - mean(diff(WL));
+jump_ID         = dProbe >= 5*mean(diff(WL));
+Sfit(:,jump_ID) = NaN;
+
 for i=1:nC
     % Convert Tau to a readable format (can handle tau < 1 s)
     TAU_plot = TAU_fit(i);
@@ -250,7 +256,7 @@ legend('location','best');
 yline(ax,0,'handlevisibility','off');
 title(ax,SpectraTitle);
 xlim(ax,'tight');
-ax.Box = 'on';
+ax.Box      = 'on';
 ax.FontSize = FontSize;
 
 xlabel(ax,[probelabel ' (' Xunits ')'],'FontWeight','bold')
@@ -297,6 +303,7 @@ ctrs_r  = linspace(zoomR*minZres,zoomR*maxZres,NCtrs+1);
 
 % Plot the data
 ax1 = nexttile;
+Dexp(:,jump_ID) = NaN;
 contourf(ax1,WL,tplot,Dexp,ctrs,'EdgeColor','flat'); cb1 = colorbar;
 colormap(ax1,darkb2r(zoomF*minZ,zoomF*maxZ,NCtrs,2));
 caxis(ax1,zoomF*[minZ maxZ]);
@@ -304,6 +311,7 @@ ax1.YScale = linlog;
 
 % Plot the fit
 ax2 = nexttile;
+Dbest(:,jump_ID) = NaN;
 contourf(ax2,WL,tplot,Dbest,ctrs,'EdgeColor','flat'); cb2 = colorbar;
 colormap(ax2,darkb2r(zoomF*minZ,zoomF*maxZ,NCtrs,2));
 caxis(ax2,zoomF*[minZ maxZ]);
@@ -312,6 +320,7 @@ ax2.YScale = linlog;
 
 % Plot the residuals
 ax3 = nexttile;
+res(:,jump_ID) = NaN;
 contourf(ax3,WL,tplot,res,ctrs_r,'EdgeColor','flat'); cb3 = colorbar;
 colormap(ax3,darkb2r(zoomR*minZres,zoomR*maxZres,NCtrs,2));
 caxis(ax3,zoomR*[minZres maxZres]);

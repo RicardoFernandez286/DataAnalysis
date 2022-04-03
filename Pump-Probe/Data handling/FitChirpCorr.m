@@ -56,7 +56,14 @@ switch mode
         fh.Color = 'w';
         ax = axes('parent',fh);
         
-        contourf(ax,probeAxis,delays,Z,ctrs,'EdgeColor','flat');
+        % Automatically detect discontinuities in the probe axis (e.g. masked pump scatter)
+        % and plot them accordingly
+        dProbe          = diff(probeAxis) - mean(diff(probeAxis));
+        jump_ID         = dProbe >= 5*mean(diff(probeAxis));
+        Zplot           = Z;
+        Zplot(:,jump_ID)= NaN;
+
+        contourf(ax,probeAxis,delays,Zplot,ctrs,'EdgeColor','flat');
         
         colormap(darkb2r(minPl,maxPl,40,2));
         clim(ax,[minPl,maxPl]);
@@ -234,6 +241,8 @@ clf(fh);
 fh.Color= 'w';
 
 ax      = axes('parent',fh);
+
+WHAT(:,jump_ID) = NaN;
 
 contourf(ax,probeAxis,delays,WHAT,ctrs,'EdgeColor','flat');
 colormap(darkb2r(minPl,maxPl,40,2));

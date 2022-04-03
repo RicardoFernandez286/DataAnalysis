@@ -69,11 +69,18 @@ X  = probe;
 Y  = delays;
 Z  = Zdata{k};
 
-if sum(Zdata{k}(:),'omitnan') == 0
+% Automatically detect discontinuities in the probe axis (e.g. masked pump scatter)
+% and plot them accordingly
+dProbe  = diff(probe) - mean(diff(probe));
+jump_ID = dProbe >= 5*mean(diff(probe));
+Z(:,jump_ID) = NaN;
+
+if sum(abs(Zdata{k}(:)),'omitnan') == 0
+    warning('Something is not right! The pump-probe data is identically zero!')
     return
 end
 
-if numel(Zdata{k}) <= 2048*1000
+if numel(Zdata{k}) <= 2048*100
     if plot_filledcontours == 1
         contourf(where,X,Y,Z,plot_contours,'LineStyle','-','LineColor','flat');
     else
