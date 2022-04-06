@@ -33,7 +33,7 @@ function  dataStruct = load2DIR_UoS(dataStruct,varargin)
 %% HARDCODED Settings
 
 %% READ from dataStruct
-if isempty(varargin)
+if varargin{1} == 1
     ShowWaitBar = true;
 else
     ShowWaitBar = false;
@@ -124,6 +124,9 @@ if exist([datadir filesep 'w0.csv'],'file') == 2
 	rotframe = readmatrix([datadir filesep 'w0.csv']);
     w0  = rotframe(1);
     dt1 = rotframe(2);
+elseif varargin{2} == 0
+    w0  = 0;
+    dt1 = 1;
 else
     prompt = {'Enter rotating frame frequency (\omega_{0}, in cm^{-1}):','Enter t_{1} time step (in fs):'};
     dlgtitle = 'Rotating Frame Settings';
