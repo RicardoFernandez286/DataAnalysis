@@ -91,6 +91,11 @@ switch app.PP_DataFormat.Value
         ScanData = squeeze(dataStruct.scandata{1}(:,k,:));
     case 'TRIR (Sheffield)'
         ScanData = squeeze(dataStruct.scandata{DET}(:,k,:));
+    case 'Helios TA'
+        ScanData = squeeze(dataStruct.scandata{DET}(:,k,:));
+    otherwise
+        warning('This feature is not implemented for the selected data format');
+        return
 end
 % Ask the user which scans to use if >15 scans
 if Nscans >= 15

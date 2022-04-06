@@ -91,6 +91,11 @@ switch app.PP_DataFormat.Value
         clear TempScanData;
     case 'UniGE TA'
         ScanData = squeeze(dataStruct.scandata{1}(k,:,:))';
+    case 'Helios TA'
+        ScanData = squeeze(dataStruct.scandata{1}(k,:,:))';
+    otherwise
+        warning('This feature is not implemented for the selected data format');
+        return
 end
 
 % Ask the user which scans to use if >15 scans

@@ -56,7 +56,14 @@ switch mode
         fh.Color = 'w';
         ax = axes('parent',fh);
         
-        contourf(ax,probeAxis,delays,Z,ctrs,'EdgeColor','flat');
+        % Automatically detect discontinuities in the probe axis (e.g. masked pump scatter)
+        % and plot them accordingly
+        dProbe          = diff(probeAxis) - mean(diff(probeAxis));
+        jump_ID         = dProbe >= 5*mean(diff(probeAxis));
+        Zplot           = Z;
+        Zplot(:,jump_ID)= NaN;
+
+        contourf(ax,probeAxis,delays,Zplot,ctrs,'EdgeColor','flat');
         
         colormap(darkb2r(minPl,maxPl,40,2));
         clim(ax,[minPl,maxPl]);
@@ -203,13 +210,13 @@ switch ChirpEquation
         LB = [-1e6  -1E10  -1e10   -0  0];
 end
 
-        options     = optimoptions(@lsqcurvefit,...
-                        'FunctionTolerance',1e-10,...
-                        'MaxIterations',5e4,...
-                        'MaxFunctionEvaluations',5e4,...
-                        'steptolerance',1e-10,...
-                        'display','off');
-%                       'typicalX',C0,...
+%         options     = optimoptions(@lsqcurvefit,...
+%                         'FunctionTolerance',1e-10,...
+%                         'MaxIterations',5e4,...
+%                         'MaxFunctionEvaluations',5e4,...
+%                         'steptolerance',1e-10,...
+%                         'display','off');
+%                         'typicalX',C0,...
         
         opt2            = optimset(@lsqcurvefit);
         opt2.TolFun     = 1e-10;
@@ -234,6 +241,12 @@ clf(fh);
 fh.Color= 'w';
 
 ax      = axes('parent',fh);
+
+% Automatically detect discontinuities in the probe axis (e.g. masked pump scatter)
+% and plot them accordingly
+dProbe          = diff(probeAxis) - mean(diff(probeAxis));
+jump_ID         = dProbe >= 5*mean(diff(probeAxis));
+WHAT(:,jump_ID) = NaN;
 
 contourf(ax,probeAxis,delays,WHAT,ctrs,'EdgeColor','flat');
 colormap(darkb2r(minPl,maxPl,40,2));

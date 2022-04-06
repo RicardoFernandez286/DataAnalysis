@@ -54,6 +54,7 @@ if Nscans >= 1
 else
     Nscans  = NaN;
     noise{1}= zeros(size(rawsignal{1}));
+    scandata= [];
 end
 
 %% Read the plot ranges
@@ -82,6 +83,7 @@ dataStruct.SNR         = abs(round(zminmax/dataStruct.AvgNoise,3));
 
 % Number of scans
 dataStruct.Nscans      = Nscans;
+dataStruct.scandata    = {scandata};
 
 % Background Subtraction
 if dataStruct.recalcBkg == 0
