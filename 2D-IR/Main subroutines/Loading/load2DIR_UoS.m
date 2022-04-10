@@ -33,7 +33,7 @@ function  dataStruct = load2DIR_UoS(dataStruct,varargin)
 %% HARDCODED Settings
 
 %% READ from dataStruct
-if varargin{1} == 1
+if isempty(varargin) || varargin{1} == 1
     ShowWaitBar = true;
 else
     ShowWaitBar = false;
