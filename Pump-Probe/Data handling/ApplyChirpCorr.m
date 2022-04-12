@@ -83,5 +83,5 @@ dataStruct.chirpCorr    = 1;
 % 
 % contourf(ax,WL,t,WHAT,ctrs,'EdgeColor','flat');
 % colormap(darkb2r(minPl,maxPl,40,2));
-% clim([minPl,maxPl]);
+% caxis([minPl,maxPl]);
 % colorbar;

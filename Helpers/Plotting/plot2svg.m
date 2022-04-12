@@ -1439,8 +1439,8 @@ for i=length(axchild):-1:1
         end
         % Scale color if scaled color mapping is turned on
         if strcmp(get(axchild(i),'CDataMapping'),'scaled')
-            clim=get(ax,'CLim');
-            pointc=(pointc-clim(1))/(clim(2)-clim(1))*(size(cmap,1)-1)+1;
+            caxis=get(ax,'CLim');
+            pointc=(pointc-caxis(1))/(caxis(2)-caxis(1))*(size(cmap,1)-1)+1;
         end
         % Limit index to smallest or biggest color index
         pointc=max(pointc,1);
@@ -1653,8 +1653,8 @@ for i=length(axchild):-1:1
         points=points';
         % Scale color if scaled color mapping is turned on
         if strcmp(get(axchild(i),'CDataMapping'),'scaled')
-            clim=get(ax,'CLim');
-            pointc=(pointc-clim(1))/(clim(2)-clim(1))*(size(cmap,1)-1)+1;
+            caxis=get(ax,'CLim');
+            pointc=(pointc-caxis(1))/(caxis(2)-caxis(1))*(size(cmap,1)-1)+1;
         end
         % Limit index to smallest or biggest color index
         pointc=max(pointc,1);
@@ -1934,8 +1934,8 @@ for i=length(axchild):-1:1
         pointc=get(axchild(i),'CData');
         %pointcclass = class(pointc);  % Bugfix proposed by Tom
         if strcmp(get(axchild(i),'CDataMapping'),'scaled')
-            clim=get(ax,'CLim');
-            pointc=(pointc-clim(1))/(clim(2)-clim(1))*(size(cmap,1) - 1) + 1; % Bugfix proposed by Tom
+            caxis=get(ax,'CLim');
+            pointc=(pointc-caxis(1))/(caxis(2)-caxis(1))*(size(cmap,1) - 1) + 1; % Bugfix proposed by Tom
             %pointcclass = 'double'; % since range is now [0->size(cmap,1)-1]  % Bugfix proposed by Tom
         end
         data_aspect_ratio = get(ax,'DataAspectRatio');

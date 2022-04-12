@@ -319,9 +319,9 @@ colormap(plotaxis,cmap);
 % Set shading and color axis limits
 shading(plotaxis,'flat');
 if symcolrange == 1
-    clim(plotaxis,[-maxDabs*plot_colourrange/100,maxDabs*plot_colourrange/100]);
+    caxis(plotaxis,[-maxDabs*plot_colourrange/100,maxDabs*plot_colourrange/100]);
 else
-    clim(plotaxis,[minabs*plot_colourrange/100,maxabs*plot_colourrange/100]);
+    caxis(plotaxis,[minabs*plot_colourrange/100,maxabs*plot_colourrange/100]);
 end
 
 % Show the colorbar
