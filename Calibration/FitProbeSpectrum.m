@@ -46,6 +46,7 @@ maxX = meanW0 + 1.5*mean([pFit1(3),pFit2(3)]);
 fhS = figure(3);
 fhS.Color = 'w';
 fhS.Position(3:4) = [600 350];
+fhS.Name = 'Spectral Distribution Fit';
 clf(fhS);
 axS = axes('parent',fhS);
 
@@ -56,7 +57,6 @@ hold(axS,'on');
     plot(axS,cm_fit,g1_plt,'Color',[0 0.5 0],'LineWidth',1,'DisplayName','Det 1 (Fit)')
     plot(axS,cm_fit,g2_plt,'Color',[0  0  1],'LineWidth',1,'DisplayName','Det 2 (Fit)')
 hold(axS,'off');
-
 
 xlabel(axS,'Wavenumbers (cm^{-1})','FontWeight','bold');
 ylabel(axS,'Norm. Intensity','FontWeight','bold');

@@ -20,6 +20,8 @@ switch Xunits
         probeunits = 'Wavelength';
     case 'cm^{-1}'
         probeunits = 'Wavenumbers';
+    otherwise
+        probeunits = 'Pixels';
 end
 
 data            = readmatrix(fullName,'FileType','text','CommentStyle','%s');

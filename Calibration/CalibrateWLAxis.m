@@ -2,7 +2,7 @@ function [cm,lam] = CalibrateWLAxis(CAL_data)
 % Subroutine to calibrate the wavelength axis of a spectrometer, using a centering and scaling approach.
 % Will output the fitted cm-1 and nm axes
 % The number of columns of cm and lam = Ndet (given by the size of the AbsSolvent cell in the CAL_data structure).
-% Ricardo Fernandez-Teran / 09.11.2021 / v1.0a
+% Ricardo Fernandez-Teran / 20.04.2022 / v2.0b
 
 %% Read from input structure
 CalType     = CAL_data.CalType;
@@ -167,10 +167,12 @@ for i=1:Ndet
     cm(:,i)         = 1e7./lam(:,i);
 
     %% Plot Fit Results
-    fh{i} = figure(i);
-    fh{i}.Color = 'w';
-    fh{i}.Position(3:4) = [600 350];
+    fh(i) = figure(i); %#ok<*AGROW> 
+    fh(i).Color = 'w';
+    fh(i).Position(3:4) = [600 350];
+    fh(i).Name = ['Detector No.' num2str(i) ' Calibration / Exp(Red) vs Ref(Black)'];
     clf(fh{i});
+    
     ax = axes('parent',fh{i});
 
     if i>1

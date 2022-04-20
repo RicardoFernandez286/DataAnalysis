@@ -27,7 +27,7 @@ function dataStruct = process2DIR_UoS(app,dataStruct,ReProcess,bkgIdx,varargin)
 %     The calculation routines were updated accordingly in MESS and now the chopper signal and all
 %     datastates should be calculated properly.
 %
-% Ricardo Fernandez-Teran / 11.11.2021 / v2.5d
+% Ricardo Fernandez-Teran / 20.04.2022 / v3.0a
 
 %% Choose between debug/manual mode and normal mode
 debug=0;
@@ -66,12 +66,6 @@ w0              = dataStruct.w0;
 dt1             = dataStruct.dt1;
 
 datadir     = [rootdir filesep datasubdir];
-datadir_fl  = dir(datadir);
-datadir_fn  = {datadir_fl.name};
-
-[~,fn,~]   = fileparts(datadir_fn{contains(datadir_fn(:),'.LG','IgnoreCase',1)});
-
-filename    = [rootdir filesep datadir filesep fn];
 
 %%% Read GUI options
 bkg_sub         = app.I2D_SubtractScatteringCheckBox.Value;
@@ -83,8 +77,6 @@ else
 end
 zeropad_next2k  = app.I2D_ZeropadToNext2K.Value;
 apodise_method  = app.I2D_ApodisationFunction.Value;
-phase_method    = app.I2D_PhaseFitFunction.Value;
-phase_points    = app.I2D_PhaseFitRangeEdit.Value;
 probe_calib     = app.I2D_AutocalibrateprobeaxisCheckBox.Value;
 pumpcorrection  = app.I2D_PumpcorrectionCheckBox.Value;
 
@@ -135,7 +127,7 @@ end
 
 %% Preprocess the data
 % Initialise variables
-    FFTinterferogram={};
+    FFTinterferogram={}; %#ok<*NASGU> 
     bin=[]; difference={}; coeff={}; scanrange={};
     progress = 0;
     
@@ -276,8 +268,22 @@ end
 if m==bkgIdx
       % Get a list of the maxima of the interferogram (N_FTpoints/50 around the spectral max) 
       %%%! TO DO: needs to be redefined in terms of cm-1
-        minProbe_est_idx        = findClosestId2Val(PumpAxis{m,k},min(est_probe{k}));  
-        maxProbe_est_idx        = findClosestId2Val(PumpAxis{m,k},max(est_probe{k}));          
+      switch probe_calib 
+            % 0=No calibration, use generated probe axis
+            % 1=Doing calibration from scattering, use the results (TBD)
+            % 2=Using saved probe (in file)
+            case {0,1}
+                if unique(diff(est_probe{k})) == 1
+                    probe    = linspace(min(PumpAxis{m,k}),max(PumpAxis{m,k}),DetSz(k));
+                else
+                    probe    = est_probe{k};
+                end
+            case 2
+                probe        = saved_probe{k};
+      end
+
+        minProbe_est_idx        = findClosestId2Val(PumpAxis{m,k},min(probe));  
+        maxProbe_est_idx        = findClosestId2Val(PumpAxis{m,k},max(probe));          
         fitrange                = minProbe_est_idx:maxProbe_est_idx;
         Npixels                 = size(magnitude_FFTsig{m,k},2);
         pixels                  = transpose(1:1:Npixels);
@@ -314,7 +320,7 @@ if m==bkgIdx
 %                 ProbeAxis{k}      = saved_probe{k};
 %         end
 
-freq_fit{k}         = freq_fit_tmp;   
+freq_fit{k}         = freq_fit_tmp;   %#ok<*AGROW> 
 scattering_maxima{k}= scattering_maxima_d;
 
 switch probe_calib 
@@ -439,22 +445,5 @@ end
     dataStruct.signal              = signal;
     dataStruct.PROC_2D_DATA        = PROC_2D_DATA;
     dataStruct.SpecDiff            = 0;
-%% Stuff to do only if DEBUG MODE is ON
-if debug==1
-    % Export the data properly
-        dataStruct.PROC_2D_DATA{1,1}   = PROC_2D_DATA{1,1};
-%         dataStruct.t2_delay_ps         = t2_delay_ps;
-        dataStruct.t2_delay_ps         = 0;
-    % Show phased interferogram
-    if show_int ==1
-        figure
-        plot(PumpAxis{1,1},real(phased_FFTZPint{1,1}*SignPump(1,1)))
-        hl=refline(0,0); hl.Color = [0.5 0.5 0.5];
-        xlim([min(ProbeAxis)*0.75,max(ProbeAxis)*1.25]);
-    end
-    % Make 2D plot
-    if autoplot==1
-        figure
-        plotaxis = gca; plot_2DIR(dataStruct,plotaxis);
-    end
-end
+
+%%%%%%%% EOF

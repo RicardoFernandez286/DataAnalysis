@@ -8,7 +8,7 @@ function varargout = ContourPlot_2DIR(plotOptions,dataStruct,plotaxis,k)
 % Outputs:
 %     (plot)
 %     plotLimits.min/max_cut
-% Ricardo Fernández-Terán / 11.11.2021 / v6.0a
+% Ricardo Fernández-Terán / 20.04.2022 / v7.0b
 
 debug=0;
 cla(plotaxis);
@@ -67,6 +67,7 @@ if debug==0
     symcolrange         = plotOptions.symcolrange;
     squarebox           = plotOptions.squarebox;
     plotVersion         = plotOptions.plotVersion;
+    
     switch plotOptions.TextBackground
         case 1
             textBGcolor = 'w';
@@ -134,6 +135,10 @@ end
 PROC_2D_DATA{m,k}   = PROC_2D_DATA{m,k}(1:L,:);
 PumpAxis{m,k}       = PumpAxis{m,k}(1:L,:);
 PumpSpectrum        = PumpSpectrum{m,k}(1:L,:);
+
+if unique(diff(ProbeAxis)) == 1
+    cut = 0;
+end
 
 % Cut the datasets along the pump direction (if selected)
 switch cut
@@ -208,6 +213,22 @@ switch plotVersion
     case '2'
         plot_contours = linspace(min_cut,max_cut,Ncontours+1);
         plot_contours = plot_contours(1:end-1);
+    case '3'
+        negCont       = linspace(min_cut,0,round((Ncontours+2)/2))';
+        posCont       = linspace(0,max_cut,round((Ncontours+2)/2))';
+        plot_contours = tanh([negCont; posCont]./max(abs([min_cut max_cut]))).*max(abs([min_cut max_cut]));
+%         LS  = linspace(min_cut,max_cut,Ncontours);
+%         L1  = linspace(-0.999,0.999,Ncontours);
+%         tL1 = atanh(L1);
+%         tL1 = tL1./abs(max(tL1(:)));
+%         plot_contours = interp1(L1,LS,tL1,'spline');
+end
+
+switch cut_method
+    case 'Uncalibrated'
+        probeunits = '(pixels)';
+    otherwise
+        probeunits = '(cm^{-1})';
 end
 
 % Set pump and probe orientations (i.e. define X,Y and Z)
@@ -222,12 +243,13 @@ case 'Vertical' % Old way
             %X  = linspace() etcetera NOT DONE PENDING
             Z  = interp2(X,Y,Z,Xi,Yi,'bicubic');
         end
+
         % Save axes labels
-        omegaX      = '\omega_{3} (cm^{-1})';
+        omegaX      = ['\omega_{3} ' probeunits];
         omegaY      = '\omega_{1} (cm^{-1})';
-        PP_x        = 'Probe frequency (cm^{-1})';
+        PP_x        = ['Probe frequency ' probeunits];
         PP_y        = 'Pump frequency (cm^{-1})';
-        omegaPP_x   = '\omega_{probe} (cm^{-1})';
+        omegaPP_x   = ['\omega_{probe} ' probeunits];
         omegaPP_y   = '\omega_{pump} (cm^{-1})';
 case 'Horizontal' % New way
       % Save XYZ
@@ -241,11 +263,11 @@ case 'Horizontal' % New way
         end
       % Save axes labels
         omegaX      = '\omega_{1} (cm^{-1})';
-        omegaY      = '\omega_{3} (cm^{-1})';
+        omegaY      = ['\omega_{3} ' probeunits];
         PP_x        = 'Pump frequency (cm^{-1})';
-        PP_y        = 'Probe frequency (cm^{-1})';
+        PP_y        = ['Probe frequency ' probeunits];
         omegaPP_x   = '\omega_{pump} (cm^{-1})';
-        omegaPP_y   = '\omega_{probe} (cm^{-1})';
+        omegaPP_y   = ['\omega_{probe} ' probeunits];
 end
 
 % Make the contour plot
@@ -287,15 +309,15 @@ switch plot_colourscheme
         tmp_blue    = othercolor('YlOrRd9',n_blues);
         map_blue    = flipud([tmp_blue(:,3) tmp_blue(:,2) tmp_blue(:,1)]);
 %         % An alternative blue (looks like "smoked" blue)        
-%         map_blue = flipud(othercolor('Blues1',n_blues));
+        map_blue    = flipud(othercolor('PuBu9',n_blues));        
 
         % Generate WHITE part of the colormap
         map_white   = ones(n_whites,3);
         
         % Renormalize the colour scale to make the white more striking
         for j=1:3
-            map_blue(:,j) = map_blue(:,j)/(max(map_blue(:,j)));
-            map_red(:,j) = map_red(:,j)/(max(map_red(:,j)));
+            map_blue(:,j) = map_blue(:,j)./(max(map_blue(:,j)));
+            map_red(:,j) = map_red(:,j)./(max(map_red(:,j)));
         end
         % Join the colormap "parts"
         % The first/last element of the red/blue maps is white, so it is discarded
@@ -304,6 +326,8 @@ switch plot_colourscheme
         cmap    = othercolor('BuDRd_12',n_tot);
     case 'Rd/Wh/Bl'
         cmap    = b2r(min_cut,max_cut,n_tot,n_whites);
+    case 'Rd/Wh/Bl (2)'
+        cmap    = brighten(flipud(othercolor('RdBu11',n_tot)),-0.75);
     case 'DkRd/Wh/DkBl'
         cmap    = darkb2r(min_cut,max_cut,n_tot,n_whites);
     case 'Jet'
@@ -421,19 +445,24 @@ if plot_showcontours == 1
         pos_zero        = (plot_Nwhites/Ncontours)*max_cut;
         contourlines    = [min_cut:step:neg_zero pos_zero:step:max_cut];
     case '2'
-%         negCont         = decimate(linspace(min_cut,0,round(Ncontours/2)),plot_skiplevels,8);
-%         posCont         = decimate(linspace(0,max_cut,round(Ncontours/2)),plot_skiplevels,8);
-
         if plot_skiplevels > 1
             negCont         = decim(linspace(min_cut,0,round((Ncontours+1)/2)),plot_skiplevels,'max');
             posCont         = decim(linspace(0,max_cut,round((Ncontours+1)/2)),plot_skiplevels,'max');
             contourlines    = [negCont; posCont];
-%             contourlines    = tanh([negCont; posCont]./max(abs([min_cut max_cut]))).*max(abs([min_cut max_cut]));
         else
             negCont         = linspace(min_cut,0,round((Ncontours+1)/2))';
             posCont         = linspace(0,max_cut,round((Ncontours+1)/2))';
             contourlines    = [negCont; posCont];
-%             contourlines    = tanh([negCont; posCont]./max(abs([min_cut max_cut]))).*max(abs([min_cut max_cut]));
+        end
+    case '3'
+        if plot_skiplevels > 1
+            negCont         = decim(linspace(min_cut,0,round((Ncontours+1)/2)),plot_skiplevels,'max');
+            posCont         = decim(linspace(0,max_cut,round((Ncontours+1)/2)),plot_skiplevels,'max');
+            contourlines    = tanh([negCont; posCont]./max(abs([min_cut max_cut]))).*max(abs([min_cut max_cut]));
+        else
+            negCont         = linspace(min_cut,0,round((Ncontours+1)/2))';
+            posCont         = linspace(0,max_cut,round((Ncontours+1)/2))';
+            contourlines    = tanh([negCont; posCont]./max(abs([min_cut max_cut]))).*max(abs([min_cut max_cut]));
         end
     end
     
