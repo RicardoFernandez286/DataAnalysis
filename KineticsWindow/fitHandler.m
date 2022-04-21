@@ -209,21 +209,20 @@ jump_ID         = dProbe >= 5*mean(diff(WL));
 Sfit(:,jump_ID) = NaN;
 
 for i=1:nC
-    % Convert Tau to a readable format (can handle tau < 1 s)
-    TAU_plot = TAU_fit(i);
-    powS     = getTimescale(timescale);
-    newExp   = 3.*floor(floor(log10(TAU_plot))'./3);
-    powS     = powS + newExp;
-    TAU_plot = TAU_plot.*10.^(-newExp);
-    ERR_plot = TAU_err(i).*10.^(-newExp);
-    tS_plot  = setTimescale(powS);
-    
-    if isinf(TAU_fit(i))
-        tS_plot = '';
-    end
-
     switch modelType
         case 'Parallel'
+            % Convert Tau to a readable format (can handle tau < 1 s)
+            TAU_plot = TAU_fit(i);
+            powS     = getTimescale(timescale);
+            newExp   = 3.*floor(floor(log10(TAU_plot))'./3);
+            powS     = powS + newExp;
+            TAU_plot = TAU_plot.*10.^(-newExp);
+            ERR_plot = TAU_err(i).*10.^(-newExp);
+            tS_plot  = setTimescale(powS);
+            
+            if isinf(TAU_fit(i))
+                tS_plot = '';
+            end
             if ~isinf(TAU_fit(i))
                 name = ['\tau_{' char(64+i) '} = ' num2str(TAU_plot,'%4.3g')];
             else
@@ -235,6 +234,15 @@ for i=1:nC
                 name = [name '\pm' num2str(round(ERR_plot,1,'significant'),'%2.2g') ' ' tS_plot];
             end
         case 'Sequential'
+            % Convert Tau to a readable format (can handle tau < 1 s)
+            TAU_plot = TAU_fit(i);
+            powS     = getTimescale(timescale);
+            newExp   = 3.*floor(floor(log10(TAU_plot))'./3);
+            powS     = powS + newExp;
+            TAU_plot = TAU_plot.*10.^(-newExp);
+            ERR_plot = TAU_err(i).*10.^(-newExp);
+            tS_plot  = setTimescale(powS);
+
             if ~isinf(TAU_fit(i))
                 name = ['\tau_{' num2str(i) '} = ' num2str(TAU_plot,'%4.3g')];
             else

@@ -23,7 +23,7 @@ function  dataStruct = load2DIR_UoS(dataStruct,varargin)
 %     interferogram     (Cell array)
 %     signal			(Cell array)
 %
-% Ricardo Fernandez-Teran / 20.04.2022 / v3.0a
+% Ricardo Fernandez-Teran / 21.04.2022 / v3.0b
 
 %% READ from dataStruct
 if isempty(varargin) || varargin{1} == 1
@@ -113,7 +113,7 @@ if Mcomplete == 1 % if measurement is completed
         est_probe{i} = 1e7./(pix./ppnm + CWL(i)+60 - DetSz(i)./2./ppnm);
     end
 else
-    t2delays = delFN;
+    t2delays = delFN(delID);
 end
 
 % If there is an w0 file in the current ROOTDIR, use it to set the rotating frame frequency.
