@@ -171,12 +171,12 @@ for i=1:Ndet
     fh(i).Color = 'w';
     fh(i).Position(3:4) = [600 350];
     fh(i).Name = ['Detector No.' num2str(i) ' Calibration / Exp(Red) vs Ref(Black)'];
-    clf(fh{i});
+    clf(fh(i));
     
-    ax = axes('parent',fh{i});
+    ax = axes('parent',fh(i));
 
     if i>1
-        fh{i}.Position(2) = fh{i-1}.Position(2) - fh{i-1}.Position(4) - 100;
+        fh(i).Position(2) = fh(i-1).Position(2) - fh(i-1).Position(4) - 100;
     end
 
     switch CalType
