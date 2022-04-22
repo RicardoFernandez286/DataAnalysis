@@ -24,14 +24,11 @@ function  dataStruct = load2DIR_RALproc(dataStruct,varargin)
 %     interferogram     (Cell array)
 %     signal			(Cell array)
 %
-% Ricardo Fernandez-Teran / 11.05.2021 / v0.9a
-
-%% DEBUG
-% rootdir         = 'D:\GoogleDrive\RESULTS\From James';
-% datafilename    = 'PTZCCC13C13NAP LT5';
-% ShowWaitBar     = true;
+% Ricardo Fernandez-Teran / 22.04.2022 / v1.1b
 
 %% HARDCODED Settings
+DetSz = [128 128]; % Probe 1 / Probe 2
+dt1 = 1; % Since the data is already in frequency domain
 
 %% READ from dataStruct
 if isempty(varargin)
@@ -48,19 +45,18 @@ datadir     = [rootdir filesep datafilename];
 datadir_fl  = dir(datadir);
 datadir_fn  = {datadir_fl.name};
 
-[~,fn,~]    = fileparts({datadir_fn{contains(datadir_fn(:),'.csv','IgnoreCase',1)}});
+[~,fn,~]    = fileparts({datadir_fn{contains(datadir_fn(:),'2DIR.csv','IgnoreCase',1)}});
 
 Ndelays     = length(fn);
 fn_cell     = cell(Ndelays,1);
-t2delays_u    = zeros(Ndelays,1);
+t2delays_u  = zeros(Ndelays,1);
 
-for i=1:Ndelays
-    fn_cell{i}  = strsplit(fn{i},'_');
-    t2delays_u(i) = str2double(erase(fn_cell{i}{end-1},'ps'));
+for m=1:Ndelays
+    fn_cell{m}    = strsplit(fn{m},'_');
+    t2delays_u(m) = str2double(erase(fn_cell{m}{end-1},'ps'));
 end
 
 [t2delays,idx] = sort(t2delays_u); % Delays are already in ps
-
 
 % Create progress bar and clear error string
 if ShowWaitBar == 1
@@ -72,58 +68,23 @@ if ShowWaitBar == 1
     dataStruct.ErrorText.String         = "";
 end
 
+
 if Ndelays > 0
-
-rawdata   = readmatrix([datadir filesep fn{1} '.csv']);
+rawdata = readmatrix([datadir filesep fn{1} '.csv']);
     
-Nbins     = size(rawdata,2)-1;
-bins      = (1:Nbins)';
+Nbins   = size(rawdata,2)-1;
+bins    = (1:Nbins)';
+w3      = rawdata(2:end,1);
 
-cmprobe   = rawdata(2:end,1);  % (?)
-
-% [cmprobe,idProbe,~] = unique(cmprobe);
-Npixels   = length(cmprobe);
-
-lowpart   = 1:(Npixels/2);
-highpart  = (Npixels/2:Npixels-1)+1;
-
-ProbeCut  = 'other';
-
-switch ProbeCut
-    case 'low'
-        startlow    = 1;
-        endlow      = length(cmprobe(cmprobe(lowpart) < min(cmprobe(highpart))));
-        starthigh   = Npixels/2+1;
-        endhigh     = Npixels;
-    case 'high'
-        startlow    = 1;
-        endlow      = Npixels/2;
-        starthigh   = Npixels/2 + find(cmprobe(highpart) > max(cmprobe(lowpart)),1);
-        endhigh     = Npixels;
-    case 'other'
-        startlow    = 1;
-        endlow      = Npixels/2 - 20;
-        starthigh   = Npixels/2 + find(cmprobe(highpart) > max(cmprobe(startlow:endlow)),1);
-        endhigh     = Npixels;
-end
-idProbe = [startlow:endlow starthigh:endhigh];
-Npixels = length(idProbe);
-cmprobe = cmprobe(idProbe);
-% idProbe   = 1:Npixels;
-
-signal          = cell(Ndelays,1);
-t1delays        = cell(Ndelays,1);
+ProbeAxis       = cell(2,1);
+signal          = cell(Ndelays,2);
+t1delays        = cell(Ndelays,2);
 dummy_cell      = cell(Ndelays,1);
 dummy_Onescell  = cell(Ndelays,1);
 PumpAxis        = cell(Ndelays,1);
 PROC_2D_DATA    = cell(Ndelays,1);
 
-for i=1:Ndelays
-    dummy_cell{i,1}     = 0;
-    dummy_Onescell{i,1} = ones(Nbins,1);
-    signal{i,1}         = zeros(Nbins,Npixels);
-    t1delays{i,1}       = bins;
-
+for m=1:Ndelays 
     if ShowWaitBar == 1
         % Update the Wait Bar
         progress = progress + 1;
@@ -136,14 +97,28 @@ for i=1:Ndelays
         drawnow;
     end
     
-    rawdata = readmatrix([datadir filesep fn{idx(i)} '.csv']);
-    PumpAxis{i,1}       = rawdata(1,2:end)';
-    PROC_2D_DATA{i,1}   = 1000*rawdata(idProbe+1,2:end)';
+    rawdata = readmatrix([datadir filesep fn{idx(m)} '.csv']);
+    for k=1:2 % Ndetectors
+        ProbeIdx = (1:DetSz(k)) + sum(DetSz(1:k-1));
+        dummy_cell{m,k}     = 0;
+        dummy_Onescell{m,k} = ones(Nbins,1);
+        binzero{m,k}        = 1; % Because we are using the shaper
+        binspecmax(m,k)     = 1; %#ok<*AGROW> 
+        
+        signal{m,k}         = zeros(Nbins,DetSz(k));
+        t1delays{m,k}       = [bins bins.*dt1];
+        PumpAxis{m,k}       = rawdata(1,2:end)';
+        PROC_2D_DATA{m,k}   = 1000*rawdata(ProbeIdx,2:end)';
+    end
+end
+for k=1:2
+    ProbeIdx = (1:DetSz(k)) + sum(DetSz(1:k-1));
+    ProbeAxis{k} = w3(ProbeIdx);
 end
 %% WRITE to dataStruct (Load)
     dataStruct.isSimulation  = 0;
     dataStruct.isShaper      = 1;
-    dataStruct.cmprobe       = cmprobe;
+    dataStruct.cmprobe       = ProbeAxis;
     dataStruct.bins          = bins;
     dataStruct.t2delays      = t2delays; % Delays already in ps !!!
     dataStruct.Ndelays       = Ndelays;
@@ -155,19 +130,19 @@ end
     dataStruct.Nslowmod      = 1;
     dataStruct.t1delays      = t1delays; % in fs!
     dataStruct.Nscans        = 1;
-    dataStruct.datatype      = 'TimeFreq';
+    dataStruct.datatype      = 'FreqFreq';
     dataStruct.interferogram = dummy_Onescell;
 
 %% WRITE to dataStruct (Process 2D-IR)
-    dataStruct.ProbeAxis           = cmprobe;
-    dataStruct.freq_fit            = [];
-    dataStruct.scattering_maxima   = [];
+    dataStruct.ProbeAxis           = ProbeAxis;
+    dataStruct.freq_fit            = dummy_Onescell;
+    dataStruct.scattering_maxima   = dummy_Onescell;
     dataStruct.PumpAxis            = PumpAxis;
     
     dataStruct.t1delays            = t1delays;
     
-    dataStruct.binzero             = dummy_cell;
-    dataStruct.binspecmax          = ones(Ndelays,1);
+    dataStruct.binzero             = binzero;
+    dataStruct.binspecmax          = binspecmax;
     dataStruct.apodize_function    = dummy_Onescell;
     dataStruct.FFT_ZPsig           = [];
     dataStruct.phased_FFTZPsig     = dummy_Onescell;

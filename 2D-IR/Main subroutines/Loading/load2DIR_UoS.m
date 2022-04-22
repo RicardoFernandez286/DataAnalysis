@@ -51,11 +51,8 @@ else
     filename    = [rootdir filesep datafilename filesep fn];
     % Read t2 delays
     t2delays  = readmatrix([filename '.DT'],'FileType','delimitedtext');
-    Ndelays   = length(t2delays);
     datadir_fn= datadir_fn(~contains(datadir_fn(:),fn,'IgnoreCase',1))';
 end
-
-
 
 % Create progress bar and clear error string
 if ShowWaitBar
@@ -167,7 +164,6 @@ for k=1:2 % Ndetectors
     for i=1:Ndone
         rawdata             = readmatrix([datadir filesep fn_L{i}],'FileType','delimitedtext');
         if i==1
-            Npixels         = size(rawdata,2);
             Nbins           = size(rawdata,1);
             bins            = (1:Nbins)'-1;
         end
