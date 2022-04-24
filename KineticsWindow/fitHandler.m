@@ -185,19 +185,21 @@ else
 end
 
 beginTau            = (1+length(IsFixIRF)-sum(IsFixIRF));
+
 FitTaus             = pFit(beginTau:end);
 ErrTaus             = pErr(beginTau:end);
 TAU_fit(IsFixTau)   = FixP;
 TAU_fit(~IsFixTau)  = FitTaus;
 TAU_err(IsFixTau)   = NaN;
-TAU_err(~IsFixTau)  = ErrTaus;
+TAU_err(~IsFixTau)  = ErrTaus(~IsFixTau);
+
 Ntaus               = length(TAU_fit);
 
 for i=1:Ntaus
     if IsFixTau(i)
-        fprintf('k%i = %.3e ; tau%i = %.3f %s**\n',i,1./TAU_fit(i),i,TAU_fit(i),timescale)
+        fprintf('tau%i = %.3f %s**\n',i,TAU_fit(i),timescale)
     else
-        fprintf('k%i = %.3e ; tau%i = %.3f ± %.3f %s\n',i,1./TAU_fit(i),i,TAU_fit(i),TAU_err(i),timescale)
+        fprintf('tau%i = %.3f ± %.3f %s\n',i,TAU_fit(i),TAU_err(i),timescale)
     end
 end
     fprintf('\n# of fixed IRF parameters: %i',sum(IsFixIRF));
