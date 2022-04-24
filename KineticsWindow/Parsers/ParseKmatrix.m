@@ -1,25 +1,38 @@
 function [Kmat_Fun,numTaus,numC,defTbl,defRowNames] = ParseKmatrix(modelIdx)
 
+% This function defines a kinetic target model for first-order coupled reaction systems.
+% A few models have been pre-defined, and a custom model can be typed.
+%
+% To correctly display the reaction graph, all rates must be written following the order of the species:
+% e.g. Write all rates that involve species A, then species B, and so on. This can be counter-intuitive sometimes.
+%
+% Ricardo Fernández-Terán /  2022.04.24 / v1.1a
+
+
 % Define the K matrix from target model
 switch modelIdx
-    case 1 % 'A <=> B';
+    case 1  % 'A <=> B';
         Kfun_str = '[-k(1)   k(2); k(1)  -k(2)]';
-    case 2 % 'A <=> B; A -> ; B -> ';
+    case 2  % 'A <=> B; A -> ; B -> ';
         Kfun_str = '[-(k(1)+k(2)) k(3); k(1) -(k(3)+k(4))]';
-    case 3 % 'A <=> B; A ->';         
+    case 3  % 'A <=> B; A ->';         
         Kfun_str = '[-(k(1)+k(2)) k(3); k(1) -k(3)]';
-    case 4 % 'A <=> B; B ->';         
+    case 4  % 'A <=> B; B ->';         
         Kfun_str = '[-k(1) k(2); k(1) -(k(2)+k(3))]';
-    case 5 % 'A <=> B; B -> C; C -> ';   
+    case 5  % 'A <=> B; B -> C; C -> ';   
         Kfun_str = '[-k(1) k(2) 0 ; k(1) -(k(2)+k(3)) 0; 0 k(3) -k(4)]';
-    case 6 % 'A <=> B; B<=>C; C ->';
+    case 6  % 'A <=> B; B<=>C; C ->';
         Kfun_str = '[-k(1) k(2) 0; k(1) -(k(2)+k(3)) k(4); 0 k(3) -(k(4)+k(5))]'; 
-    case 7 % 'A -> B; B<=>C; B -> ; C ->'
+    case 7  % 'A -> B; B<=>C; B -> ; C ->';
         Kfun_str = '[-k(1) 0  0; k(1) -(k(2)+k(3)) k(4); 0 k(2) -(k(4)+k(5))]';
-    case 8 % 'A -> B -> D; A -> C -> D; D ->'
+    case 8  % 'A -> B -> D; A -> C -> D; D ->';
         Kfun_str = '[-k(1)-k(2) 0 0 0; k(2) -k(4) 0 0; k(1) 0 -k(3) 0; 0 k(4) k(3) -k(5)]';
-    case 9 % Custom model
-        prompt   = 'Enter K matrix in functional form [i.e. as a function of a vector "k" containing the taus]:';
+    case 9  % 'A -> B -> C ; A -> D -> E';
+        Kfun_str = '[-k(1)-k(2) 0 0 0 0; k(1) -k(3) 0 0 0; 0 k(3) 0 0 0; k(2) 0 0 -k(4) 0; 0 0 0 k(4) 0]';
+    case 10 % 'A -> B -> C -> ; A -> D -> E ->';
+        Kfun_str = '[-k(1)-k(2) 0 0 0 0; k(1) -k(3) 0 0 0; 0 k(3) -k(4) 0 0; k(2) 0 0 -k(5) 0; 0 0 0 k(5) -k(6)]';
+    case 11 % Custom model
+        prompt   = 'Enter K matrix in functional form [i.e. as a function of a vector "k" containing the rate constants (see example)]:';
         title    = 'Define K matrix for target model';
         dims     = [10 100];
         definput = {['[-k(1)-k(2) k(3)'; 'k(1) -k(2)-k(3)]']};
@@ -33,7 +46,7 @@ switch modelIdx
         end
 end
 
-% Check how many parameters are needed
+% Check how many parameters (rate constants) are needed
 matchStr    = regexp(Kfun_str,'k\(\d\)','match');
 numTaus     = numel(unique(matchStr));
 
@@ -45,7 +58,7 @@ numC        = unique(size(Kmat_Fun(ones(numTaus,1))));
 
 % Check that the K matrix is square
 if length(numC) > 1
-    error('Wrong definition of the K matrix function: K matrix is not square');
+    error('Wrong definition of the K matrix function: the K matrix is not square!');
 end
 
 % Generate new default rate table (for the GUI)

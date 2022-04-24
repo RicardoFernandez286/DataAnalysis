@@ -1,4 +1,4 @@
-function [Dbest,res,CConc,Sfit] = fitHandler(doFit,PP_Data,KineticModel,ExtraPlots,Model_pFID)
+function [Dbest,res,CConc,Sfit] = fitHandler(doFit,PP_Data,KineticModel,ExtraPlots,Model_pFID,CutData)
 
 %% Disable some warnings
 warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
@@ -8,18 +8,21 @@ warning('off','MATLAB:illConditionedMatrix');
 warning('off','MATLAB:nearlySingularMatrix');
 
 %% Extract IRF parameters and convert to fit parameters and boundaries
-GauIRF  = KineticModel.IRF.GauIRF;  % Decide whether to do Gaussian IRF or not (otherwise Heaviside)
-t0_param= KineticModel.IRF.t0;      % Val UB LB
-w_param = KineticModel.IRF.FWHM;    % Val UB LB
+GauIRF      = KineticModel.IRF.GauIRF;  % Decide whether to do Gaussian IRF or not (otherwise Heaviside)
+IRF_tbl     = cell2mat(KineticModel.IRF.Values(:,1:3));  % Numerical (IRF values)
+IsFixIRF    = cell2mat(KineticModel.IRF.Values(:,4));    % Logical (fix or not)
+IsT0        = [1 0];
 
 if GauIRF == 1
-    p0_IRF = [t0_param(1) w_param(1)];
-    UB_IRF = [t0_param(2) w_param(2)];
-    LB_IRF = [t0_param(3) w_param(3)];
+    p0_IRF = IRF_tbl(~IsFixIRF,1)';
+    UB_IRF = IRF_tbl(~IsFixIRF,2)';
+    LB_IRF = IRF_tbl(~IsFixIRF,3)';
+elseif GauIRF == 0
+    p0_IRF = IRF_tbl(~IsFixIRF&IsT0,1)';
+    UB_IRF = IRF_tbl(~IsFixIRF&IsT0,2)';
+    LB_IRF = IRF_tbl(~IsFixIRF&IsT0,3)';
 else
-    p0_IRF = t0_param(1);
-    UB_IRF = t0_param(2);
-    LB_IRF = t0_param(3);
+    error('Unknown parameter for Gaussian IRF configuration. Set it to 0 or 1 to disable/enable.')
 end
 
 %% Extract Kmat function and main parameters from kinetic model
@@ -31,18 +34,27 @@ modelType   = KineticModel.modelType;
 %% Convert Rate table to fit parameters and boundaries
 Tau0_tbl    = cell2mat(KineticModel.Tau0(:,1:3));  % Numerical (i.e. tau values)
 IsFixTau    = cell2mat(KineticModel.Tau0(:,4));    % Logical (fix or not)
-Nfix        = sum(IsFixTau);
+NfixTau     = sum(IsFixTau);
+NfixIRF     = sum(IsFixIRF);
+
+Nfix        = NfixTau + NfixIRF;
 
 if Nfix == 0
     p0_Tau   = Tau0_tbl(:,1)';
     UB_Tau   = Tau0_tbl(:,2)';
     LB_Tau   = Tau0_tbl(:,3)';
     FixP     = [];
+    FixIRF   = [];
 else
     p0_Tau   = Tau0_tbl(~IsFixTau,1)';
     UB_Tau   = Tau0_tbl(~IsFixTau,2)';
     LB_Tau   = Tau0_tbl(~IsFixTau,3)';
     FixP     = Tau0_tbl(IsFixTau,1)';
+    if GauIRF == 1
+        FixIRF   = IRF_tbl(IsFixIRF,1)';
+    else
+        FixIRF   = IRF_tbl(IsFixIRF&IsT0,1)';
+    end
 end
 
 % If we have any infinite components, their lower bounds 
@@ -55,7 +67,23 @@ LB_all = [LB_IRF LB_Tau];
 Dexp   = PP_Data.rawsignal{1};
 t      = PP_Data.delays;
 WL     = PP_Data.cmprobe{1};
-% WL = 1:length(WL);
+
+%% Read Cut Settings and Cut Data
+if CutData == 1
+    tmin = PP_Data.plotranges{1}(1);
+    tmax = PP_Data.plotranges{1}(2);
+    Lmin = PP_Data.plotranges{1}(3);
+    Lmax = PP_Data.plotranges{1}(4);
+
+    selWL= WL>=Lmin & WL<=Lmax;
+    selT = t>=tmin & t<=tmax;
+
+    t = t(selT);
+    WL= WL(selWL);
+    Dexp=Dexp(selT,selWL);
+end
+
+%% Read Other Settings
 linlog      = PP_Data.linlog;
 timescale   = PP_Data.timescale;
 probelabel  = PP_Data.probeunits;
@@ -63,7 +91,7 @@ Xunits      = PP_Data.Xunits;
 
 %% Now we are ready to set the fit options (TO BE READ IN THE FUTURE, CONTINUEHERE)
 p0eps = p0_all;
-p0eps(p0_all==0)=eps;
+p0eps(p0_all==0)=eps; %#ok<*NASGU> 
 
 fitOptions = optimoptions('lsqnonlin',...
                 'MaxFunctionEvaluations',15000,...
@@ -80,13 +108,15 @@ fitOptions = optimoptions('lsqnonlin',...
     
 % Determine whether a fit is to be done or just plot the initial guess
 if doFit == 1
-    [pFit,resnorm,~,exitflag,output,~,J] = lsqnonlin(@(p) FitFunc(p,t,Kmat_Fun,C0,Dexp,GauIRF,FixP,IsFixTau),p0_all,LB_all,UB_all,fitOptions);
-    [~,Dbest,CConc,Sfit] = FitFunc(pFit,t,Kmat_Fun,C0,Dexp,GauIRF,FixP,IsFixTau);
+    tic;
+    [pFit,resnorm,~,exitflag,output,~,J] = lsqnonlin(@(p) FitFunc(p,t,Kmat_Fun,C0,Dexp,GauIRF,FixP,IsFixTau,FixIRF,IsFixIRF,Model_pFID),p0_all,LB_all,UB_all,fitOptions); %#ok<*ASGLU> 
+    tfit=toc;
+    [~,Dbest,CConc,Sfit] = FitFunc(pFit,t,Kmat_Fun,C0,Dexp,GauIRF,FixP,IsFixTau,FixIRF,IsFixIRF,Model_pFID);
     res     = Dexp-Dbest;
     chi2    = resnorm./(numel(res)-length(pFit)-Nfix-1);
 
     % First, calculate covariance matrix from the Jacobian
-    covB = chi2*inv(J.'*J);
+    covB = chi2.*inv(J.'*J);
     % This calculates the 95 % confidence intervals
     ci   = nlparci(pFit,res,'covar',covB);
     % Take errors as the difference between the parameter and the lower ci
@@ -94,23 +124,69 @@ if doFit == 1
 
 else
     pFit    = p0_all;
-    [~,Dbest,CConc,Sfit] = FitFunc(pFit,t,Kmat_Fun,C0,Dexp,GauIRF,FixP,IsFixTau);
+    [~,Dbest,CConc,Sfit] = FitFunc(pFit,t,Kmat_Fun,C0,Dexp,GauIRF,FixP,IsFixTau,FixIRF,IsFixIRF,Model_pFID);
     res     = Dexp-Dbest;
     chi2    = NaN;
     pErr    = NaN(size(pFit));
 end
 
-%% Display fit results in command window
-fprintf('\n=============\nFit Results:\n=============\n')
-fprintf('t0   = %.3f ± %.3f \n',pFit(1),pErr(1))
-if GauIRF == 1
-    fprintf('FWHM = %.3f ± %.3f \n\n',pFit(2),pErr(2))
-else
-    fprintf('Delta-shaped IRF assumed. \n\n')
+%% If the data was previously cut, fill with NaNs
+if CutData == 1
+    Dbest(selT,selWL)   = Dbest;
+    Dexp(selT,selWL)    = Dexp;
+    res(selT,selWL)     = res;
+    CConc(selT,:)       = CConc; 
+    Sfit(:,selWL)       = Sfit;
+
+    Dbest(~selT,:)      = NaN;
+    Dbest(:,~selWL)     = NaN;
+    Dexp(~selT,:)       = NaN;
+    Dexp(:,~selWL)      = NaN;
+    res(~selT,:)        = NaN;
+    res(:,~selWL)       = NaN;
+    CConc(~selT,:)      = NaN; 
+    Sfit(:,~selWL)      = NaN;
+
+    t(selT)     = t;
+    WL(selWL)   = WL;
+    t(~selT)    = NaN;
+    WL(~selWL)  = NaN;
 end
 
-FitTaus             = pFit((2+GauIRF):end);
-ErrTaus             = pErr((2+GauIRF):end);
+%% Display fit results in command window
+fprintf('\n**********************************');
+fprintf('\n=======================\n\t Fit Results\n(%s)\n=======================\n',datetime)
+if doFit == 1
+    fprintf('Fit done in %.2f s\n\n',tfit);
+else
+    fprintf('Preview only. No fit done.\n\n');
+end
+
+if IsFixIRF(1) == 1
+    t0 = FixIRF(1);
+    fprintf('t0   = %.3f %s**\n',t0,timescale)
+else
+    t0      = pFit(1);
+    t0err   = pErr(1);
+    fprintf('t0   = %.3f ± %.3f %s\n',t0,t0err,timescale)
+end
+
+if GauIRF == 1
+    if IsFixIRF(2) == 1
+        FWHM = FixIRF(end);
+        fprintf('FWHM = %.3f %s**\n\n',FWHM,timescale)
+    else
+        FWHM    = pFit(2-IsFixIRF(1));
+        FWHMerr = pErr(2-IsFixIRF(1));
+        fprintf('FWHM = %.3f ± %.3f %s\n\n',FWHM,FWHMerr,timescale)
+    end
+else
+    fprintf('Delta-shaped IRF assumed.\n\n')
+end
+
+beginTau            = (1+length(IsFixIRF)-sum(IsFixIRF));
+FitTaus             = pFit(beginTau:end);
+ErrTaus             = pErr(beginTau:end);
 TAU_fit(IsFixTau)   = FixP;
 TAU_fit(~IsFixTau)  = FitTaus;
 TAU_err(IsFixTau)   = NaN;
@@ -124,11 +200,11 @@ for i=1:Ntaus
         fprintf('k%i = %.3e ; tau%i = %.3f ± %.3f %s\n',i,1./TAU_fit(i),i,TAU_fit(i),TAU_err(i),timescale)
     end
 end
-if sum(IsFixTau) > 0
-    fprintf('\n# of fixed Time Constants: %i\n',sum(IsFixTau));
-end
-fprintf('chi^2 = %.3g\n',chi2);
-fprintf('*****************\n');
+    fprintf('\n# of fixed IRF parameters: %i',sum(IsFixIRF));
+    fprintf('\n# of fixed Time Constants: %i',sum(IsFixTau));
+
+fprintf('\n\nchi^2 = %.3g\n',chi2);
+fprintf('**********************************\n');
 
 %% Plot results
 drawnow;
@@ -166,7 +242,7 @@ for i=1:nC
 end
 hold(ax,'off')
 title(ax,'Concentration Profiles');
-xline(ax,pFit(1));
+xline(ax,t0);
 yline(ax,0);
 axis(ax,'tight');
 ax.Box = 'on';
@@ -176,7 +252,12 @@ xlabel(ax,['Delay (' timescale ')'],'FontWeight','bold')
 ylabel(ax,'Relative Conc.','FontWeight','bold')
 
 if GauIRF
-    xlim(ax,[round(10*pFit(2))/10 max(t)]);
+    if IsFixIRF(2) == 1
+        FWHM  = FixIRF(end);
+    else
+        FWHM  = pFit(2);
+    end
+    xlim(ax,[round(10*FWHM)/10 max(t)]);
 else
     xlim(ax,[min(t(t>0)) max(t)]);
 end
@@ -228,8 +309,10 @@ for i=1:nC
             else
                 name = ['\tau_{' char(64+i) '} = \infty'];
             end
-            if IsFixTau(i)
-                name = [name ' ' tS_plot '*']; %#ok<*AGROW> 
+            if IsFixTau(i) && isinf(TAU_fit(i))
+                name = [name '*']; %#ok<*AGROW> 
+            elseif IsFixTau(i) && ~isinf(TAU_fit(i))
+                name = [name ' ' tS_plot '*']; 
             else
                 name = [name '\pm' num2str(round(ERR_plot,1,'significant'),'%2.2g') ' ' tS_plot];
             end
@@ -248,7 +331,9 @@ for i=1:nC
             else
                 name = ['\tau_{' num2str(i) '} = \infty'];
             end
-            if IsFixTau(i)
+            if IsFixTau(i) && isinf(TAU_fit(i))
+                name = [name '*']; 
+            elseif IsFixTau(i) && ~isinf(TAU_fit(i))
                 name = [name ' ' tS_plot '*']; 
             else
                 name = [name '\pm' num2str(round(ERR_plot,1,'significant'),'%2.2g') ' ' tS_plot];
@@ -289,10 +374,11 @@ movegui(fhB,'onscreen')
 figure(fhB);
 tiledlayout(fhB,1,3,'padding','compact');
 
-tplot   = t-pFit(1);    % Shift time axis such that tplot = 0 at t0
+tplot   = PP_Data.delays-t0;    % Shift time axis such that tplot = 0 at t0
+WLplot  = PP_Data.cmprobe{1};
 
 zoomF   = 100/100;      % A zoom factor for the Z scale of the data
-zoomR   = 50/100;       % A zoom factor for the Z scale of the residuals
+zoomR   = 10/100;       % A zoom factor for the Z scale of the residuals
 NCtrs   = 40;           % Number of contours to plot
 
 % Get minimum and maximum absorbance of the dataset
@@ -312,7 +398,7 @@ ctrs_r  = linspace(zoomR*minZres,zoomR*maxZres,NCtrs+1);
 % Plot the data
 ax1 = nexttile;
 Dexp(:,jump_ID) = NaN;
-contourf(ax1,WL,tplot,Dexp,ctrs,'EdgeColor','flat'); cb1 = colorbar;
+contourf(ax1,WLplot,tplot,Dexp,ctrs,'EdgeColor','flat'); cb1 = colorbar;
 colormap(ax1,darkb2r(zoomF*minZ,zoomF*maxZ,NCtrs,2));
 caxis(ax1,zoomF*[minZ maxZ]);
 ax1.YScale = linlog;
@@ -320,7 +406,7 @@ ax1.YScale = linlog;
 % Plot the fit
 ax2 = nexttile;
 Dbest(:,jump_ID) = NaN;
-contourf(ax2,WL,tplot,Dbest,ctrs,'EdgeColor','flat'); cb2 = colorbar;
+contourf(ax2,WLplot,tplot,Dbest,ctrs,'EdgeColor','flat'); cb2 = colorbar;
 colormap(ax2,darkb2r(zoomF*minZ,zoomF*maxZ,NCtrs,2));
 caxis(ax2,zoomF*[minZ maxZ]);
 title(ax2,'Fit','FontSize',18);
@@ -329,7 +415,7 @@ ax2.YScale = linlog;
 % Plot the residuals
 ax3 = nexttile;
 res(:,jump_ID) = NaN;
-contourf(ax3,WL,tplot,res,ctrs_r,'EdgeColor','flat'); cb3 = colorbar;
+contourf(ax3,WLplot,tplot,res,ctrs_r,'EdgeColor','flat'); cb3 = colorbar;
 colormap(ax3,darkb2r(zoomR*minZres,zoomR*maxZres,NCtrs,2));
 caxis(ax3,zoomR*[minZres maxZres]);
 ax3.YScale = linlog;
@@ -371,8 +457,8 @@ ax3.TickLength = [0.02 0.02];
 
 % Add title to the colorbars
 title(cb1,{'\DeltaAbs (mOD)'})
-title(cb2,{'\DeltaAbs';'(mOD)'})
-title(cb3,{'\DeltaAbs';'(mOD)'})
+title(cb2,{'\DeltaAbs (mOD)'})
+title(cb3,{'\DeltaAbs (mOD)'})
 
 drawnow;
 
@@ -387,20 +473,30 @@ end
 %%%%%%%%%%%%%%%%% EOF
 
 %% This auxilliary function calculates the fit dataset
-function [res,Dfit,CConc,Sfit] = FitFunc(p,t,Kmodel,C0,Dexp,GauIRF,FixP,IsFixTau)
-%     numTaus = length(IsFixTau);
-    FitTaus = p((2+GauIRF):end);
-    AllTaus(IsFixTau)  = 1./FixP;
-    AllTaus(~IsFixTau) = 1./FitTaus;
+function [res,Dfit,CConc,Sfit] = FitFunc(p,t,Kmodel,C0,Dexp,GauIRF,FixT,IsFixTau,FixIRF,IsFixIRF,Model_pFID)
+    beginTau            = (1+length(IsFixIRF)-sum(IsFixIRF));
+    FitTaus             = p(beginTau:end);
+    AllTaus(IsFixTau)   = 1./FixT;
+    AllTaus(~IsFixTau)  = 1./FitTaus;
 
     % Read parameters off the parameter vector (p)
-    t0      = p(1);
+    if IsFixIRF(1) == 1
+        t0  = FixIRF(1);
+    else
+        t0  = p(1);
+    end
+
     % Build the K matrix. Note that in the fit we are using k=1/tau
     Kmat    = Kmodel(AllTaus);
     Conc_fn = @(t) kineticsKmat_simu(t,Kmat,C0,0,[]);
 
     if GauIRF == 1
-        FWHM    = p(2);
+        if IsFixIRF(2) == 1
+            FWHM  = FixIRF(end);
+        else
+            FWHM  = p(2);
+        end
+
         CConc   = IRF_Kmat(t,Kmat,C0,FWHM,t0);
 %         IRFfnc  = @(T,T0,W) (2./W)*sqrt(log(2)/pi)*exp(-4*log(2).*((T-T0)./W).^2)';
 %         CConc   = IRFconvol(IRFfnc,t,t0,FWHM,Conc_fn); 
