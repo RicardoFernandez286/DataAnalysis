@@ -6,7 +6,7 @@ function [Kmat_Fun,numTaus,numC,defTbl,defRowNames] = ParseKmatrix(modelIdx)
 % To correctly display the reaction graph, all rates must be written following the order of the species:
 % e.g. Write all rates that involve species A, then species B, and so on. This can be counter-intuitive sometimes.
 %
-% Ricardo Fernández-Terán /  2022.04.24 / v1.1a
+% Ricardo Fernández-Terán /  2022.05.01 / v1.3b
 
 
 % Define the K matrix from target model
@@ -31,10 +31,12 @@ switch modelIdx
         Kfun_str = '[-k(1)-k(2) 0 0 0 0; k(1) -k(3) 0 0 0; 0 k(3) 0 0 0; k(2) 0 0 -k(4) 0; 0 0 0 k(4) 0]';
     case 10 % 'A -> B -> C -> ; A -> D -> E ->';
         Kfun_str = '[-k(1)-k(2) 0 0 0 0; k(1) -k(3) 0 0 0; 0 k(3) -k(4) 0 0; k(2) 0 0 -k(5) 0; 0 0 0 k(5) -k(6)]';
-    case 11 % Custom model
+    case 11 % 'A -> B -> ; A -> C ->'
+        Kfun_str = '[-k(1)-k(2) 0 0; k(1) -k(3) 0; k(2) 0 -k(4)]';
+    case 12 % Custom model
         prompt   = 'Enter K matrix in functional form [i.e. as a function of a vector "k" containing the rate constants (see example)]:';
         title    = 'Define K matrix for target model';
-        dims     = [10 100];
+        dims     = [10 50];
         definput = {['[-k(1)-k(2) k(3)'; 'k(1) -k(2)-k(3)]']};
 
         Kfun_inp = inputdlg(prompt,title,dims,definput);

@@ -40,7 +40,7 @@ Nscans = NaN;
 noise  = zeros(size(rawsignal));
 
 %% Read the plot ranges
-mintime     = min(delays);
+mintime     = min(delays); %#ok<*NASGU> 
 maxtime     = max(delays);
 minabs      = min(rawsignal(:));
 maxabs      = max(rawsignal(:));
