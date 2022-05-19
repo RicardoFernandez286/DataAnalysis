@@ -15,18 +15,20 @@ text            = fscanf(fopen(fullName),'%c');
 head_n          = count(text,'%');
 
 alldata         = readmatrix(fullName,'FileType','text','NumHeaderLines',head_n,'CommentStyle','%s');
-Npixels         = round(size(alldata,2)/2)-1;
 
+Npixels         = round(size(alldata,2)/2)-1;
 removePix       = sort([1:25 Npixels-(0:1:10)]);
 
-% cmprobe         = 
 alldelays       = alldata(1:end,1)*1e12; % convert to ps
 [delays,~,dID]  = unique(alldelays); 
 Ndelays         = length(delays);
 
 alldata         = alldata.*sign;
-%%%% remove NaN lines due to comments at end of file
+
+%%%% remove NaN lines due to comments at end of file [currently not needed]
 % NaNidx          = sum(isnan(cmprobe));
+
+% Read the pixel to lambda calibration if it exists
 if exist([rootdir filesep 'pix2lam.mat'],'file') ~= 0
     load([rootdir filesep 'pix2lam.mat'],'lam');
     cmprobe{1}  = lam;
