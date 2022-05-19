@@ -20,7 +20,8 @@ Npixels         = round(size(alldata,2)/2)-1;
 removePix       = sort([1:25 Npixels-(0:1:10)]);
 
 % cmprobe         = 
-delays          = unique((alldata(2:end,1)))*1e12; % convert to ps
+alldelays       = alldata(1:end,1)*1e12; % convert to ps
+[delays,~,dID]  = unique(alldelays); 
 Ndelays         = length(delays);
 
 alldata         = alldata.*sign;
@@ -35,7 +36,7 @@ end
 
 %% Read single scan data
 if dataStruct.chirpCorr == 0
-    Nscans          = floor(size(alldata,1)/length(delays));
+    Nscans          = floor(size(alldata,1)/Ndelays);
     rawsignal{1}    = zeros(Ndelays,Npixels);
     
     % remove NaN lines due to comments at end of file
@@ -65,15 +66,16 @@ else
     rawsignal{1}    = rawsignal{1}(:,1:end-NaNidx)*1e3; % convert to mOD
     rawsignal{1}    = fillmissing(rawsignal{1}, 'linear');
 end
-
-
-    
+  
 if Nscans >= 1
     scandata{1}         = zeros([size(rawsignal{1}) Nscans]);
     scan_err{1}         = zeros([size(rawsignal{1}) Nscans]);
     for s=1:Nscans
-        scandata{1}(:,:,s) = alldata((s-1)*Ndelays+(1:Ndelays),3:2:(2*Npixels+2))./1e3; % s-th set of delays (rows), odd columns
-        scan_err{1}(:,:,s) = alldata((s-1)*Ndelays+(1:Ndelays),4:2:(2*Npixels+2))./1e3; % s-th set of delays (rows), even columns
+        IDs                 = (s-1)*Ndelays + (1:Ndelays);
+        tmpScanData         = alldata(IDs,3:2:(2*Npixels+2))./1e3;
+        smpScanError        = alldata(IDs,4:2:(2*Npixels+2))./1e3;
+        scandata{1}(:,:,s)  = tmpScanData(dID(IDs),:);  % s-th set of delays (rows), odd columns     - indexed by dID [to sort into correct delay]
+        scan_err{1}(:,:,s)  = smpScanError(dID(IDs),:); % s-th set of delays (rows), even columns   - indexed by dID [to sort into correct delay]
     end
     noise{1}                    = mean(scan_err{1},3); % in mOD
     rawsignal{1}                = mean(scandata{1},3); % in mOD
