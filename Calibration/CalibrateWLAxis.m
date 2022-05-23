@@ -63,7 +63,7 @@ for i=1:Ndet
             RefY_cut    = RefY(cutID(1):cutID(2));
         
         case 2    % UniGE TA 
-            minRefX  = 340;
+            minRefX  = 345;
             maxRefX  = 690;
 
             cutID    = sort(findClosestId2Val(RefX,[minRefX maxRefX]));
@@ -117,21 +117,21 @@ for i=1:Ndet
 
     switch CalType
         case 1 % UoS TRIR/2DIR
-            p0 = [wp1  ppnm  1    -0.1  eps eps];
-            LB = [1e3  1e-4  0.1  -1    -1  -1 ];
-            UB = [1e4  0.25  10   1     1   1  ];
+            p0 = [wp1  ppnm  1    -0.1  eps  eps  ];
+            LB = [1e3  1e-4  0.1  -1    -Inf -Inf ];
+            UB = [1e4  0.25  10   1     Inf  Inf  ];
             ftol= 5e-7;
             stol= 5e-7;
         case 2 % UniGE TA
-            p0 = [310 1.05  0.6 -0.1 eps eps];
-            LB = [100 0.1   0.1 -1   -1 -1];
-            UB = [400 2     10  1    1 1];
+            p0 = [310 1.05  0.6 -0.1 1 1];
+            LB = [150 0.5   0.1 -Inf -Inf -Inf];
+            UB = [400 2     10   Inf  Inf Inf ];
             ftol= 5e-7;
             stol= 5e-7;
         case 3 % UniGE nsTA
-            p0 = [330 1.33  0.58 -0.1 eps eps ];
-            LB = [100 0.1   0.1  -1   -1 -1];
-            UB = [400 2     10   1    1 1];
+            p0 = [330 1.33  0.58 -0.1 1     1];
+            LB = [100 0.1   0.1  -1 -Inf -Inf];
+            UB = [400 2     10   1  Inf  Inf ];
             ftol= 1e-6;
             stol= 1e-6;
         case 4 % UZH Lab 2
@@ -152,11 +152,11 @@ for i=1:Ndet
                 'display','off',...
                 'typicalX',p0);%,...
 %                 'plotfcn','optimplotresnorm_log');
-    
+
+%     Pfit(i,:)=p0;
     Pfit(i,:) = lsqnonlin(fit_fun,p0,LB,UB,options);
     
     delete(mb);
-    % Pfit(i,:)=p0;
 
     switch CalType
         case {1,4} % IR Setups UoS and UZH Lab 2

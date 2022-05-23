@@ -116,7 +116,7 @@ if doFit == 1
     chi2    = resnorm./(numel(res)-length(pFit)-Nfix-1);
 
     % First, calculate covariance matrix from the Jacobian
-    covB = chi2.*inv(J.'*J);
+    covB = chi2.*inv(J'*J);
     % This calculates the 95 % confidence intervals
     ci   = nlparci(pFit,res,'covar',covB);
     % Take errors as the difference between the parameter and the lower ci
