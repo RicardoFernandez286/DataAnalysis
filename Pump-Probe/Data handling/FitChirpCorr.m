@@ -40,11 +40,13 @@ fitPixels   = 1:Npixels;
 fitWL       = probeAxis(fitPixels);
 NfitPix     = length(fitPixels);
 
-mode        = questdlg('Select Chirp Correction Method','Chirp Correction Method','Automatic','Manual','Cancel','Automatic');
+mode        = questdlg('Select Chirp Correction Method','Chirp Correction Method','Automatic','Manual','Step Function (Auto)','Automatic');
+
+if isempty(mode)
+    return
+end
 
 switch mode
-    case 'Cancel'
-        return
     case 'Manual'
         % Make a plot of the data
         maxPl = plotpercent./100.*max(abs(Z(:)));
@@ -160,6 +162,81 @@ switch mode
             waitbar(j/NfitPix,wb,['Fitting chirp correction... (' num2str(j) ' of ' num2str(NfitPix) ')'])
         end
         delete(wb);
+    case 'Step Function (Auto)'
+        %%% Fit a Gaussian response + step and take the WL-dependent t0 parameter to do the chirp fit
+        % 1D Gaussian with 1st and 2nd derivative
+        % Parameters: 1=t0  2=FWHM  3=Amplitude  4=Amp 1st deriv  5=Amp 2nd deriv   6 = Offset
+        G0 = @(p,t) exp(-log(2).*((t-p(1))./p(2)).^2);
+        G1 = @(p,t) -2.*log(2)./(p(2).^2).*(t-p(1)).*G0(p,t);
+        G2 = @(p,t) 2.*log(2).*(-p(2).^2 + 2.*log(2).*(t-p(1)).^2)./(p(2).^4).*G0(p,t);
+        HS = @(p,t) p(7)*(1+erf((t-p(1))./(sqrt(2).*p(2)/(2*sqrt(2*log(2))))));
+
+        ArtFitStep = @(p,t) p(3).*G0(p,t) + p(4).*G1(p,t) + p(5).*G2(p,t) + p(6) + HS(p,t);
+
+        P0  = [0.1  0.1   1     1    1    1     1  ];
+        LB  = [-5   0     -50   -50  -50  -50   -50];
+        UB  = [5    1     50    50   50   50    50 ];
+        
+        % Trim the data to consider only early delays
+        %   Typically [-1,3] ps works well for TA/TRIR
+        tmin = -1;
+        tmax = 3;
+        fitdelID = delays >= tmin & delays <= tmax;
+        fit_delays = delays(fitdelID);
+        Ndelays = length(fit_delays);
+        Zfit = Z(fitdelID,:);
+
+        % Prepare an array where we will store the results
+        Pfit = zeros(NfitPix,length(P0));
+        Dfit = zeros(Ndelays,NfitPix);
+        % Define fit options
+        options     = optimoptions(@lsqcurvefit,...
+                        'FunctionTolerance',5e-10,...
+                        'MaxIterations',1e4,...
+                        'MaxFunctionEvaluations',1e4,...
+                        'steptolerance',5e-10,...
+                        'OptimalityTolerance',5e-10,...
+                        'display','off');
+        
+        qf = uifigure;
+        qf.Position(3:4) = [650 170];
+        inclDeriv = uiconfirm(qf,'Include 1st and 2nd derivatives of the Gaussian IRF?','Artifact Fit Options','Options',{'No';'1st Derivative';'2nd Derivative';'1st+2nd Derivatives'},'DefaultOption',1,'Icon','question');
+        delete(qf);
+
+        if strcmp(inclDeriv,'Cancel')
+            figure(app.DataAnalysisGUI_UIFigure);
+            return
+        end
+
+        % Do the fits
+        wb = waitbar(0);            
+        for j=1:NfitPix
+            i=fitPixels(j);
+            [P0(3),idM] = max(abs(diff(abs(Zfit(:,i)))));
+            P0(1)   = fit_delays(idM);
+            UB(1)   = P0(1) + 1;
+            LB(1)   = P0(1) - 1;
+            UB(3:7) = 10*P0(3);
+            LB(3:7) = -10*P0(3); 
+            
+            % Do NOT include derivative terms (?)
+            switch inclDeriv
+                case 'No'
+                    LB(4:5) = 0;
+                    UB(4:5) = 0;
+                case '1st Derivative'
+                    UB(5)   = 0;
+                    LB(5)   = 0;
+                case '2nd Derivative'
+                    UB(4)   = 0;
+                    LB(4)   = 0;
+            end
+            Pfit(j,:) = lsqcurvefit(ArtFitStep,P0,fit_delays,Zfit(:,i),LB,UB,options);
+            Dfit(:,j) = ArtFitStep(Pfit(j,:),fit_delays);
+            waitbar(j/NfitPix,wb,['Fitting chirp correction... (' num2str(j) ' of ' num2str(NfitPix) ')'])
+        end
+        delete(wb);
+
 end
 
 %% Diagnostic plot for fit
@@ -339,7 +416,7 @@ ax2.TickLength = [0.02 0.02];
 linkaxes([ax,ax2],'x');
 
 switch mode
-    case 'Automatic'
+    case {'Automatic','Step Function (Auto)'}
         %%% Plot wavelength-dependent FWHM
         fh = figure(3);
         clf(fh);
