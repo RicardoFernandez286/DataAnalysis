@@ -115,10 +115,10 @@ I would like to thank my mentors:
 And I would like to thank the following users for finding bugs, requesting features and playing with the software overall:
 * Jeannette Ruf (UZH)
 * Dr. Gökçen Tek (UZH)
-* Dr. Kerstin Oppelt (UZH)
+* Dr. Kerstin T. Oppelt (UZH)
 * Dr. James D. Shipp (UoS)
 * Martin V. Appleby (UoS)
-* Iona Ivalo (UoS)
-* Catheryne Royle (UoS)
+* Iona I. Ivalo (UoS)
+* Catherine E. Royle (UoS)
 * Estefanía Sucre-Rosales (UniGE)
 
