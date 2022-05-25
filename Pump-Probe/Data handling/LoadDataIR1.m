@@ -198,16 +198,18 @@ if N_modSpec >= 2
     cmprobe     = 10^7./(WL_nm + ShiftWL);
 end
 
-% Timescale is in picoseconds! (nicer to understand)
-if log10(delays(1)) >= 3
+% This needs a rework, but can't think of an easy way
+% if the negative time delay is <10 ps = <10000 fs then we know we are in ps
+if log10(abs(delays(1))) >= 3
     delays = delays/1000;
     dataStruct.timescale = 'ps';
+    % Timescale is in picoseconds! (nicer to understand)
 else
     dataStruct.timescale = 'ns';
 end
 
 % Read the plot ranges
-mintime         = -0.5;
+mintime         = min(delays);
 maxtime         = max(delays);
 flatbl          = findClosestId2Val(delays,mintime);
 minabs          = min(rawsignal(flatbl:end,:),[],'all');

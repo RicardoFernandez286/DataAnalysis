@@ -1,8 +1,9 @@
 function dataStruct = LoadDataTRUVIS(dataStruct,SpectrumToDisplay,varargin)
 % Loading routine for Pump-Probe data from TRUVIS, FileFormat 2
 % Updated for the new AppDesigner GUI.
+% Updated for compatibility with n-detector arrangement
 %
-% v4.0a / 16.04.2019 / Ricardo Fernández-Terán
+% v5.0b / 25.05.2022 / Ricardo Fernández-Terán
 
 dataStruct.removeduplicates = 1;
 cut2ndOrder = 1;
@@ -226,7 +227,7 @@ zminmax         = round(max([abs(minabs) abs(maxabs)]),3);
 minwl           = min(cmprobe);
 maxwl           = max(cmprobe);
 Ncontours       = 40;
-plotranges      = [mintime maxtime minwl maxwl minabs maxabs];
+plotranges      = [mintime maxtime minwl maxwl minabs maxabs Ncontours];
 
 % Remove duplicate delays and average the data for repeated delays (new universal method)
 [delays,~,idx]  = unique(delays,'stable');
@@ -245,10 +246,10 @@ noise           = new_noise(sortID,:);
 
 %% Write to DataStructure
 dataStruct.delays       = delays;
-dataStruct.cmprobe      = cmprobe;
-dataStruct.rawsignal    = rawsignal;
-dataStruct.noise        = noise;
-dataStruct.plotranges   = plotranges;
+dataStruct.cmprobe      = {cmprobe};
+dataStruct.rawsignal    = {rawsignal};
+dataStruct.noise        = {noise};
+dataStruct.plotranges   = {plotranges};
 dataStruct.Nscans       = Nscans;
 dataStruct.tempdir      = tempdir;
 
@@ -267,11 +268,11 @@ end
     Idx = findClosestId2Val(dataStruct.delays,[dataStruct.mintimeBkg dataStruct.maxtimeBkg]);
     % Do the background subtraction and change status in handles.rawcorr
     if Idx(2)==1
-        dataStruct.bkg = dataStruct.rawsignal(1,:);
+        dataStruct.bkg = {dataStruct.rawsignal{1}(1,:)};
     else
-        dataStruct.bkg = mean(dataStruct.rawsignal(Idx(1):Idx(2),:));
+        dataStruct.bkg = {mean(dataStruct.rawsignal{1}(Idx(1):Idx(2),:))};
     end
-dataStruct.corrdata = dataStruct.rawsignal - dataStruct.bkg;
+dataStruct.corrdata = {dataStruct.rawsignal{1} - dataStruct.bkg{1}};
     
 else
     assert(exist([filename '_delays.csv'],'file') ~= 0,'Selected directory does not contain a valid Pump-Probe (Lab 1 or Lab 4) dataset')
