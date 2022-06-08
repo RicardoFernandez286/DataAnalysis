@@ -47,7 +47,10 @@ for i=1:Ndet
     switch CalType
         case 1 % UoS 2DIR/TRIR
             switch Gratings(i)
-                case 0 
+                case 0 % 120 l/mm
+                    minRefX = CWL(i) - 200;
+                    maxRefX = CWL(i) + 200;
+                    ppnm    = 0.153;             % pixels per nm = 1/resolution;
                 case 1 % 100 l/mm
                     minRefX = CWL(i) - 350;
                     maxRefX = CWL(i) + 350;
@@ -117,7 +120,7 @@ for i=1:Ndet
 
     switch CalType
         case 1 % UoS TRIR/2DIR
-            p0 = [wp1  ppnm  1    -0.1  eps  eps  ];
+            p0 = [wp1  ppnm  1.5   -0.1  eps  eps  ];
             LB = [1e3  1e-4  0.1  -1    -Inf -Inf ];
             UB = [1e4  0.25  10   1     Inf  Inf  ];
             ftol= 5e-7;
