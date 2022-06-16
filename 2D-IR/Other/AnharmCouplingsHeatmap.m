@@ -1,10 +1,10 @@
 % function AnharmCouplingsHeatmap
 
-% ModeLabels = ["A'(2)" "A''" "A'(1)"];
+ModeLabels = ["A'(2)" "A''" "A'(1)"];
 % ModeLabels = ["A'(2)" "A''" "A'(1)" "C{\equiv}C"];
 % ModeLabels = ["A'(2)" "A''" "A'(1)" "N_{3}"];
 
-ModeLabels = ["{\nu}_{CO}(a)" "{\nu}_{CO}(s)" "A'(2)" "A''" "A'(1)"];
+% ModeLabels = ["{\nu}_{CO}(a)" "{\nu}_{CO}(s)" "A'(2)" "A''" "A'(1)"];
 
 % ModeLabels = ["{\nu}_{Ar}" "2" "3" "4" "5" "6" "7" "8" "9" "10" "{\nu}_{C=O}^{(s)}" "{\nu}_{C=O}^{(a)}" "A'(2)" "A''" "A'(1)"];
 
@@ -19,13 +19,14 @@ LineCol = 1*[1 1 1];
 LineWidth = 1.5;
 LineStyle = 'solid'; % 'solid' | 'dashed' | 'dotted' | 'dashdot' |'none'
 
-PlotW1W3  = 1; % 0 = energy ordering, 1 = 2D-IR like
+PlotW1W3  = 1;  % 0 = energy ordering, 1 = 2D-IR like
 plotTriang= -1; % 0 = plot everything; 1 = upper; -1 = lower;
 hideDiag  = 0;
 
-sx   = 7.5;
+sx   = 5;
 sy   = sx;
 c1   = 0;
+XPeak= 0.25;
 
 percentScale = 100;
 Ncontours = 40;
@@ -34,16 +35,16 @@ showContours = 1;
 contCol = [0.5 0.5 0.5];
 
 freqs = [...
-2013.22
-2198.72
-4005.70
-4342.98
-4194.29
+1873.43
+2009.26
+3712.42
+3997.91
+3837.77
 ];
 
 int = [...
-377.3304
-120.4921
+5.9704
+737.0453
 ];
 
 %% Frequency input
@@ -167,7 +168,7 @@ ovcom   = freqs(Nmodes+1:end);
 [ii,jj] = ndgrid(1:Nmodes);
 
 H1 = fund*ones(Nmodes,1)'+(fund*ones(Nmodes,1)')';
-H2 = zeros(Nmodes);
+H2 = zeros(Nmodes); %#ok<*PREALL> 
 
 H2 = diag(ovcom(1:Nmodes),0);
 H2(ii>jj) = ovcom(Nmodes+1:end);
@@ -336,6 +337,9 @@ for i=1:Nmodes
         Anh = H1-H2;
         a1 = Anh(i,j);
         ESA1 = sqrt(int(i)*int(j));
+        if i~=j
+            ESA1 = ESA1*XPeak;
+        end
         GSB1 = -ESA1;
         % Calculate the peaks
         ZGSB    = G2Dc(X,Y,x1,x3,sx,sy,c1,GSB1/sqrt(1-c1));

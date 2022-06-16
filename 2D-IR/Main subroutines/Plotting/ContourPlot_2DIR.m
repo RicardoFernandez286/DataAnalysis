@@ -255,7 +255,7 @@ case 'Horizontal' % New way
       % Save XYZ
         X = PumpAxis{m,k};
         Y = ProbeAxis(probelim);
-        Z = transpose(proc2Ddata);
+        Z = proc2Ddata';
         % Interpolate the data
         if interpolate == 1
             %X  = linspace() etcetera NOT DONE PENDING
@@ -467,7 +467,7 @@ if plot_showcontours == 1
     end
     
     hold(plotaxis,'on')
-        contour(plotaxis,X,Y,Z,contourlines,'LineColor',LineColor,'LineStyle',ContourLineStyle,'LineWidth',0.05);
+        contour(plotaxis,X,Y,Z,contourlines,'LineColor',LineColor,'LineStyle',ContourLineStyle,'LineWidth',0.5);
     hold(plotaxis,'off')
 end
 
@@ -476,11 +476,11 @@ if Plot_SpecDiff
     hold(plotaxis,'on')
     % CLS
     if ~isempty(CLS_Xdata) && ~isempty(CLS_Xdata{m})
-        plot(plotaxis,CLS_Xdata{m},CLS_Ydata{m}(:,popdelay),'LineWidth',2,'Color','w')
+        plot(plotaxis,CLS_Xdata{m},CLS_Ydata{m},'LineWidth',2,'Color','w')
     end
     % IvCLS
     if ~isempty(IvCLS_Xdata) && ~isempty(IvCLS_Xdata{m})
-        plot(plotaxis,IvCLS_Xdata{m}(:,popdelay),IvCLS_Ydata{m},'LineWidth',2,'Color','y')
+        plot(plotaxis,IvCLS_Xdata{m},IvCLS_Ydata{m},'LineWidth',2,'Color','y')
     end
     % NLS
     if ~isempty(NLS_Xdata) && ~isempty(NLS_Xdata{m})

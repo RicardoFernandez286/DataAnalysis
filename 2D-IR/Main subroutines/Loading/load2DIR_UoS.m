@@ -140,7 +140,7 @@ else
             writematrix([w0;dt1],[datadir filesep 'w0.csv']);
         catch
             warning('Error writing rotating frame info file to default path');
-            fp = uigetdir('Save rotating frame information - where?','w0.csv');
+            fp = uigetdir('Where to save rotating frame file?','w0.csv');
             if fp == 0
                 warning('Nowhere to save the rotating frame file :(');
             else

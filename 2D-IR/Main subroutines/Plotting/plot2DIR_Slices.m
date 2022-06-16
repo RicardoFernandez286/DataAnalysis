@@ -30,7 +30,8 @@ Ndelays             = dataStruct.Ndelays;
 t2delays            = dataStruct.t2delays;
 PROC_2D_DATA        = dataStruct.PROC_2D_DATA;
 datafilename        = string(dataStruct.datafilename);
-
+doNormalise         = dataStruct.Normalise;
+doSave              = dataStruct.SaveData;
 
 
 switch slice_options{slice_typeindx}
@@ -279,11 +280,19 @@ switch slice_options{slice_typeindx}
         
         % Get the indices of the pump wavelengths to integrate
         pump_indexes    = findClosestId2Val(PumpAxis{PopDelay,k},SelTraces);
+        
+        % Get indices of the probe axis wavelengths to keep
+        selProbe        = ProbeAxis >= min(ProbeLimits) & ProbeAxis <= max(ProbeLimits);
+        ProbeAxis       = ProbeAxis(selProbe);
         % Initialize variables
         data            = zeros(length(ProbeAxis),Ndelays);
+a=0;
         % Get the data to be plotted
         for m=1:Ndelays
-            data(:,m)   = transpose(sum(PROC_2D_DATA{m,k}(min(pump_indexes):max(pump_indexes),:),1));
+            data(:,m)   = sum(PROC_2D_DATA{m,k}(min(pump_indexes):max(pump_indexes),selProbe),1)';
+            if doNormalise == 1
+                data(:,m) = data(:,m)./max(abs(data(:,m)));
+            end
         end
         
         % Create a new figure
@@ -328,7 +337,9 @@ switch slice_options{slice_typeindx}
         % Add zero line
         hline = yline(axes2,0,'HandleVisibility','off');
         hline.Color = [0.5 0.5 0.5];
-            
+        
+        %%% Write data to file
+
     case 'Integrate along probe axis'
         switch interactivemode
             case 'Off'

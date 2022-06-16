@@ -70,7 +70,7 @@ Nfitpoints          = 3;
 N_pointsParabola    = round(Interp_order*Nfitpoints); % No. of X points to fit a parabola on each side of the peak: [-x (peak) +x]
 N_points_IvCLS      = 8;
 
-intensity_threshold = 50/100; % Intensity threshold for the linear fit to get the CLS or IvCLS
+intensity_threshold = 80/100; % Intensity threshold for the linear fit to get the CLS or IvCLS
 textcolor           = 'none'; % 'none' or RGB color
 fit_method          = 'LSQ'; % 'GA' or 'LSQ' for Genetic algorithm or Least-squares
 
@@ -188,9 +188,9 @@ for q=1:L
             Npeaks              = length(pump_indexes);
             min_values          = zeros(Npeaks,Ndelays);
             SpecDif_ind         = zeros(length(t2delays),1);
-            pump_cut            = cell(Ndelays);
-            CLS_Xdata           = cell(Ndelays);
-            CLS_Ydata           = cell(Ndelays);
+            pump_cut            = cell(Ndelays,1);
+            CLS_Xdata           = cell(Ndelays,1);
+            CLS_Ydata           = cell(Ndelays,1);
             for m=t2_idx
                 % Get the data around the minimum
                 [peak_val,peak_pos] = min(Interp_Data{m,k}(pump_indexes,probe_indexes),[],2);
@@ -222,8 +222,9 @@ for q=1:L
                 CLS_coeff           = coeffvalues(mdl);
                 SpecDif_ind(m)      = CLS_coeff(1);
                 % Save the spectral diffusion data
-                CLS_Xdata{m}        = PumpAxis{1,1}(pump_cut{m});
-                CLS_Ydata{m}        = min_values(above_threshold,:);
+                CLS_Xdata{m,1}        = PumpAxis{1,1}(pump_cut{m});
+                CLS_Ydata{m,1}        = mdl(CLS_Xdata{m,1});
+%                 CLS_Ydata{m,1}        = min_values(above_threshold,m);
             end
             SpecDif_name = 'CLS';
             % Save CLS to file
@@ -238,9 +239,9 @@ for q=1:L
             Npeaks              = length(probe_indexes);
             min_values          = zeros(Npeaks,Ndelays);
             SpecDif_ind         = zeros(Ndelays,1);
-            probe_cut           = cell(Ndelays);
-            IvCLS_Xdata         = cell(Ndelays);
-            IvCLS_Ydata         = cell(Ndelays);
+            probe_cut           = cell(Ndelays,1);
+            IvCLS_Xdata         = cell(Ndelays,1);
+            IvCLS_Ydata         = cell(Ndelays,1);
             for m=t2_idx
                 % Get the data around the minimum
                 [peak_val,peak_pos] = min(Interp_Data{m,k}(pump_indexes,probe_indexes),[],1);
@@ -269,7 +270,7 @@ for q=1:L
                 IvCLS_coeff         = coeffvalues(mdl);
                 SpecDif_ind(m)      = 1./IvCLS_coeff(1);
                 % Save the spectral diffusion data
-                IvCLS_Xdata{m}      = min_values(above_threshold,:);
+                IvCLS_Xdata{m}      = min_values(above_threshold,m);
                 IvCLS_Ydata{m}      = Interp_ProbeAxis(probe_cut{m});
             end
             SpecDif_name    = 'IvCLS';
@@ -289,9 +290,9 @@ for q=1:L
             Npeaks              = length(probe_indexes);
             min_values          = zeros(Npeaks,Ndelays);
             IvCLS_value         = zeros(Ndelays,1);
-            probe_cut           = cell(Ndelays);
-            IvCLS_Xdata         = cell(Ndelays);
-            IvCLS_Ydata         = cell(Ndelays);
+            probe_cut           = cell(Ndelays,1);
+            IvCLS_Xdata         = cell(Ndelays,1);
+            IvCLS_Ydata         = cell(Ndelays,1);
             for m=t2_idx
                 % Get the data around the minimum
                 [peak_val,peak_pos] = min(Interp_Data{m,k}(pump_indexes,probe_indexes),[],1);
@@ -320,7 +321,7 @@ for q=1:L
                 IvCLS_coeff         = coeffvalues(mdl);
                 IvCLS_value(m)      = 1./IvCLS_coeff(1);
                 % Save the spectral diffusion data
-                IvCLS_Xdata{m}      = min_values(above_threshold,:);
+                IvCLS_Xdata{m}      = min_values(above_threshold,m);
                 IvCLS_Ydata{m}      = Interp_ProbeAxis(probe_cut{m});
             end
 
@@ -331,9 +332,9 @@ for q=1:L
             Npeaks              = length(pump_indexes);
             min_values          = zeros(Npeaks,Ndelays);
             CLS_value           = zeros(Ndelays,1);
-            pump_cut            = cell(Ndelays);
-            CLS_Xdata           = cell(Ndelays);
-            CLS_Ydata           = cell(Ndelays);
+            pump_cut            = cell(Ndelays,1);
+            CLS_Xdata           = cell(Ndelays,1);
+            CLS_Ydata           = cell(Ndelays,1);
             for m=t2_idx
                 % Get the data around the minimum
                 [peak_val,peak_pos] = min(Interp_Data{m,k}(pump_indexes,probe_indexes),[],2);
@@ -363,7 +364,7 @@ for q=1:L
                 CLS_value(m)        = CLS_coeff(1);
                 % Save the spectral diffusion data
                 CLS_Xdata{m}        = PumpAxis{1,1}(pump_cut{m});
-                CLS_Ydata{m}        = min_values(above_threshold,:);
+                CLS_Ydata{m}        = min_values(above_threshold,m);
             end
             SpecDif_name = 'CLS';
 
