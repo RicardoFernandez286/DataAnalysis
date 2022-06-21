@@ -48,6 +48,9 @@ maxDabs             = max([abs(minabs),abs(maxabs)]);
 switch TitleOnOff
     case 'Noise'
         symcolrange = 0;
+        edgeCol = [0.5 0.5 0.5];
+    otherwise
+        edgeCol = 'flat';
 end
 
 if symcolrange == 1
@@ -73,9 +76,9 @@ if sum(Zdata{DET}(:),'omitnan') == 0
 end
 
 if plot_filledcontours == 1
-    surf(where,X,Y,Z,'LineStyle','-','EdgeColor','flat','FaceAlpha',0.8);
+    surf(where,X,Y,Z,'LineStyle','-','EdgeColor',edgeCol,'FaceAlpha',0.8);
 else
-    mesh(where,X,Y,Z,'LineStyle','-','EdgeColor','flat');
+    mesh(where,X,Y,Z,'LineStyle','-','EdgeColor',edgeCol);
 end
 
 switch TitleOnOff
