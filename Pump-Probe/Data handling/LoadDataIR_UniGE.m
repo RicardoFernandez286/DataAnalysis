@@ -35,7 +35,11 @@ end
 cmprobe = {tmp_probe(:)};
 
 % Read delays
-delays = readmatrix([fullName '.stg1'],'FileType','text','Delimiter','\t');
+try
+    delays = readmatrix([fullName '.stg1'],'FileType','text','Delimiter','\t');
+catch ERR
+    delays = readmatrix([fullName '.stg2'],'FileType','text','Delimiter','\t');
+end
 
 % Read first scan data and initialise variables
 scandata{1}(:,:,1)  = -1e3.*sign.*readmatrix([fullName '.top'],'FileType','text','Delimiter','\t');
@@ -53,10 +57,10 @@ end
 rawsignal{1} = zeros(Ndelays,Npixels);
 noise{1}     = zeros(Ndelays,Npixels);
 
-%% Read single scan data 
+%% Read single scan data
+scandata{1}         = zeros([size(rawsignal{1}) Nscans]);
+scan_err{1}         = zeros([size(rawsignal{1}) Nscans]);
 if Nscans >= 1
-    scandata{1}         = zeros([size(rawsignal{1}) Nscans]);
-    scan_err{1}         = zeros([size(rawsignal{1}) Nscans]);
     for s=2:Nscans
         fullName    = [rootdir filesep datafilename filesep fn{s}];
         scandata{1}(:,:,s)  = -1e3.*sign.*readmatrix([fullName '.top'],'FileType','text','Delimiter','\t');
@@ -65,10 +69,8 @@ if Nscans >= 1
     rawsignal{1}        = mean(scandata{1},3); % in mOD
 else
     Nscans      = NaN;
-    rawsignal{1}= scandata{1}(:,:,1);
-    noise{1}    = zeros(size(rawsignal{1}));
-    scandata    = [];
-    scan_err    = [];
+    rawsignal   = {scandata{1}};
+    noise       = {zeros(size(rawsignal{1}))};
 end
 
 if recalcScans == 1
