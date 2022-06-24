@@ -3,20 +3,20 @@ function data = LoadSpectrum(app,message)
 % Ricardo Fernandez-Teran / 09.11.2021 / v1.0a
 
 if ispc
-    [datafile, datapath, TYPE] = uigetfile({'*.2D','UoS TRIR';'*.dat','UniGE TA';'*.dat','UniGE nsTA';'*ds0_intensity*.csv','UZH Lab 2'},message);
+    [datafile, datapath, TYPE] = uigetfile({'*.2D','UoS TRIR';'*.dat','UniGE TA';'*.dat','UniGE nsTA';'*ds0_intensity*.csv','UZH Lab 2';'*.dat','UniGE NIR-TA'},message);
 else
     [datafile, datapath, TYPE] = uigetfile('*.*');
-    
     qf = uifigure;
     qf.Position(3:4) = [405 170];
-    calType = uiconfirm(qf,'Select Calibration Type:','Calibration Type','Options',{'UoS TRIR';'UniGE TA';'UniGE nsTA';'UZH Lab 2'},'DefaultOption',1,'Icon','question');
+    calType = uiconfirm(qf,'Select Calibration Type:','Calibration Type','Options',{'UoS TRIR';'UniGE TA';'UniGE nsTA';'UZH Lab 2';'UniGE NIR-TA'},'DefaultOption',1,'Icon','question');
     delete(qf);
 
     switch calType
-        case 'UoS TRIR';    TYPE = 1;
-        case 'UniGE TA';    TYPE = 2;
-        case 'UniGE nsTA';  TYPE = 3;
-        case 'UZH Lab 2';   TYPE = 4;
+        case 'UoS TRIR';        TYPE = 1;
+        case 'UniGE TA';        TYPE = 2;
+        case 'UniGE nsTA';      TYPE = 3;
+        case 'UZH Lab 2';       TYPE = 4;
+        case 'UniGE NIR-TA';    TYPE = 5;
     end
 end
 
@@ -57,13 +57,14 @@ switch TYPE
         app.CAL_data.Gratings   = Gratings;
         app.CAL_data.CWL        = CWL;
         
-    case 2 % UniGE TA
+    case {2,5} % UniGE TA or NIR-TA
         rawdata = readmatrix([datapath filesep datafile],'FileType','text','Delimiter','\t');
-        data{1} = rawdata(:,3);
-                
+        data{1} = rawdata(:,3);   
+    
     case 3 % UniGE nsTA
         rawdata = readmatrix([datapath filesep datafile],'FileType','text','Delimiter','\t');
         data{1} = rawdata(:,2);
+    
     case 4 % UZH Lab 2
         rawdata = readmatrix([datapath filesep datafile],'FileType','text','Delimiter','\t');
         data{1} = rawdata(:,1);
