@@ -15,10 +15,14 @@ datadir_fn  = {datadir_fl.name};
 scanfiles   = datadir_fn(contains(datadir_fn(:),'.top','IgnoreCase',true));
 
 Nscans      = length(scanfiles);
-
 [~,fn,~]    = fileparts(scanfiles);
 
-fullName    = [rootdir filesep datafilename filesep fn{1}];
+if Nscans > 1
+    fullName    = [rootdir filesep datafilename filesep fn{1}];
+else
+    fullName    = [rootdir filesep datafilename filesep fn];
+end
+
 % If there is a calibrated WL file in the current EXPDIR, use it
 wavenumberfile  = 'CalibratedProbe.csv';
 if exist([datadir filesep wavenumberfile],'file') == 2 % it's inside the data folder
@@ -58,19 +62,21 @@ rawsignal{1} = zeros(Ndelays,Npixels);
 noise{1}     = zeros(Ndelays,Npixels);
 
 %% Read single scan data
-scandata{1}         = zeros([size(rawsignal{1}) Nscans]);
-scan_err{1}         = zeros([size(rawsignal{1}) Nscans]);
-if Nscans >= 1
-    for s=2:Nscans
+
+if Nscans > 1
+    scandata{1}     = zeros([size(rawsignal{1}) Nscans]);
+    scan_err{1}     = zeros([size(rawsignal{1}) Nscans]);
+    for s=1:Nscans
         fullName    = [rootdir filesep datafilename filesep fn{s}];
         scandata{1}(:,:,s)  = -1e3.*sign.*readmatrix([fullName '.top'],'FileType','text','Delimiter','\t');
     end
-    noise{1}            = std(scandata{1},0,3); % in mOD
-    rawsignal{1}        = mean(scandata{1},3); % in mOD
+    noise{1}        = std(scandata{1},0,3); % in mOD
+    rawsignal{1}    = mean(scandata{1},3); % in mOD
 else
-    Nscans      = NaN;
-    rawsignal   = {scandata{1}};
+    Nscans      = 1;
+    rawsignal   = scandata(1);
     noise       = {zeros(size(rawsignal{1}))};
+    scan_err{1} = zeros([size(rawsignal{1}) Nscans]);
 end
 
 if recalcScans == 1
