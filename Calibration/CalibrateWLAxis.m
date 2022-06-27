@@ -109,7 +109,7 @@ for i=1:Ndet
             RefX_cut    = RefX(cutID(1):cutID(2));
             RefY_cut    = RefY(cutID(1):cutID(2));
         case 5  % UniGE NIR-TA
-            minRefX  = 800;
+            minRefX  = 830;
             maxRefX  = 1450;
 
             cutID    = sort(findClosestId2Val(RefX,[minRefX maxRefX]));
@@ -186,8 +186,8 @@ for i=1:Ndet
             p0 = [248 175 60  2   -0.5  ];
             LB = [100 100 30  0.1 -1    ];
             UB = [370 240 90  5   +1    ];
-            ftol= 1e-12;
-            stol= 1e-12;
+            ftol= 5e-7;
+            stol= 5e-7;
     end
     
     if doFit == 1
