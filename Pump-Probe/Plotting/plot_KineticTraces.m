@@ -2,7 +2,7 @@ function [figNum,k,ydata] = plot_KineticTraces(DataStruct,DET,data,overlay,figNu
 
 %% Hardcoded Settings
 FontSize = 16; % 18 for papers (single column figure), 14 for presentations (can vary)
-ResPlotStyle = '-o';
+ResPlotStyle = 'o';
 %% Decide whether we want residuals or not
 if ~isempty(varargin)
     resplot = varargin{1};

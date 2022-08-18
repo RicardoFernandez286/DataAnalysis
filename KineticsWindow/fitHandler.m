@@ -188,10 +188,14 @@ beginTau            = (1+length(IsFixIRF)-sum(IsFixIRF));
 
 FitTaus             = pFit(beginTau:end);
 ErrTaus             = pErr(beginTau:end);
+
+TAU_fit             = zeros(size(Tau0_tbl(:,1)));
+TAU_err             = zeros(size(Tau0_tbl(:,1)));
+
 TAU_fit(IsFixTau)   = FixP;
 TAU_fit(~IsFixTau)  = FitTaus;
 TAU_err(IsFixTau)   = NaN;
-TAU_err(~IsFixTau)  = ErrTaus(~IsFixTau);
+TAU_err(~IsFixTau)  = ErrTaus;
 
 Ntaus               = length(TAU_fit);
 
