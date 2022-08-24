@@ -1,4 +1,4 @@
-function Photoisomerisation()
+function UVVis_Photoisomerisation()
 % Calculate and plot photoisomerisation difference spectra from .txt files
 % CURRENT VERSION v1.0
 
