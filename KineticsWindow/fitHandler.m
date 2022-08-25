@@ -1,4 +1,4 @@
-function [Dbest,res,CConc,Sfit] = fitHandler(doFit,PP_Data,KineticModel,ExtraPlots,Model_pFID,CutData)
+function [Dbest,res,CConc,Sfit] = fitHandler(doFit,PP_Data,KineticModel,ExtraPlots,Model_pFID,CutData,NormaliseSAS)
 
 %% Disable some warnings
 warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
@@ -27,8 +27,8 @@ end
 
 %% Extract Kmat function and main parameters from kinetic model
 Kmat_Fun    = KineticModel.Kmat_Fun;
-% numC        = KineticModel.numC;
-% numTaus     = KineticModel.numTaus;
+numC        = KineticModel.numC;
+numTaus     = KineticModel.numTaus;
 C0          = KineticModel.C0;
 modelType   = KineticModel.modelType;
 %% Convert Rate table to fit parameters and boundaries
@@ -106,6 +106,7 @@ fitOptions = optimoptions('lsqnonlin',...
                 'Display','off',...
                 'PlotFcn',{'optimplotresnorm_log','optimplotx'});
     
+%% Do fit or calculate 
 % Determine whether a fit is to be done or just plot the initial guess
 if doFit == 1
     tic;
@@ -155,9 +156,39 @@ end
 
 %% Display fit results in command window
 fprintf('\n**********************************');
-fprintf('\n=======================\n\t Fit Results\n(%s)\n=======================\n',datetime)
+fprintf('\n=======================\n\t Fit Results\n(%s)\n=======================',datetime)
+fprintf('\nDataset: "%s"\n',PP_Data.datafilename)
+switch modelType
+    case 'Parallel'
+        fprintf('\nFit Model: Parallel, %i components',numC);
+    case 'Sequential'
+        fprintf('\nFit Model: Sequential, %i components',numC);
+    case 'Target'
+        fprintf('\nFit Model: Target\n\t%s',KineticModel.TargetModel);
+    case 'ODE-defined'
+        fprintf('NOT IMPLEMENTED!');
+end
+fprintf('\n');
+
 if doFit == 1
-    fprintf('Fit done in %.2f s\n\n',tfit);
+    fprintf('Fit done in %.2f s\n',tfit);
+    switch exitflag
+        case 1
+            exitflag_str = 'Function converged to a solution x.';
+        case 2
+            exitflag_str = 'Change in parameters is less than the specified tolerance, or Jacobian at current parameters is undefined.';
+        case 3
+            exitflag_str = 'Change in the residual is less than the specified tolerance.';
+        case 4
+            exitflag_str = 'Relative magnitude of search direction is smaller than the step tolerance.';
+        case 0
+            exitflag_str = 'Number of iterations or function evaluations exceeded';
+        case -1 
+            exitflag_str = 'A plot function or output function stopped the solver.';
+        case -2
+            exitflag_str = 'Problem is infeasible: the bounds lb and ub are inconsistent.';
+    end
+    fprintf('[%s]\n\n',exitflag_str)
 else
     fprintf('Preview only. No fit done.\n\n');
 end
@@ -174,14 +205,14 @@ end
 if GauIRF == 1
     if IsFixIRF(2) == 1
         FWHM = FixIRF(end);
-        fprintf('FWHM = %.3f %s**\n\n',FWHM,timescale)
+        fprintf('FWHM = %.3f %s**\n[Gaussian IRF assumed]\n\n',FWHM,timescale)
     else
         FWHM    = pFit(2-IsFixIRF(1));
         FWHMerr = pErr(2-IsFixIRF(1));
-        fprintf('FWHM = %.3f ± %.3f %s\n\n',FWHM,FWHMerr,timescale)
+        fprintf('FWHM = %.3f ± %.3f %s\n[Gaussian IRF assumed]\n\n',FWHM,FWHMerr,timescale)
     end
 else
-    fprintf('Delta-shaped IRF assumed.\n\n')
+    fprintf('[Delta-shaped IRF assumed]\n\n')
 end
 
 beginTau            = (1+length(IsFixIRF)-sum(IsFixIRF));
@@ -209,7 +240,7 @@ end
     fprintf('\n# of fixed IRF parameters: %i',sum(IsFixIRF));
     fprintf('\n# of fixed Time Constants: %i',sum(IsFixTau));
 
-fprintf('\n\nchi^2 = %.3g\n',chi2);
+fprintf('\n\nchi^2 = %.4g\n',chi2);
 fprintf('**********************************\n');
 
 %% Plot results
@@ -233,7 +264,7 @@ else
 end
 
 
-% Concentration profiles
+%%%%% Concentration profiles
 % ax = subplot(2,1,1,axA);
 fhA1     = figure(3);
 clf(fhA1);
@@ -270,7 +301,7 @@ end
 ax.TickLength   = [0.02 0.02];
 % ax.TickDir      = 'both';
 
-% SAS
+%%%%%% SAS
 % ax = subplot(2,1,2);
 fhA2     = figure(4);
 clf(fhA2);
@@ -347,8 +378,15 @@ for i=1:nC
         otherwise
             name = char(64+i);
     end
-   
-    plot(WL,Sfit(i,:),'Color',cmapR(i,:),'LineWidth',2,'DisplayName',name);
+    switch NormaliseSAS
+        case 0
+            plot(WL,Sfit(i,:),'Color',cmapR(i,:),'LineWidth',2,'DisplayName',name);
+            Yname = 'Amplitude (mOD)';
+        case 1
+            plot(WL,Sfit(i,:)./max(abs(Sfit(i,:))),'Color',cmapR(i,:),'LineWidth',2,'DisplayName',name);
+            Yname = 'Norm. SAS Amplitude';
+    end
+    
 end
 hold(ax,'off')
 legend('location','best');
@@ -359,12 +397,19 @@ ax.Box      = 'on';
 ax.FontSize = FontSize;
 
 xlabel(ax,[probelabel ' (' Xunits ')'],'FontWeight','bold')
-ylabel(ax,'Amplitude (mOD)','FontWeight','bold')
+ylabel(ax,Yname,'FontWeight','bold')
 
 ax.TickLength   = [0.02 0.02];
 % ax.TickDir      = 'both';
 
 drawnow;
+
+%%% Plot SVD of residuals
+% [U,s,W] = svd(res(selT,selWL),'vector');
+% plotSVD = 4;
+% clf(figure(4));
+% plot(t(selT),U(:,plotSVD)'); ax=gca; ax.XScale = 'log'; yline(0);
+% plot(WL(selWL),W(:,plotSVD)'); yline(0);
 
 if ExtraPlots == 0
     return
@@ -439,13 +484,13 @@ title(ax1,'(A) Data','FontAngle','italic');
 title(ax2,'(B) Fit','FontAngle','italic');
 title(ax3,'(C) Residuals','FontAngle','italic');
 
-xlabel(ax1,[probelabel '(' Xunits ')'],'FontWeight','bold')
-xlabel(ax2,[probelabel '(' Xunits ')'],'FontWeight','bold')
-xlabel(ax3,[probelabel '(' Xunits ')'],'FontWeight','bold')
+xlabel(ax1,[probelabel ' (' Xunits ')'],'FontWeight','bold')
+xlabel(ax2,[probelabel ' (' Xunits ')'],'FontWeight','bold')
+xlabel(ax3,[probelabel ' (' Xunits ')'],'FontWeight','bold')
 
-ylabel(ax1,'Time (s)','FontWeight','bold')
-ylabel(ax2,'Time (s)','FontWeight','bold')
-ylabel(ax3,'Time (s)','FontWeight','bold')
+ylabel(ax1,['Time (' timescale ')'],'FontWeight','bold')
+ylabel(ax2,['Time (' timescale ')'],'FontWeight','bold')
+ylabel(ax3,['Time (' timescale ')'],'FontWeight','bold')
 
 % Increase Font Size
 ax1.FontSize = 14;
@@ -465,6 +510,15 @@ ax3.TickLength = [0.02 0.02];
 title(cb1,{'\DeltaAbs (mOD)'})
 title(cb2,{'\DeltaAbs (mOD)'})
 title(cb3,{'\DeltaAbs (mOD)'})
+
+% Change X+Y limits to the fitted ranges
+xlim(ax1,[Lmin Lmax]);
+if tmin < 0
+    tminPlot = min(tplot(tplot>0));
+else
+    tminPlot = tmin;
+end
+ylim(ax1,[tminPlot tmax]);
 
 drawnow;
 

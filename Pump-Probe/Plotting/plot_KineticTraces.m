@@ -6,6 +6,9 @@ ResPlotStyle = 'o';
 %% Decide whether we want residuals or not
 if ~isempty(varargin)
     resplot = varargin{1};
+    if resplot ~= 1
+        overlay = 0;
+    end
 end
 
 %% Get the data to be plotted
