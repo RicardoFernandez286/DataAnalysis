@@ -13,6 +13,14 @@ function Ct = kineticsKmat_simu(t,K,C0,MakePlot,NameArray)
 % Tested and implemented in MATLAB R2021b
 % v1.0
 
+%% Disable some warnings
+warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
+warning('off','MATLAB:Axes:NegativeDataInLogAxis');
+warning('off','MATLAB:singularMatrix');
+warning('off','MATLAB:illConditionedMatrix');
+warning('off','MATLAB:nearlySingularMatrix');
+warning('off','MATLAB:rankDeficientMatrix');
+
 %% Build Concentration Matrix
 EigenVal = 1;   % Set to zero in order to use the matrix exponential calculation,
                 % otherwise use the eigenvalue/eigenvector method of Berberan-Santos and Martinho.
