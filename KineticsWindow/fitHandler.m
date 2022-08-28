@@ -93,7 +93,7 @@ timescale   = PP_Data.timescale;
 probelabel  = PP_Data.probeunits;
 Xunits      = PP_Data.Xunits;
 
-%% Now we are ready to set the fit options (TO BE READ IN THE FUTURE, CONTINUEHERE)
+%% Read Fit Options
 p0eps = p0_all;
 p0eps(p0_all==0)=1e-6; %#ok<*NASGU> 
 
@@ -117,11 +117,13 @@ switch Method
         PSOoptions = optimoptions('particleswarm',...
                         'FunctionTolerance',1e-6,...
                         'MaxIterations',350,...
-                        'InitialSwarmSpan',2*(UB_all - LB_all),...
                         'Display','off',...
                         'PlotFcn',{'pswplotbestf','optimplot_bestx'},...
                         'UseVectorized',false,...
                         'UseParallel',doParallel);
+        if sum(isinf(UB_all - LB_all))==0
+            PSOoptions.InitialSwarmSpan = 2*(UB_all - LB_all);
+        end
     case 'Genetic Algorithm'
         GAoptions = optimoptions('ga',...
             'Display','off',...
@@ -129,6 +131,23 @@ switch Method
             'PlotFcn',{'gaplotbestf','gaplotbestindiv_txt'}, ...
             'UseParallel',doParallel, ...
             'UseVectorized',false);
+    case 'Constrained Fit (fmincon)'
+        FMCopt = optimoptions('fmincon', ...
+            'ConstraintTolerance',1e-3, ...
+            'FiniteDifferenceType','central', ...
+            'MaxFunctionEvaluations',15000,...
+            'MaxIterations',350,...
+            'OptimalityTolerance',1e-15,...
+            'StepTolerance',1e-15,...
+            'Display','off',...
+            'Algorithm','sqp',...
+            'FunctionTolerance',1e-15,...
+            'PlotFcn',{'optimplotfval','optimplotx_txt'});
+            
+            fprintf('\nNon-linear constraints require additional input:\n')
+            t1 = input('  Enter Tau1 (TCSPC) in ns: ');
+            t2 = input('  Enter Tau2 (TCSPC) in ns: ');
+            TCSPC = [t1 t2];
 end
 
 
@@ -136,19 +155,23 @@ end
 % Determine whether a fit is to be done or just plot the initial guess
 if doFit == 1
     tic;
+    Nvars = length(p0_all);
     switch Method
         case {'Levenberg-Marquardt','Trust-Region-Reflective'}
             [pFit,~,~,exitflag,output,~,J] = lsqnonlin(@(p) FitFunc(p,t,Kmat_Fun,C0,Dexp,GauIRF,FixTAU,IsFixTau,FixIRF,IsFixIRF,Model_pFID),p0_all,LB_all,UB_all,fitOptions);
         case 'Particle Swarm'
-            Nvars = length(p0_all);
             fitfun = @(p) norm(FitFunc(p,t,Kmat_Fun,C0,Dexp,GauIRF,FixTAU,IsFixTau,FixIRF,IsFixIRF,Model_pFID)).^2;
+            
             [pFit,~,exitflag,output] = particleswarm(fitfun,Nvars,LB_all,UB_all,PSOoptions);
         case 'Genetic Algorithm'
-            Nvars = length(p0_all);
             fitfun = @(p) norm(FitFunc(p,t,Kmat_Fun,C0,Dexp,GauIRF,FixTAU,IsFixTau,FixIRF,IsFixIRF,Model_pFID)).^2;
+            
             [pFit,~,exitflag,output] = ga(fitfun,Nvars,[],[],[],[],LB_all,UB_all,[],GAoptions);
         case 'Constrained Fit (fmincon)'
+            fitfun = @(p) norm(FitFunc(p,t,Kmat_Fun,C0,Dexp,GauIRF,FixTAU,IsFixTau,FixIRF,IsFixIRF,Model_pFID)).^2;
+            nlc = @(p) nlcon(p,TCSPC,FixTAU,IsFixTau,IsFixIRF);
             
+            [pFit,~,exitflag,output,~,grad,hessian] = fmincon(fitfun,p0_all,[],[],[],[],LB_all,UB_all,nlc,FMCopt);
     end
     
     tfit=toc;
@@ -156,18 +179,27 @@ if doFit == 1
     res     = Dexp-Dbest;
     chi2    = norm(res).^2./(numel(res)-length(pFit)-Nfix-1);
 
-    switch Method
-        case {'Levenberg-Marquardt','Trust-Region-Reflective'}
-            % First, calculate covariance matrix from the Jacobian
-            covB = chi2.*inv(J'*J);
-            % This calculates the 95 % confidence intervals
-            ci   = nlparci(pFit,res,'covar',covB);
-            % Take errors as the difference between the parameter and the lower ci
-            pErr = diff(ci,1,2)./2;
-        case 'Constrained Fit (fmincon)'
-
-        otherwise
-            pErr = NaN.*zeros(Nvars,1);
+    if exitflag == -1
+        pErr = NaN.*zeros(Nvars,1);
+    else
+        switch Method
+            case {'Levenberg-Marquardt','Trust-Region-Reflective'}
+                % First, calculate covariance matrix from the Jacobian
+                covB = chi2.*inv(J'*J);
+                % This calculates the 95 % confidence intervals
+                ci   = nlparci(pFit,res,'covar',covB);
+                % Take errors as the difference between the parameter and the lower ci
+                pErr = diff(ci,1,2)./2;
+            case 'Constrained Fit (fmincon)'
+                % First, calculate covariance matrix from the Jacobian
+                covB = chi2.*inv(hessian);
+                % This calculates the 95 % confidence intervals
+                ci   = nlparci(pFit,res,'covar',covB);
+                % Take errors as the difference between the parameter and the lower ci
+                pErr = diff(ci,1,2)./2;
+            otherwise
+                pErr = NaN.*zeros(Nvars,1);
+        end
     end
 else
     pFit    = p0_all;
@@ -244,7 +276,7 @@ if doFit == 1
                 case 0
                     exit_str = 'Number of iterations or function evaluations exceeded';
                 case -1 
-                    exit_str = 'A plot function or output function stopped the solver.';
+                    exit_str = 'Optimization terminated by output or plot function.';
                 case -2
                     exit_str = 'Problem is infeasible: the bounds lb and ub are inconsistent.';
             end
@@ -256,7 +288,7 @@ if doFit == 1
                 case 0
                     exit_str = 'Number of iterations exceeded.';
                 case -1
-                    exit_str = 'Iterations stopped by output or plot function.';
+                    exit_str = 'Optimization terminated by output or plot function.';
                 case -2
                     exit_str = 'Problem is infeasible: the bounds LB and UB are inconsistent.';
                 case -3
@@ -280,7 +312,7 @@ if doFit == 1
                 case 0
                     exit_str = 'Maximum number of generations exceeded.';
                 case -1
-                    exit_str = 'Optimization terminated by output or plot fuunction.';
+                    exit_str = 'Optimization terminated by output or plot function.';
                 case -2
                     exit_str = 'No feasible point found.';
                 case -4
@@ -288,7 +320,22 @@ if doFit == 1
                 case -5
                     exit_str = 'Time limit exceeded.';
             end
-
+        case 'Constrained Fit (fmincon)'
+            switch exitflag
+                case 1
+                    exit_str = 'Gradient norm less than tolerance, params. within bounds ± ConstTol.';
+                case 0
+                    exit_str = 'Number of iterations exceeded.';
+                case -1
+                    exit_str = 'Optimization terminated by output or plot function.';
+                case -2
+                    exit_str = 'No feasible point found.';
+                case 2
+                    exit_str = 'Change in parameters less than StepTol, params. within bounds ± ConstTol.';
+            end
+            [~,nlc_val] = nlc(pFit);
+            fprintf('\tNon-linear constraints: %.3g | %.3g\n',nlc_val(1),nlc_val(2));
+            fprintf('\t%i Iterations, %i Func. Evals.\n',output.iterations,output.funcCount);
     end
     fprintf('\t[%s]\n\n',exit_str)
 else
@@ -675,4 +722,19 @@ function [res,Dfit,CConc,Sfit] = FitFunc(p,t,Kmodel,C0,Dexp,GauIRF,FixTAU,IsFixT
     
     % Calculate Residuals
     res     = Dexp-Dfit;
+end
+
+%% This auxiliary function calculates the nonlinear constrains for a specific model
+function [c,ceq] = nlcon(p,TCSPC,FixTAU,IsFixTau,IsFixIRF)
+    beginTau  = (1+length(IsFixIRF)-sum(IsFixIRF));
+    FitTaus             = p(beginTau:end);
+    AllTaus(IsFixTau)   = FixTAU;
+    AllTaus(~IsFixTau)  = FitTaus;
+    k         = 1./AllTaus;
+    
+    c = [];
+    lam1 = 0.5.*(-sum(k(2:5)) - sqrt(sum(k(2:5)).^2 - 4.*(k(3).*k(4)+k(2).*k(5)+k(3).*k(5)))) + 1./TCSPC(1);
+    lam2 = 0.5.*(-sum(k(2:5)) + sqrt(sum(k(2:5)).^2 - 4.*(k(3).*k(4)+k(2).*k(5)+k(3).*k(5)))) + 1./TCSPC(2);
+    
+    ceq = [lam1,lam2];
 end
