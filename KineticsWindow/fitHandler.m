@@ -1,4 +1,7 @@
-function [Dbest,res,CConc,Sfit] = fitHandler(doFit,PP_Data,KineticModel,ExtraPlots,Model_pFID,CutData,NormaliseSAS)
+function [Dbest,res,CConc,Sfit,FitStruct] = fitHandler(doFit,PP_Data,KineticModel,ExtraPlots,Model_pFID,CutData,NormaliseSAS,Method)
+
+%% Hardcoded settings
+doParallel = true;
 
 %% Disable some warnings
 warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
@@ -6,6 +9,7 @@ warning('off','MATLAB:Axes:NegativeDataInLogAxis');
 warning('off','MATLAB:singularMatrix');
 warning('off','MATLAB:illConditionedMatrix');
 warning('off','MATLAB:nearlySingularMatrix');
+warning('off','MATLAB:rankDeficientMatrix');
 
 %% Extract IRF parameters and convert to fit parameters and boundaries
 GauIRF      = KineticModel.IRF.GauIRF;  % Decide whether to do Gaussian IRF or not (otherwise Heaviside)
@@ -43,13 +47,13 @@ if Nfix == 0
     p0_Tau   = Tau0_tbl(:,1)';
     UB_Tau   = Tau0_tbl(:,2)';
     LB_Tau   = Tau0_tbl(:,3)';
-    FixP     = [];
+    FixTAU   = [];
     FixIRF   = [];
 else
     p0_Tau   = Tau0_tbl(~IsFixTau,1)';
     UB_Tau   = Tau0_tbl(~IsFixTau,2)';
     LB_Tau   = Tau0_tbl(~IsFixTau,3)';
-    FixP     = Tau0_tbl(IsFixTau,1)';
+    FixTAU   = Tau0_tbl(IsFixTau,1)';
     if GauIRF == 1
         FixIRF   = IRF_tbl(IsFixIRF,1)';
     else
@@ -91,45 +95,98 @@ Xunits      = PP_Data.Xunits;
 
 %% Now we are ready to set the fit options (TO BE READ IN THE FUTURE, CONTINUEHERE)
 p0eps = p0_all;
-p0eps(p0_all==0)=eps; %#ok<*NASGU> 
+p0eps(p0_all==0)=1e-6; %#ok<*NASGU> 
 
-fitOptions = optimoptions('lsqnonlin',...
-                'MaxFunctionEvaluations',15000,...
-                'MaxIterations',350,...
-                'Algorithm','levenberg-marquardt',...
-                'FiniteDifferenceType','central',...
-                'OptimalityTolerance',1e-15,...
-                'FunctionTolerance',1e-15,...
-                'StepTolerance',1e-15,...
-                'UseParallel',false,...
-                'ScaleProblem','Jacobian',...
-                'Display','off',...
-                'PlotFcn',{'optimplotresnorm_log','optimplotx'});
-    
+switch Method
+    case {'Levenberg-Marquardt','Trust-Region-Reflective'}
+        fitOptions = optimoptions('lsqnonlin',...
+                        'MaxFunctionEvaluations',15000,...
+                        'MaxIterations',350,...
+                        'Algorithm',Method,...
+                        'FiniteDifferenceType','central',...
+                        'OptimalityTolerance',1e-15,...
+                        'FunctionTolerance',1e-15,...
+                        'StepTolerance',1e-15,...
+                        'UseParallel',false,...
+                        'ScaleProblem','Jacobian',...
+                        'TypicalX',p0eps,...
+                        'Display','off',...
+                        'UseParallel',false,...
+                        'PlotFcn',{'optimplotresnorm_log','optimplotx_txt'});
+    case 'Particle Swarm'
+        PSOoptions = optimoptions('particleswarm',...
+                        'FunctionTolerance',1e-6,...
+                        'MaxIterations',350,...
+                        'InitialSwarmSpan',2*(UB_all - LB_all),...
+                        'Display','off',...
+                        'PlotFcn',{'pswplotbestf','optimplot_bestx'},...
+                        'UseVectorized',false,...
+                        'UseParallel',doParallel);
+    case 'Genetic Algorithm'
+        GAoptions = optimoptions('ga',...
+            'Display','off',...
+            'MaxGenerations',100,...
+            'PlotFcn',{'gaplotbestf','gaplotbestindiv_txt'}, ...
+            'UseParallel',doParallel, ...
+            'UseVectorized',false);
+end
+
+
 %% Do fit or calculate 
 % Determine whether a fit is to be done or just plot the initial guess
 if doFit == 1
     tic;
-    [pFit,resnorm,~,exitflag,output,~,J] = lsqnonlin(@(p) FitFunc(p,t,Kmat_Fun,C0,Dexp,GauIRF,FixP,IsFixTau,FixIRF,IsFixIRF,Model_pFID),p0_all,LB_all,UB_all,fitOptions); %#ok<*ASGLU> 
+    switch Method
+        case {'Levenberg-Marquardt','Trust-Region-Reflective'}
+            [pFit,~,~,exitflag,output,~,J] = lsqnonlin(@(p) FitFunc(p,t,Kmat_Fun,C0,Dexp,GauIRF,FixTAU,IsFixTau,FixIRF,IsFixIRF,Model_pFID),p0_all,LB_all,UB_all,fitOptions);
+        case 'Particle Swarm'
+            Nvars = length(p0_all);
+            fitfun = @(p) norm(FitFunc(p,t,Kmat_Fun,C0,Dexp,GauIRF,FixTAU,IsFixTau,FixIRF,IsFixIRF,Model_pFID)).^2;
+            [pFit,~,exitflag,output] = particleswarm(fitfun,Nvars,LB_all,UB_all,PSOoptions);
+        case 'Genetic Algorithm'
+            Nvars = length(p0_all);
+            fitfun = @(p) norm(FitFunc(p,t,Kmat_Fun,C0,Dexp,GauIRF,FixTAU,IsFixTau,FixIRF,IsFixIRF,Model_pFID)).^2;
+            [pFit,~,exitflag,output] = ga(fitfun,Nvars,[],[],[],[],LB_all,UB_all,[],GAoptions);
+        case 'Constrained Fit (fmincon)'
+            
+    end
+    
     tfit=toc;
-    [~,Dbest,CConc,Sfit] = FitFunc(pFit,t,Kmat_Fun,C0,Dexp,GauIRF,FixP,IsFixTau,FixIRF,IsFixIRF,Model_pFID);
+    [~,Dbest,CConc,Sfit] = FitFunc(pFit,t,Kmat_Fun,C0,Dexp,GauIRF,FixTAU,IsFixTau,FixIRF,IsFixIRF,Model_pFID);
     res     = Dexp-Dbest;
-    chi2    = resnorm./(numel(res)-length(pFit)-Nfix-1);
+    chi2    = norm(res).^2./(numel(res)-length(pFit)-Nfix-1);
 
-    % First, calculate covariance matrix from the Jacobian
-    covB = chi2.*inv(J'*J);
-    % This calculates the 95 % confidence intervals
-    ci   = nlparci(pFit,res,'covar',covB);
-    % Take errors as the difference between the parameter and the lower ci
-    pErr = diff(ci,1,2)./2;
+    switch Method
+        case {'Levenberg-Marquardt','Trust-Region-Reflective'}
+            % First, calculate covariance matrix from the Jacobian
+            covB = chi2.*inv(J'*J);
+            % This calculates the 95 % confidence intervals
+            ci   = nlparci(pFit,res,'covar',covB);
+            % Take errors as the difference between the parameter and the lower ci
+            pErr = diff(ci,1,2)./2;
+        case 'Constrained Fit (fmincon)'
 
+        otherwise
+            pErr = NaN.*zeros(Nvars,1);
+    end
 else
     pFit    = p0_all;
-    [~,Dbest,CConc,Sfit] = FitFunc(pFit,t,Kmat_Fun,C0,Dexp,GauIRF,FixP,IsFixTau,FixIRF,IsFixIRF,Model_pFID);
+    [~,Dbest,CConc,Sfit] = FitFunc(pFit,t,Kmat_Fun,C0,Dexp,GauIRF,FixTAU,IsFixTau,FixIRF,IsFixIRF,Model_pFID);
     res     = Dexp-Dbest;
-    chi2    = NaN;
+    chi2    = norm(res).^2./(numel(res)-length(pFit)-Nfix-1);
     pErr    = NaN(size(pFit));
 end
+
+% Store in output structure (FitStruct) for further reference
+FitStruct.pFit      = pFit;
+FitStruct.pErr      = pErr;
+FitStruct.GauIRF    = GauIRF;
+FitStruct.FixTAU    = FixTAU;
+FitStruct.FixIRF    = FixIRF;
+FitStruct.IsFixTau  = IsFixTau;
+FitStruct.IsFixIRF  = IsFixIRF;
+FitStruct.chi2      = chi2;
+FitStruct.FitDone   = doFit;
 
 %% If the data was previously cut, fill with NaNs
 if CutData == 1
@@ -171,24 +228,69 @@ end
 fprintf('\n');
 
 if doFit == 1
-    fprintf('Fit done in %.2f s\n',tfit);
-    switch exitflag
-        case 1
-            exitflag_str = 'Function converged to a solution x.';
-        case 2
-            exitflag_str = 'Change in parameters is less than the specified tolerance, or Jacobian at current parameters is undefined.';
-        case 3
-            exitflag_str = 'Change in the residual is less than the specified tolerance.';
-        case 4
-            exitflag_str = 'Relative magnitude of search direction is smaller than the step tolerance.';
-        case 0
-            exitflag_str = 'Number of iterations or function evaluations exceeded';
-        case -1 
-            exitflag_str = 'A plot function or output function stopped the solver.';
-        case -2
-            exitflag_str = 'Problem is infeasible: the bounds lb and ub are inconsistent.';
+    fprintf('\nFit done in %.2f s\n',tfit);
+    fprintf('Method: %s\n',Method);
+    switch Method
+        case {'Levenberg-Marquardt','Trust-Region-Reflective'}
+            switch exitflag
+                case 1
+                    exit_str = 'Function converged to a solution x.';
+                case 2
+                    exit_str = 'Change in parameters is less than the specified tolerance, or Jacobian at current parameters is undefined.';
+                case 3
+                    exit_str = 'Change in the residual is less than the specified tolerance.';
+                case 4
+                    exit_str = 'Relative magnitude of search direction is smaller than the step tolerance.';
+                case 0
+                    exit_str = 'Number of iterations or function evaluations exceeded';
+                case -1 
+                    exit_str = 'A plot function or output function stopped the solver.';
+                case -2
+                    exit_str = 'Problem is infeasible: the bounds lb and ub are inconsistent.';
+            end
+            fprintf('\t %i Iterations, %i Func. Evals.\n',output.iterations,output.funcCount);
+        case 'Particle Swarm'
+            switch exitflag
+                case 1
+                    exit_str = 'May have converged!, relative change in SSR over the last iterations is < FuncTol.';
+                case 0
+                    exit_str = 'Number of iterations exceeded.';
+                case -1
+                    exit_str = 'Iterations stopped by output or plot function.';
+                case -2
+                    exit_str = 'Problem is infeasible: the bounds LB and UB are inconsistent.';
+                case -3
+                    exit_str = 'The best objective function value is below the objective limit.';
+                case -4
+                    exit_str = 'Best objective function value did not change within allowed run time.';
+                case -5
+                    exit_str = 'Run time exceeded maximum allowed run time.';
+            end
+            fprintf('\t %i Iterations, %i Func. Evals.\n',output.iterations,output.funccount);
+        case 'Genetic Algorithm'
+            switch exitflag
+                case 1
+                    exit_str = 'Average cumulative change in SSR < FuncTol, and params. within bounds ± ConstTol.';
+                case 3
+                    exit_str = 'Change in SSR < FuncTol, and params. within bounds ± ConstTol.';
+                case 4
+                    exit_str = 'Magnitude of step smaller than eps and params. within bounds ± ConstTol.';
+                case 5
+                    exit_str = 'Maximum fitness reached.';
+                case 0
+                    exit_str = 'Maximum number of generations exceeded.';
+                case -1
+                    exit_str = 'Optimization terminated by output or plot fuunction.';
+                case -2
+                    exit_str = 'No feasible point found.';
+                case -4
+                    exit_str = 'Stall time limit exceeded.';
+                case -5
+                    exit_str = 'Time limit exceeded.';
+            end
+
     end
-    fprintf('[%s]\n\n',exitflag_str)
+    fprintf('\t[%s]\n\n',exit_str)
 else
     fprintf('Preview only. No fit done.\n\n');
 end
@@ -223,7 +325,7 @@ ErrTaus             = pErr(beginTau:end);
 TAU_fit             = zeros(size(Tau0_tbl(:,1)));
 TAU_err             = zeros(size(Tau0_tbl(:,1)));
 
-TAU_fit(IsFixTau)   = FixP;
+TAU_fit(IsFixTau)   = FixTAU;
 TAU_fit(~IsFixTau)  = FitTaus;
 TAU_err(IsFixTau)   = NaN;
 TAU_err(~IsFixTau)  = ErrTaus;
@@ -244,7 +346,6 @@ fprintf('\n\nchi^2 = %.4g\n',chi2);
 fprintf('**********************************\n');
 
 %% Plot results
-drawnow;
 %%% Plot the concentration profiles and SAS
 % fhA     = figure(3);
 % clf(fhA);
@@ -306,6 +407,7 @@ ax.TickLength   = [0.02 0.02];
 fhA2     = figure(4);
 clf(fhA2);
 fhA2.Position(3:4) = [700 410];
+fhA2.Position(2) = fhA1.Position(2) - 500;
 movegui(fhA2,'onscreen')
 
 ax = axes('parent',fhA2);
@@ -533,11 +635,11 @@ end
 %%%%%%%%%%%%%%%%% EOF
 
 %% This auxilliary function calculates the fit dataset
-function [res,Dfit,CConc,Sfit] = FitFunc(p,t,Kmodel,C0,Dexp,GauIRF,FixT,IsFixTau,FixIRF,IsFixIRF,Model_pFID)
+function [res,Dfit,CConc,Sfit] = FitFunc(p,t,Kmodel,C0,Dexp,GauIRF,FixTAU,IsFixTau,FixIRF,IsFixIRF,Model_pFID)
     beginTau            = (1+length(IsFixIRF)-sum(IsFixIRF));
     FitTaus             = p(beginTau:end);
-    AllTaus(IsFixTau)   = 1./FixT;
-    AllTaus(~IsFixTau)  = 1./FitTaus;
+    AllRates(IsFixTau)  = 1./FixTAU;
+    AllRates(~IsFixTau) = 1./FitTaus;
 
     % Read parameters off the parameter vector (p)
     if IsFixIRF(1) == 1
@@ -547,7 +649,7 @@ function [res,Dfit,CConc,Sfit] = FitFunc(p,t,Kmodel,C0,Dexp,GauIRF,FixT,IsFixTau
     end
 
     % Build the K matrix. Note that in the fit we are using k=1/tau
-    Kmat    = Kmodel(AllTaus);
+    Kmat    = Kmodel(AllRates);
     Conc_fn = @(t) kineticsKmat_simu(t,Kmat,C0,0,[]);
 
     if GauIRF == 1

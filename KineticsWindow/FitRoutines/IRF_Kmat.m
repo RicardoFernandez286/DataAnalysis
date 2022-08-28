@@ -12,9 +12,17 @@ function [CConc,tIRF,simIRF,NConc] = IRF_Kmat(t,K,C0,w,t0)
 %
 % Outputs:      Ct = concentration matrix (nt x N)
 %
-% Tested and implemented in MATLAB R2021b
-% v1.0
+% Tested and implemented in MATLAB R2021b / runs in MATLAB R2022a
+% v1.1 / 2022.08.27 / Ricardo Fernández-Terán
 % 
+
+%% Disable some warnings
+warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
+warning('off','MATLAB:Axes:NegativeDataInLogAxis');
+warning('off','MATLAB:singularMatrix');
+warning('off','MATLAB:illConditionedMatrix');
+warning('off','MATLAB:nearlySingularMatrix');
+warning('off','MATLAB:rankDeficientMatrix');
 
 % Gaussian IRF function (area-normalised Gaussian function)
 IRFfnc      = @(T,T0,W) (2./W)*sqrt(log(2)/pi)*exp(-4*log(2).*((T-T0)./W).^2)';

@@ -1,4 +1,4 @@
-function stop = optimplotresnorm(x,optimValues,state,varargin)
+function stop = optimplotresnorm_log(x,optimValues,state,varargin)
 % OPTIMPLOTRESNORM Plot value of the norm of residuals at each iteration.
 %
 %   STOP = OPTIMPLOTRESNORM(X,OPTIMVALUES,STATE) plots OPTIMVALUES.resnorm.
