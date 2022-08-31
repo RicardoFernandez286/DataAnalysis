@@ -1,4 +1,4 @@
-function plot2D(app,Zdata,where,TitleOnOff,k)
+function plot2D(app,Zdata,where,TitleOnOff,k,varargin)
 % Description: This function will make a contour plot of transient data
 % Usage: handles = plot2D(dataStruct,Zdata,where,TitleOnOff)
 % Inputs:
@@ -10,7 +10,7 @@ function plot2D(app,Zdata,where,TitleOnOff,k)
 % Outputs:
 %     plot
 % 
-% Ricardo Fernandez-Teran / 07.04.2019 / v3.0a
+% Ricardo Fernandez-Teran / 31.08.2022 / v3.1b
 
 %% READ from Data Structure
 dataStruct          = app.PP_Data;
@@ -33,6 +33,12 @@ LineStyle           = app.PP_ContourFormat.Value;
 plot_colourscheme   = app.PP_ColourScheme.Value;
 
 linlog_time         = dataStruct.linlog;
+
+if ~isempty(varargin)
+   quickPlot = varargin{1};
+else
+   quickPlot = false;
+end
 
 %% Parse the plot ranges
 delaylim            = plotranges(1:2); %delaylim = [Min Max]
@@ -80,14 +86,14 @@ if sum(abs(Zdata{k}(:)),'omitnan') == 0
     return
 end
 
-if numel(Zdata{k}) <= 2048*100
+if quickPlot || numel(Zdata{k}) >= 2048*100
+    pcolor(where,X,Y,Z);
+else
     if plot_filledcontours == 1
         contourf(where,X,Y,Z,plot_contours,'LineStyle','-','LineColor','flat');
     else
         contour(where,X,Y,Z,plot_contours,'LineStyle','-','LineColor','flat');
     end
-else
-        pcolor(where,X,Y,Z);
 end    
 
 %% Make the plot format nice:
