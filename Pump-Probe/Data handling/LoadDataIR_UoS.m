@@ -116,6 +116,14 @@ else
     delays = mean(delays_S,2);
 end
 
+% Set timescale
+if max(delays) > 5000
+    delays = delays./1000;
+    dataStruct.timescale    = 'ns';
+else
+    dataStruct.timescale    = 'ps';
+end
+
 for j=1:2
     % Noise and ranges
     noise{j}        = zeros(size(rawsignal{j}));
@@ -148,9 +156,6 @@ dataStruct.SNR          = abs(round(zminmax/dataStruct.AvgNoise,3));
 dataStruct.Nscans       = Nscans;
 dataStruct.scandata     = scandata;
 dataStruct.scanNoise    = scandata;
-
-% Set timescale
-dataStruct.timescale    = 'ps';
 
 %% Background correction
 if recalcScans == 1
