@@ -4,7 +4,14 @@ function dataStruct = LoadDataIR_UoS(dataStruct,recalcScans)
 rootdir     = dataStruct.rootdir;
 datafilename= dataStruct.datafilename;
 
-DetSz       = [96 96 32 32]; % Sizes of [probe1 probe2 ref1 ref2] in pixels
+ActiveDet = 1;
+
+switch ActiveDet
+    case 1
+        DetSz   = 96;
+    case 2
+        DetSz   = [96 96 32 32]; % Sizes of [probe1 probe2 ref1 ref2] in pixels
+end
 
 SortScans   = 1;
 
@@ -43,7 +50,7 @@ else
     est_probe   = cell(1,2);
 
     % Estimate probe axis, arbitrary calibration factors
-    for i=1:2
+    for i=1:ActiveDet
         switch Gratings(i)
             case 0 % 120 l/mm
                 ppnm    = 0.168;
@@ -68,7 +75,9 @@ switch probe_calib
         cmprobe         = est_probe;
     case 2
         cmprobe{1}      = tmp_probe(1:96);
-        cmprobe{2}      = tmp_probe(97:end);
+        if ActiveDet == 2
+            cmprobe{2}      = tmp_probe(97:end);
+        end
 end
 
 Ndelays         = length(delays);
@@ -86,7 +95,7 @@ if recalcScans == 1
     Nscans          = 0;
 else
     %% Split Data into two detectors
-    for j=1:2
+    for j=1:ActiveDet
         idx = (1:DetSz(j)) + sum(DetSz(1:j-1));
         rawsignal{j}    = rawdata(:,idx);
     
@@ -124,7 +133,7 @@ else
     dataStruct.timescale    = 'ps';
 end
 
-for j=1:2
+for j=1:ActiveDet
     % Noise and ranges
     noise{j}        = zeros(size(rawsignal{j}));
     % Read the plot ranges
@@ -162,7 +171,7 @@ if recalcScans == 1
     dataStruct.recalcBkg = 0;
 end
 
-for j=1:2
+for j=1:ActiveDet
     % Background Subtraction
     if dataStruct.recalcBkg == 0
         % Subtract the first negative delay from all the dataset by default - otherwise take the inputs
