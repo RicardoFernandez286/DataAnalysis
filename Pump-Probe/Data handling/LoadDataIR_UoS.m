@@ -4,7 +4,7 @@ function dataStruct = LoadDataIR_UoS(dataStruct,recalcScans)
 rootdir     = dataStruct.rootdir;
 datafilename= dataStruct.datafilename;
 
-ActiveDet = 1;
+ActiveDet = 2;
 
 switch ActiveDet
     case 1
