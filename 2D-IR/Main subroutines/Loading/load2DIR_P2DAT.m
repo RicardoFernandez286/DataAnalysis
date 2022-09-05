@@ -1,9 +1,8 @@
-function  dataStruct = load2DIR_RALproc(dataStruct,varargin)
+function  dataStruct = load2DIR_P2DAT(dataStruct,varargin)
 
-% Description: This function loads pre-processed 2DIR data from the ULTRA LIFEtime experiment at the
-% Central Laser Facility of the Rutherford Appelton Laboratory.
+% Description: This function loads pre-processed 2DIR data that has been saved in the P2DAT format (XYZZZZZZ)
 %
-% Usage: dataStruct = load2DIRsimu(dataStruct)
+% Usage: dataStruct = load2DIR_P2DAT(dataStruct)
 % Inputs:
 %   dataStruct structure with fields:
 %     datafilename
@@ -24,10 +23,9 @@ function  dataStruct = load2DIR_RALproc(dataStruct,varargin)
 %     interferogram     (Cell array)
 %     signal			(Cell array)
 %
-% Ricardo Fernandez-Teran / 22.04.2022 / v1.1b
+% Ricardo Fernandez-Teran / 05.09.2022 / v1.0a
 
 %% HARDCODED Settings
-DetSz = [128 128]; % Probe 1 / Probe 2
 dt1 = 1; % Since the data is already in frequency domain
 
 %% READ from dataStruct
@@ -40,23 +38,29 @@ end
 datafilename    = dataStruct.datafilename;
 rootdir         = dataStruct.rootdir;
 
-%% Load all the necessary files after checking that they exist
-datadir     = [rootdir filesep datafilename];
-datadir_fl  = dir(datadir);
-datadir_fn  = {datadir_fl.name};
+%% Load Data
+dataXYZZ = readmatrix([rootdir filesep datafilename],'FileType','text');
+Ndelays  = size(dataXYZZ,2) - 2; % 1st two columns contain the pump and probe axes
 
-[~,fn,~]    = fileparts({datadir_fn{contains(datadir_fn(:),'2DIR.csv','IgnoreCase',1)}});
+[pump,probe,~] = xyz2mat(dataXYZZ(:,1:3));
 
-Ndelays     = length(fn);
-fn_cell     = cell(Ndelays,1);
-t2delays_u  = zeros(Ndelays,1);
+w1      = pump(2:end);
+w3      = probe(2:end);
 
-for m=1:Ndelays
-    fn_cell{m}    = strsplit(fn{m},'_');
-    t2delays_u(m) = str2double(erase(fn_cell{m}{end-1},'ps'));
-end
+Nbins   = length(w1);
+Npix    = length(w3);
 
-[t2delays,idx] = sort(t2delays_u); % Delays are already in ps
+if Ndelays > 0
+bins            = (1:Nbins)';
+
+signal          = cell(Ndelays,2);
+t1delays        = cell(Ndelays,2);
+dummy_cell      = cell(Ndelays,1);
+dummy_Onescell  = cell(Ndelays,1);
+PumpAxis        = cell(Ndelays,1);
+PROC_2D_DATA    = cell(Ndelays,1);
+
+progress = 0;
 
 % Create progress bar and clear error string
 if ShowWaitBar == 1
@@ -67,22 +71,6 @@ if ShowWaitBar == 1
     dataStruct.WaitBar                  = uiprogressdlg(dataStruct.WBfigure,'Title','2D-IR data processing...','Message','Loading data...','Icon','info','ShowPercentage','on','Cancelable','on');
     dataStruct.ErrorText.String         = "";
 end
-
-
-if Ndelays > 0
-rawdata = readmatrix([datadir filesep fn{1} '.csv']);
-    
-Nbins   = size(rawdata,2)-1;
-bins    = (1:Nbins)';
-w3      = rawdata(2:end,1);
-
-ProbeAxis       = cell(2,1);
-signal          = cell(Ndelays,2);
-t1delays        = cell(Ndelays,2);
-dummy_cell      = cell(Ndelays,1);
-dummy_Onescell  = cell(Ndelays,1);
-PumpAxis        = cell(Ndelays,1);
-PROC_2D_DATA    = cell(Ndelays,1);
 
 for m=1:Ndelays 
     if ShowWaitBar == 1
@@ -97,31 +85,22 @@ for m=1:Ndelays
         drawnow;
     end
     
-    rawdata = readmatrix([datadir filesep fn{idx(m)} '.csv']);
-    for k=1:2 % Ndetectors
-        ProbeIdx = (1:DetSz(k)) + sum(DetSz(1:k-1));
-        dummy_cell{m,k}     = 0;
-        dummy_Onescell{m,k} = ones(Nbins,1);
-        binzero{m,k}        = 1; % Because we are using the shaper
-        binspecmax(m,k)     = 1; %#ok<*AGROW> 
+    k=1; % only ONE detector since we're dealing with P2DAT files
+    dummy_cell{m,k}     = 0;
+    dummy_Onescell{m,k} = ones(Nbins,1);
+    binzero{m,k}        = 1; % Because we are using the shaper
+    binspecmax(m,k)     = 1; %#ok<*AGROW> 
         
-        signal{m,k}         = zeros(Nbins,DetSz(k));
-        t1delays{m,k}       = [bins bins.*dt1];
-        PumpAxis{m,k}       = rawdata(1,2:end)';
-%         if m==12
-%             s=1;
-%         else
-            s=-1;
-%         end
-        PROC_2D_DATA{m,k}   = s*1000*rawdata(ProbeIdx,2:end)';
-    end
+    signal{m,k}         = zeros(Nbins,Npix);
+    t1delays{m,k}       = [bins bins.*dt1];
+    PumpAxis{m,k}       = w1;
+    PROC_2D_DATA{m,k}   = reshape(dataXYZZ(2:end,m+2),[Nbins Npix]);
 end
-for k=1:2
-    ProbeIdx = (1:DetSz(k)) + sum(DetSz(1:k-1));
-    ProbeAxis{k} = w3(ProbeIdx);
-end
+    
+    ProbeAxis = {w3'};
+    t2delays  = dataXYZZ(1,3:end)';
 %% WRITE to dataStruct (Load)
-    dataStruct.isSimulation  = 0;
+    dataStruct.isSimulation  = -1; % Hack to deal with P2DAT files!
     dataStruct.isShaper      = 1;
     dataStruct.cmprobe       = ProbeAxis;
     dataStruct.bins          = bins;

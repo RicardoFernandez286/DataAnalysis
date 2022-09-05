@@ -1,4 +1,4 @@
-function varargout = ContourPlot_2DIR(plotOptions,dataStruct,plotaxis,k)
+function varargout = ContourPlot_2DIR(plotOptions,dataStruct,plotaxis,k,varargin)
 
 % Description: This function will make a 2D contour plot of phased 2D-IR data.
 % Usage: dataStruct = ContourPlot_2DIR(plotOptions,dataStruct,plotaxis)
@@ -8,117 +8,105 @@ function varargout = ContourPlot_2DIR(plotOptions,dataStruct,plotaxis,k)
 % Outputs:
 %     (plot)
 %     plotLimits.min/max_cut
-% Ricardo Fernández-Terán / 20.04.2022 / v7.0b
+% Ricardo Fernández-Terán / 05.09.2022 / v8.0c
 
+%% READ from dataStruct
+if ~isempty(varargin)
+   quickPlot = varargin{1};
+else
+   quickPlot = false;
+end
+
+% Hardcoded values
+cut_threshold       = 10; % Percentage of max intensity to cut for plotting
+LineWidth           = 0.5;
+plot_limittype      = 'Local'; % 'Global' will take min/max of the whole 2D set, while 'Local' will take only the selected region
+interpolate         = 0;
 debug=0;
+
 cla(plotaxis);
 
 FitContourlineColor = 0.5*[1 1 1];
 LineColor           = 0.4*[1 1 1];
 % FontSize = 14;
 FontSize = 21;
-%% DEBUG/MANUAL:
-if debug==1
-    Ncontours=50;
-    ContourLineStyle='none';
-    
-    plot_Nwhites=0;
-    plot_colourrange=100;
-    plot_contourfill=1;
-    plot_showcontours=1;
-    
-    popdelay=1;
-    plot_pumpdirection  = 'Horizontal';
-    plot_axislegend     = 1;
-    plot_colourscheme   = 'Red/blue'; % 'Red/blue' 'Jet' 'Blue/DRed'
-    plot_skiplevels     = 0;
-    t2_delay_ps         = dataStruct.t2_delay_ps;
+
+% Read data
+ProbeAxis           = dataStruct.ProbeAxis{k};
+PumpAxis            = dataStruct.PumpAxis;
+PROC_2D_DATA        = dataStruct.PROC_2D_DATA;
+PumpSpectrum        = dataStruct.phased_FFTZPint;
+
+% Read from GUI
+cut                 = plotOptions.cut;
+minWL_pump          = plotOptions.minWL_pump;
+maxWL_pump          = plotOptions.maxWL_pump;
+minWL_probe         = plotOptions.minWL_probe;
+maxWL_probe         = plotOptions.maxWL_probe;
+plot_pumpdirection  = plotOptions.plot_pumpdirection;
+plot_contourfill    = plotOptions.plot_contourfill;
+plot_Nwhites        = plotOptions.plot_Nwhites;
+Ncontours           = plotOptions.Ncontours;
+ContourLineStyle    = plotOptions.ContourLineStyle; 
+plot_axislegend     = plotOptions.plot_axislegend; % "Omega", "Pump-probe" or "w pump-probe"
+plot_colourrange    = plotOptions.plot_colourrange; % Percent of minabs/maxabs for the color range
+plot_colourscheme   = plotOptions.plot_colourscheme;
+plot_showcontours   = plotOptions.plot_showcontours;
+plot_skiplevels     = plotOptions.plot_skiplevels;
+symcolrange         = plotOptions.symcolrange;
+squarebox           = plotOptions.squarebox;
+plotVersion         = plotOptions.plotVersion;
+
+switch plotOptions.TextBackground
+    case 1
+        textBGcolor = 'w';
+    case 0
+        textBGcolor = 'none';
 end
 
-%% READ from dataStruct
-% Hardcoded values
-    cut_threshold       = 10; % Percentage of max intensity to cut for plotting
-    LineWidth           = 0.5;
-    plot_limittype      = 'Local'; % 'Global' will take min/max of the whole 2D set, while 'Local' will take only the selected region
-    interpolate         = 0;
-% Read data
-    ProbeAxis           = dataStruct.ProbeAxis{k};
-    PumpAxis            = dataStruct.PumpAxis;
-    PROC_2D_DATA        = dataStruct.PROC_2D_DATA;
-    PumpSpectrum        = dataStruct.phased_FFTZPint;
-    
-if debug==0
-  % Read from GUI
-    cut                 = plotOptions.cut;
-    minWL_pump          = plotOptions.minWL_pump;
-    maxWL_pump          = plotOptions.maxWL_pump;
-    minWL_probe         = plotOptions.minWL_probe;
-    maxWL_probe         = plotOptions.maxWL_probe;
-    plot_pumpdirection  = plotOptions.plot_pumpdirection;
-    plot_contourfill    = plotOptions.plot_contourfill;
-    plot_Nwhites        = plotOptions.plot_Nwhites;
-    Ncontours           = plotOptions.Ncontours;
-    ContourLineStyle    = plotOptions.ContourLineStyle; 
-    plot_axislegend     = plotOptions.plot_axislegend; % "Omega", "Pump-probe" or "w pump-probe"
-    plot_colourrange    = plotOptions.plot_colourrange; % Percent of minabs/maxabs for the color range
-    plot_colourscheme   = plotOptions.plot_colourscheme;
-    plot_showcontours   = plotOptions.plot_showcontours;
-    plot_skiplevels     = plotOptions.plot_skiplevels;
-    symcolrange         = plotOptions.symcolrange;
-    squarebox           = plotOptions.squarebox;
-    plotVersion         = plotOptions.plotVersion;
-    
-    switch plotOptions.TextBackground
-        case 1
-            textBGcolor = 'w';
-        case 0
-            textBGcolor = 'none';
-    end
-    
-    popdelay            = plotOptions.popdelay;
-    
-    t2delays            = dataStruct.t2delays;
-    Ndelays             = length(t2delays);
-    if isfield(dataStruct,'t2_fitrange') ~=0
-        t2_fitrange     = dataStruct.t2_fitrange;
-        t2_fitdelays    = dataStruct.t2_fitdelays;
-    end
-    
-    % Read the selection
-    m = popdelay;
-    if dataStruct.isShaper == 0 && cut == 1
-        cut=2; % 0 or 1 for UZH, 2 for Sheffield data
-    elseif cut ~= 0
-        cut=1;
-    end
+popdelay            = plotOptions.popdelay;
 
-    % Determine if spectral diffusion analysis have been performed or not and whether to plot them
-    if plotOptions.ShowSpecDiff && dataStruct.SpecDiff
-        Plot_SpecDiff   = 1;
-        % Get the spectral diffusion data from dataStruct
-        CLS_Xdata   = dataStruct.CLS_Xdata;
-        CLS_Ydata   = dataStruct.CLS_Ydata;
-        IvCLS_Xdata = dataStruct.IvCLS_Xdata;
-        IvCLS_Ydata = dataStruct.IvCLS_Ydata;
-        NLS_Xdata   = dataStruct.NLS_Xdata;
-        NLS_Ydata   = dataStruct.NLS_Ydata;
-    else
-        Plot_SpecDiff   = 0;
-    end
-    
-    plotFitResults      = plotOptions.plotFitResults;
-    plotResidualsFit    = plotOptions.plotResidualsFit;
-    
-    % Determine whether the data is transient 2D or not, then read the delays
-    if dataStruct.Transient2D == 1
-        Transient2D         = 1;
-        delays              = dataStruct.t2delays(popdelay,:);
-        t2_delay_ps         = delays(1);
-        UV_delay_ps         = delays(2);
-    else
-        Transient2D         = 0;
-        t2_delay_ps         = dataStruct.t2delays(popdelay,1);
-    end
+t2delays            = dataStruct.t2delays;
+Ndelays             = length(t2delays);
+if isfield(dataStruct,'t2_fitrange') ~=0
+    t2_fitrange     = dataStruct.t2_fitrange;
+    t2_fitdelays    = dataStruct.t2_fitdelays;
+end
+
+% Read the selection
+m = popdelay;
+if dataStruct.isShaper == 0 && cut == 1
+    cut=2; % 0 or 1 for UZH, 2 for Sheffield data
+elseif cut ~= 0
+    cut=1;
+end
+
+% Determine if spectral diffusion analysis have been performed or not and whether to plot them
+if plotOptions.ShowSpecDiff && dataStruct.SpecDiff
+    Plot_SpecDiff   = 1;
+    % Get the spectral diffusion data from dataStruct
+    CLS_Xdata   = dataStruct.CLS_Xdata;
+    CLS_Ydata   = dataStruct.CLS_Ydata;
+    IvCLS_Xdata = dataStruct.IvCLS_Xdata;
+    IvCLS_Ydata = dataStruct.IvCLS_Ydata;
+    NLS_Xdata   = dataStruct.NLS_Xdata;
+    NLS_Ydata   = dataStruct.NLS_Ydata;
+else
+    Plot_SpecDiff   = 0;
+end
+
+plotFitResults      = plotOptions.plotFitResults;
+plotResidualsFit    = plotOptions.plotResidualsFit;
+
+% Determine whether the data is transient 2D or not, then read the delays
+if dataStruct.Transient2D == 1
+    Transient2D         = 1;
+    delays              = dataStruct.t2delays(popdelay,:);
+    t2_delay_ps         = delays(1);
+    UV_delay_ps         = delays(2);
+else
+    Transient2D         = 0;
+    t2_delay_ps         = dataStruct.t2delays(popdelay,1);
 end
 
 %% Plot the data
@@ -126,10 +114,11 @@ end
 hold(plotaxis,'off');
 
 % Cut the datasets in half (if raw data, only half the frequencies are real)
-if dataStruct.isSimulation == 0
-    L                   = round(length(PumpAxis{m,k})/2);
-else
-    L                   = length(PumpAxis{m,k});
+switch dataStruct.isSimulation 
+    case 0
+        L       = round(length(PumpAxis{m,k})/2);
+    otherwise
+        L       = length(PumpAxis{m,k});
 end
 
 PROC_2D_DATA{m,k}   = PROC_2D_DATA{m,k}(1:L,:);
@@ -270,16 +259,19 @@ case 'Horizontal' % New way
         omegaPP_y   = ['\omega_{probe} ' probeunits];
 end
 
-% Make the contour plot
-
-switch plot_contourfill
-    case 1
-        contourf(plotaxis,X,Y,Z,plot_contours,'LineColor','flat','LineStyle',ContourLineStyle,'LineWidth',LineWidth);
+switch quickPlot
     case 0
-        contour(plotaxis,X,Y,Z,plot_contours,'LineColor','flat','LineStyle',ContourLineStyle,'LineWidth',LineWidth);
+        % Make the contour plot
+        switch plot_contourfill
+            case 1
+                contourf(plotaxis,X,Y,Z,plot_contours,'LineColor','flat','LineStyle',ContourLineStyle,'LineWidth',LineWidth);
+            case 0
+                contour(plotaxis,X,Y,Z,plot_contours,'LineColor','flat','LineStyle',ContourLineStyle,'LineWidth',LineWidth);
+        end
+    case 1
+        pcolor(plotaxis,X,Y,Z);
+        plot_showcontours = 0;
 end
-
-% dlmwrite([dataStruct.datafilename '_traces.dat'],[[0,X'];[Y,Z]])
 
 %% Make the plot format nice
 
