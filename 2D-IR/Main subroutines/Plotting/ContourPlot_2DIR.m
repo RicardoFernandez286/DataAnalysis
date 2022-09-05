@@ -431,7 +431,9 @@ if Transient2D
 
 % If NOT transient 2D
 else
-    text(plotaxis,0.05,0.925,['t_{2} = ' t2_delay_ps ' ' timescale],...
+%     t2String = ['t_{2} = ' t2_delay_ps ' ' timescale];
+    t2String = [t2_delay_ps ' ' timescale];
+    text(plotaxis,0.05,0.925,t2String,...
         'Units','normalized','FontSize',12,'FontWeight','bold','BackgroundColor',textBGcolor,'FontSize',FontSize);
 end
 
@@ -540,7 +542,10 @@ if isfield(dataStruct,'FitResults') ~= 0  && ~isempty(dataStruct.FitResults) && 
 end
 
 %% Show the plot
-plotaxis.Visible='On';
+plotaxis.Visible    = 'On';
+plotaxis.Box        = 'On';
+plotaxis.Layer      = 'Top';
+plotaxis.FontSize   = FontSize;
 switch squarebox
     case 1
         plotaxis.PlotBoxAspectRatio     = [1 1 1];
@@ -551,7 +556,6 @@ switch squarebox
         plotaxis.DataAspectRatioMode    = 'auto';
         plotaxis.PlotBoxAspectRatioMode = 'auto';
 end
-
 %% Export the plot ranges (if requested)
 currentPlotLimits.max_cut = max_cut;
 currentPlotLimits.min_cut = min_cut;
