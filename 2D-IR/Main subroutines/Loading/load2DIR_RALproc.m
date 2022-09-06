@@ -30,6 +30,8 @@ function  dataStruct = load2DIR_RALproc(dataStruct,varargin)
 DetSz = [128 128]; % Probe 1 / Probe 2
 dt1 = 1; % Since the data is already in frequency domain
 
+SIGN = +1; % In case I want to invert the data for whatever reason (e.g. wrong signal calculation)
+
 %% READ from dataStruct
 if isempty(varargin)
     ShowWaitBar = true;
@@ -108,12 +110,7 @@ for m=1:Ndelays
         signal{m,k}         = zeros(Nbins,DetSz(k));
         t1delays{m,k}       = [bins bins.*dt1];
         PumpAxis{m,k}       = rawdata(1,2:end)';
-%         if m==12
-%             s=1;
-%         else
-            s=-1;
-%         end
-        PROC_2D_DATA{m,k}   = s*1000*rawdata(ProbeIdx,2:end)';
+        PROC_2D_DATA{m,k}   = SIGN*1000*rawdata(ProbeIdx,2:end)';
     end
 end
 for k=1:2

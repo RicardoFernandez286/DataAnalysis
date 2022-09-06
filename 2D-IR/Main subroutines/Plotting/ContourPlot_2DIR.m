@@ -22,14 +22,13 @@ cut_threshold       = 10; % Percentage of max intensity to cut for plotting
 LineWidth           = 0.5;
 plot_limittype      = 'Local'; % 'Global' will take min/max of the whole 2D set, while 'Local' will take only the selected region
 interpolate         = 0;
-debug=0;
 
 cla(plotaxis);
 
 FitContourlineColor = 0.5*[1 1 1];
 LineColor           = 0.4*[1 1 1];
-% FontSize = 14;
-FontSize = 21;
+% FontSize            = 14;
+FontSize            = 21;
 
 % Read data
 ProbeAxis           = dataStruct.ProbeAxis{k};
@@ -174,8 +173,8 @@ switch plot_limittype
 end
 
 % Trim the data
-proc2Ddata          = PROC_2D_DATA{m,k}(minindex:maxindex,probelim);
-PumpAxis{m,k}       = PumpAxis{m,k}(minindex:maxindex);
+proc2Ddata      = PROC_2D_DATA{m,k}(minindex:maxindex,probelim);
+PumpAxis{m,k}   = PumpAxis{m,k}(minindex:maxindex);
 
 % Get overall maxmimum of positive and negative deltaAbs
 maxDabs = max([abs(minabs),abs(maxabs)]);
