@@ -48,10 +48,10 @@ if FileName ~= 0
             end
         case 1
             try
-                SSdata  = readmatrix(SteadySpecfile);
+                SSdata  = readmatrix(SteadySpecfile,'FileType','text');
             catch err
                 try
-                    SSdata  = readmatrix(SteadySpecfile,'Delimiter',',');
+                    SSdata  = readmatrix(SteadySpecfile,'Delimiter',',','FileType','text');
                 catch err
                     return
                 end
