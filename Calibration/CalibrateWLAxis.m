@@ -232,8 +232,8 @@ for i=1:Ndet
 
     switch CalType
         case {1,4,6,7} % IR Setups UoS, UZH Lab 2, RAL LIFEtime
-            MeasX = 1:Npix(i);
-            lam(:,i)    = flipud(MeasX./Pfit(i,2) + Pfit(i,1));
+            MeasX       = 1:Npix(i);
+            lam(:,i)    = flipud(MeasX(:)./Pfit(i,2) + Pfit(i,1));
         case 5
             % Need to numerically invert the pixel(lambda) function to get lambda(pixel)
             wl_map      = 1e7./(5000:0.1:20000)';

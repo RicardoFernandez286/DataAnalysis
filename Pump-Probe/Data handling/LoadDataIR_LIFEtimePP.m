@@ -1,6 +1,6 @@
 function dataStruct = LoadDataIR_LIFEtimePP(dataStruct,recalcScans)
 %% READ from dataStruct
-% Get stuff from dataStruct
+% Get stuff from dataStruct 
 rootdir     = dataStruct.rootdir;
 datafilename= dataStruct.datafilename;
 
@@ -45,8 +45,8 @@ elseif exist([rootdir filesep wavenumberfile],'file') == 2
     probe_calib = 2;
     tmp_probe   = readmatrix([rootdir filesep wavenumberfile]);
 else  
-    probe_calib = 2;
-    tmp_probe   = 1:256;
+    probe_calib = 0;
+    est_probe   = 1:256;
 end
 
 switch probe_calib

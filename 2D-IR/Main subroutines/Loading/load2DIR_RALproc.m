@@ -31,6 +31,7 @@ DetSz = [128 128]; % Probe 1 / Probe 2
 dt1 = 1; % Since the data is already in frequency domain
 
 SIGN = +1; % In case I want to invert the data for whatever reason (e.g. wrong signal calculation)
+w0p = 1200;
 
 %% READ from dataStruct
 if isempty(varargin)
@@ -109,7 +110,7 @@ for m=1:Ndelays
         
         signal{m,k}         = zeros(Nbins,DetSz(k));
         t1delays{m,k}       = [bins bins.*dt1];
-        PumpAxis{m,k}       = rawdata(1,2:end)';
+        PumpAxis{m,k}       = rawdata(1,2:end)'+w0p;
         PROC_2D_DATA{m,k}   = SIGN*1000*rawdata(ProbeIdx,2:end)';
     end
 end
