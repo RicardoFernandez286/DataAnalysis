@@ -30,7 +30,7 @@ function  dataStruct = load2DIR_RALproc(dataStruct,varargin)
 DetSz = [128 128]; % Probe 1 / Probe 2
 dt1 = 1; % Since the data is already in frequency domain
 
-SIGN = -1; % In case I want to invert the data for whatever reason (e.g. wrong signal calculation)
+SIGN = +1; % In case I want to invert the data for whatever reason (e.g. wrong signal calculation)
 
 %% READ from dataStruct
 if isempty(varargin)
