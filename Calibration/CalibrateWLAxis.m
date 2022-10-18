@@ -8,18 +8,19 @@ doFit = 1;
 %% Read from input structure
 CalType     = CAL_data.CalType;
 
-if CalType == 1
-    Ndet = 2;
-else
-    Ndet = 1;
+switch CalType
+    case {1,6,7}; Ndet = 2;
+    otherwise;    Ndet = 1;
 end
 
 MeasY_all   = CAL_data.AbsSolvent;
 
 for i=1:Ndet
     MeasY   = MeasY_all{i};
-    MeasX   = 1:length(MeasY);
-
+    Npix(i) = length(MeasY);
+    MeasX   = 1:Npix(i);
+    
+    % Reference (standard) spectrum
     RefX    = CAL_data.CalX;
     RefY    = CAL_data.CalY;
 
@@ -29,19 +30,22 @@ for i=1:Ndet
     RefX    = reshape(RefX,[],1);
     RefY    = reshape(RefY,[],1);
 
-    % If we're doing IR calibration, convert to nm since the grating is linear in nm
-    % The X axis of the reference spectrum is converted to nm, and the Y experimental data is flipped around
+    % If we're doing IR calibration, convert standard spectral axis to nm since the grating is linear in nm
+    % The X axis of the reference [standard] spectrum is converted to nm, and the Y experimental data is flipped around
     switch CalType
-        case 1 % UoS 2DIR/TRIR
+        case {1,4} % {UoS 2DIR/TRIR, UZH Lab 2}
             Gratings    = CAL_data.Gratings;
             CWL         = CAL_data.CWL;
             RefX        = 1e7./RefX;
             MeasY       = flipud(MeasY);
-        case 4 % UZH Lab 2
-            Gratings    = CAL_data.Gratings;
+        case {6,7} % {RAL Abs, Ral Int}
             CWL         = CAL_data.CWL;
             RefX        = 1e7./RefX;
             MeasY       = flipud(MeasY);
+            
+            % Remove NaNs from measured data
+            MeasX = MeasX(~isnan(MeasY));
+            MeasY = MeasY(~isnan(MeasY));
     end
 
     %% Cut off relevant part of reference spectrum -- set initial guesses for fit parameters
@@ -122,6 +126,15 @@ for i=1:Ndet
             
             MeasX    = (1:512)';
             MeasY    = MeasY(MeasX);
+        case {6,7} % RAL LIFEtime (Absorbance or intensity)
+            ppnm     = 0.12; % estimated resolution in pixels/nm
+            
+            dW       = [-680 600]; % min/max relative to CWL to consider for fit
+
+            wp1      = CWL(i) - 64/ppnm;      % lowest wavelength (nm) = CWL - Npix/2*resolution
+            cutID    = sort(findClosestId2Val(RefX,CWL(i)+dW'));
+            RefX_cut = RefX(cutID(1):cutID(2));
+            RefY_cut = RefY(cutID(1):cutID(2));
     end
 
     %% Define Fit Functions
@@ -151,12 +164,12 @@ for i=1:Ndet
             plot_fun    = @(p) (meas_fun(pix_fun(p))+p(5)).*p(4);
             fit_fun     = @(p) (plot_fun(p) - ref_fun(RefX_cut)).*1e4;
         otherwise
-            % Parameters: 1=centralWL 2=nm/pix 3=Yscale 4=Yshift            
+            % Parameters: 1=centralWL 2=nm/pix 3=Yscale 4=Yshift 5:6=lin+quadratic baseline            
             plot_fun    = @(p) meas_fun((RefX_cut-p(1)).*p(2)).*p(3)+p(4)+1e-6.*p(5).*(RefX_cut-p(1))+1e-6.*p(6).*(RefX_cut-p(1)).^2;
             fit_fun     = @(p) (plot_fun(p) - ref_fun(RefX_cut)).*1e4;
     end
+    
     %% Calibration Fit
-
     switch CalType
         case 1 % UoS TRIR/2DIR
             p0 = [wp1  ppnm  1.5   -0.1  eps  eps  ];
@@ -188,6 +201,15 @@ for i=1:Ndet
             UB = [370 240 90  5   +1    ];
             ftol= 5e-7;
             stol= 5e-7;
+        case {6,7} % RAL LIFEtime
+            wp1_L  = CWL(i) - 64/ppnm + dW(1);
+            wp1_U  = CWL(i) - 64/ppnm + dW(2);
+
+            p0 = [wp1    ppnm  1.5  -0.1  eps  eps  ];
+            LB = [wp1_L  1e-4  0.1  -1    -Inf -Inf ];
+            UB = [wp1_U  0.2   10   1     Inf  Inf  ];
+            ftol= 5e-7;
+            stol= 5e-7;
     end
     
     if doFit == 1
@@ -209,8 +231,9 @@ for i=1:Ndet
     end
 
     switch CalType
-        case {1,4} % IR Setups UoS and UZH Lab 2
-            lam(:,i)    = flipud(MeasX/Pfit(i,2) + Pfit(i,1));
+        case {1,4,6,7} % IR Setups UoS, UZH Lab 2, RAL LIFEtime
+            MeasX = 1:Npix(i);
+            lam(:,i)    = flipud(MeasX./Pfit(i,2) + Pfit(i,1));
         case 5
             % Need to numerically invert the pixel(lambda) function to get lambda(pixel)
             wl_map      = 1e7./(5000:0.1:20000)';
@@ -237,7 +260,7 @@ for i=1:Ndet
     end
 
     switch CalType
-        case {1,4} % IR setups UoS and UZH Lab 2
+        case {1,4,6,7} % IR setups UoS and UZH Lab 2
             plot(ax,1e7./RefX,RefY,'k')
             hold(ax,'on');
             plot(ax,1e7./RefX_cut,plot_fun(Pfit(i,:)),'r','LineWidth',2)
@@ -253,7 +276,7 @@ for i=1:Ndet
         case {2,3,5}
             plot(ax,RefX,RefY,'k')
             hold(ax,'on');
-            plot(ax,RefX_cut,plot_fun(Pfit(i,:)),'r','LineWidth',2)
+                plot(ax,RefX_cut,plot_fun(Pfit(i,:)),'r','LineWidth',2)
             hold(ax,'off');
 
             axis(ax,'tight');

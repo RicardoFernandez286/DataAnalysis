@@ -1,24 +1,19 @@
-function data = LoadSpectrum(app,message)
+function data = LoadSpectrum(app,message,calType)
 % This subroutine loads a probe spectrum for further absorbance calculations
-% Ricardo Fernandez-Teran / 09.11.2021 / v1.0a
+% Ricardo Fernandez-Teran / 17.10.2022 / v1.5c
 
-if ispc
-    [datafile, datapath, TYPE] = uigetfile({'*.2D','UoS TRIR';'*.dat','UniGE TA';'*.dat','UniGE nsTA';'*ds0_intensity*.csv','UZH Lab 2';'*.dat','UniGE NIR-TA'},message);
-else
-    [datafile, datapath, TYPE] = uigetfile('*.*');
-    qf = uifigure;
-    qf.Position(3:4) = [405 170];
-    calType = uiconfirm(qf,'Select Calibration Type:','Calibration Type','Options',{'UoS TRIR';'UniGE TA';'UniGE nsTA';'UZH Lab 2';'UniGE NIR-TA'},'DefaultOption',1,'Icon','question');
-    delete(qf);
-
-    switch calType
-        case 'UoS TRIR';        TYPE = 1;
-        case 'UniGE TA';        TYPE = 2;
-        case 'UniGE nsTA';      TYPE = 3;
-        case 'UZH Lab 2';       TYPE = 4;
-        case 'UniGE NIR-TA';    TYPE = 5;
-    end
+switch calType
+    case 'UoS TRIR';                    TYPE = 1; uifilt = {'*.2D',calType};
+    case 'UniGE TA';                    TYPE = 2; uifilt = {'*.dat',calType};
+    case 'UniGE nsTA';                  TYPE = 3; uifilt = {'*.dat',calType};
+    case 'UZH Lab 2';                   TYPE = 4; uifilt = {'*ds0_intensity*.csv',calType};
+    case 'UniGE NIR-TA';                TYPE = 5; uifilt = {'*.dat',calType};
+    case 'RAL LIFEtime (Absorbance)';   TYPE = 6; uifilt = {'*.csv',calType};
+    case 'RAL LIFEtime (Intensity)';    TYPE = 7; uifilt = {'*.csv',calType};
+    otherwise;                          TYPE = 0;
 end
+
+[datafile, datapath] = uigetfile(uifilt,message);
 
 rootdir = app.rootdir;
 if isempty(rootdir)
@@ -26,7 +21,11 @@ if isempty(rootdir)
 end
 
 if TYPE == 0
-    return
+    error('Invalid calibration data type.')
+end
+
+if datafile == 0
+    error('No data selected!')
 end
 
 currdir = pwd; 
@@ -80,6 +79,27 @@ switch TYPE
         
         app.CAL_data.Gratings   = Gratings;
         app.CAL_data.CWL        = CWL;
+    case {6,7} % RAL LIFEtime (Absorbance)
+        DetSz   = [128 128]; % Sizes of [probe1 probe2] in pixels -- no reference in LifeTime
+        data    = cell(2,1);
+        
+        rawdata = readmatrix([datapath filesep datafile],'FileType','text','Delimiter',',');
+        for i=1:length(DetSz)
+            idx =  (1:DetSz(i)) + sum(DetSz(1:i-1));
+            data{i} = rawdata(idx,2);
+        end
+
+        opts.Interpreter = 'tex';
+        CWL = inputdlg({["Enter central wavenumbers for each detector";"(estimates are good, 0 to skip):";"Probe 1 [Left] (cm^{-1}):"];'Probe 2 [Right] (cm^{-1}):'},'Probe Calibration',[1,60],{'0','0'},opts);
+        if isempty(CWL)
+            error('Empty wavenumbers!')
+        end
+        CWL = str2double(CWL);
+        if sum(CWL)==0
+            error('Need at least one nonzero probe CWL!')
+        end
+
+        app.CAL_data.CWL = 1e7./CWL; % To NANOMETERS
 end
 
 app.CAL_data.CalType = TYPE;
