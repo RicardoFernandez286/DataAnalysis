@@ -39,10 +39,12 @@ if ~isempty(varargin)
     pixel           = varargin{1};
     pixline         = varargin{2};
     pixline_axis    = varargin{3};
+    pumpOrientation = varargin{4};
 else
     pixel           = 0;
     pixline         = 0;
     pixline_axis    = where;
+    pumpOrientation = 'Horizontal';
 end
 
 % apo_interferogram   = dataStruct.apo_interferogram{m,k};
@@ -153,9 +155,15 @@ if pixline == 1 && pixel > 0
     if strcmp(class(pixline_axis.Children(1)),'matlab.graphics.chart.decoration.ConstantLine')
         pixline_axis.Children(1).Value = ProbeAxis(pixel);
     else
-        yl          = yline(pixline_axis,ProbeAxis(pixel));
-        yl.Color    = 0.5*[1 1 1];
-        yl.LineWidth= 3;
+        switch pumpOrientation
+            case 'Horizontal'
+                pixLine  = yline(pixline_axis,ProbeAxis(pixel));
+            case 'Vertical'
+                pixLine  = xline(pixline_axis,ProbeAxis(pixel));
+        end
+        
+        pixLine.Color    = 0.5*[1 1 1];
+        pixLine.LineWidth= 3;
     end
 elseif pixline == 0
     if strcmp(class(pixline_axis.Children(1)),'matlab.graphics.chart.decoration.ConstantLine')

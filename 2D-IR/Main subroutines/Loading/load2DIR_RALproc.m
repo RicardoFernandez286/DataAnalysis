@@ -1,4 +1,4 @@
-function  dataStruct = load2DIR_RALproc(dataStruct,varargin)
+function  dataStruct = load2DIR_RALproc(dataStruct,bkg_sub,bkgIdx,recalcBkg,varargin)
 
 % Description: This function loads pre-processed 2DIR data from the ULTRA LIFEtime experiment at the
 % Central Laser Facility of the Rutherford Appelton Laboratory.
@@ -114,10 +114,21 @@ for m=1:Ndelays
         PROC_2D_DATA{m,k}   = SIGN*1000*rawdata(ProbeIdx,2:end)';
     end
 end
+
 for k=1:2
     ProbeIdx = (1:DetSz(k)) + sum(DetSz(1:k-1));
     ProbeAxis{k} = w3(ProbeIdx);
 end
+
+%%  Background subtraction
+for m=1:Ndelays
+    for k=1:2
+        if bkg_sub==1 && m~=bkgIdx
+            PROC_2D_DATA{m,k}       = (PROC_2D_DATA{m,k}-PROC_2D_DATA{bkgIdx,k});
+        end
+    end
+end
+
 %% WRITE to dataStruct (Load)
     dataStruct.isSimulation  = 0;
     dataStruct.isShaper      = 1;

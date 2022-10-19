@@ -9,7 +9,7 @@ switch calType
     case 'UZH Lab 2';                   TYPE = 4; uifilt = {'*ds0_intensity*.csv',calType};
     case 'UniGE NIR-TA';                TYPE = 5; uifilt = {'*.dat',calType};
     case 'RAL LIFEtime (Absorbance)';   TYPE = 6; uifilt = {'*.csv',calType};
-    case 'RAL LIFEtime (Intensity)';    TYPE = 7; uifilt = {'*.csv',calType};
+    case 'RAL LIFEtime (Intensity)';    TYPE = 7; uifilt = {'*cycle*.csv',calType};
     otherwise;                          TYPE = 0;
 end
 
