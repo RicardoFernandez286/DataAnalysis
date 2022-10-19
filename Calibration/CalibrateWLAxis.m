@@ -29,6 +29,14 @@ for i=1:Ndet
     MeasY   = reshape(MeasY,[],1);
     RefX    = reshape(RefX,[],1);
     RefY    = reshape(RefY,[],1);
+    
+    switch CalType
+        % If we're doing IR calibration, start from high to low wavenumbers
+        % (i.e. low to high wavelength!!)
+        case {1,4,6,7}
+            [RefX,idRefX]    = sort(RefX,'descend');
+            RefY             = RefY(idRefX);
+    end
 
     % If we're doing IR calibration, convert standard spectral axis to nm since the grating is linear in nm
     % The X axis of the reference [standard] spectrum is converted to nm, and the Y experimental data is flipped around
@@ -129,7 +137,8 @@ for i=1:Ndet
         case {6,7} % RAL LIFEtime (Absorbance or intensity)
             ppnm     = 0.12; % estimated resolution in pixels/nm
             
-            dW       = [-680 600]; % min/max relative to CWL to consider for fit
+%             dW       = [-570 450]; % min/max relative to CWL to consider for fit
+            dW       = [-580 180]; % min/max relative to CWL to consider for fit
 
             wp1      = CWL(i) - 64/ppnm;      % lowest wavelength (nm) = CWL - Npix/2*resolution
             cutID    = sort(findClosestId2Val(RefX,CWL(i)+dW'));
