@@ -31,9 +31,9 @@ if pW == 0
 end
 
 try 
-    writematrix(cm_merged,[pW 'CalibratedProbe.csv']);
+    writematrix(cm_merged,[pW filesep 'CalibratedProbe.csv']);
     if saveULTRA == 1
-        writematrix(cm_merged,[(1:(2*Npix))' [pW sprintf('CalibProbe_%s.csv',datestr(now,'yyyymmdd-HHMMSS'))]]);
+        writematrix([((1:(2*Npix)) - 1)' cm_merged], [pW filesep sprintf('CalibProbe_%s.csv',datestr(now,'yyyymmdd-HHMMSS'))]);
     end
     warning('Merged calibration file saved successfully!')
 catch err
