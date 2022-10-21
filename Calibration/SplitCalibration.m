@@ -5,25 +5,21 @@ function SplitCalibration
 
 saveULTRA = 1;
 
-[f1,p1] = uigetfile('*.csv','Select DETECTOR 1 (LHS) calibration','MultiSelect','off');
-[f2,p2] = uigetfile('*.csv','Select DETECTOR 2 (RHS) calibration','MultiSelect','off');
+[f1,p1] = uigetfile('*.csv','Select Calibration File');
 
 % Read files
-cm1 = readmatrix([p1 f1]);
-cm2 = readmatrix([p2 f2]);
+cm_merged = readmatrix([p1 f1]);
 
 % Check the lenghts are equal (!)
-if length(cm1) ~= length(cm2)
-    error('Unequal calibrated probe lenghts! Check')
+if mod(length(cm_merged),2) ~= 0
+    error('Odd number of pixels!')
 end
 
 %% Merge and write
 % Take the 1st half from f1 and the 2nd half from f2
-Npix = round(length(cm1)/2);
+Npix = round(length(cm_merged)/2);
 
-cm_merged = [cm1(1:Npix); cm2(Npix+(1:Npix))];
-
-pW = uigetdir(pwd,'Save MERGED calibration file to...');
+pW = uigetdir(pwd,'Save SPLIT calibration files to...');
 
 if pW == 0
     warning('No directory selected, aborting!')
@@ -31,11 +27,9 @@ if pW == 0
 end
 
 try 
-    writematrix(cm_merged,[pW 'CalibratedProbe.csv']);
-    if saveULTRA == 1
-        writematrix(cm_merged,[(1:(2*Npix))' [pW sprintf('CalibProbe_%s.csv',datestr(now,'yyyymmdd-HHMMSS'))]]);
-    end
-    warning('Merged calibration file saved successfully!')
+    writematrix([(1:(Npix))' cm_merged(1:Npix)], [pW filesep sprintf('CalibProbe_%s_LHS.csv',datestr(now,'yyyymmdd-HHMMSS'))]);
+    writematrix([(Npix + (1:(Npix)))' cm_merged(Npix+(1:Npix))], [pW filesep sprintf('CalibProbe_%s_RHS.csv',datestr(now,'yyyymmdd-HHMMSS'))]);
+    disp('Split calibration files saved successfully!')
 catch err
     warning('Error writing merged calibration files')
 end

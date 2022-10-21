@@ -1,10 +1,9 @@
-function [cm,lam] = CalibrateWLAxis(CAL_data)
+function [cm,lam] = CalibrateWLAxis(CAL_data,FitLimits,doFit)
 % Subroutine to calibrate the wavelength axis of a spectrometer, using a centering and scaling approach.
 % Will output the fitted cm-1 and nm axes
 % The number of columns of cm and lam = Ndet (given by the size of the AbsSolvent cell in the CAL_data structure).
 % Ricardo Fernandez-Teran / 24.06.2022 / v3.0c
 
-doFit = 1;
 %% Read from input structure
 CalType     = CAL_data.CalType;
 
@@ -47,7 +46,11 @@ for i=1:Ndet
             RefX        = 1e7./RefX;
             MeasY       = flipud(MeasY);
         case {6,7} % {RAL Abs, Ral Int}
-            CWL         = CAL_data.CWL;
+            CWL         = 1e7./[FitLimits{3,1:2}];
+            maxWL    = 1e7./[FitLimits{1,1:2}]; % max WL = min cm-1
+            minWL    = 1e7./[FitLimits{2,1:2}]; % min WL = max cm-1
+            ppnmT    = [FitLimits{4,1:2}];
+
             RefX        = 1e7./RefX;
             MeasY       = flipud(MeasY);
             
@@ -135,10 +138,10 @@ for i=1:Ndet
             MeasX    = (1:512)';
             MeasY    = MeasY(MeasX);
         case {6,7} % RAL LIFEtime (Absorbance or intensity)
-            ppnm     = 0.12; % estimated resolution in pixels/nm
-            
+            ppnm     = ppnmT(i); % estimated resolution in pixels/nm
 %             dW       = [-570 450]; % min/max relative to CWL to consider for fit
-            dW       = [-580 180]; % min/max relative to CWL to consider for fit
+%             dW       = [-400 260]; % min/max relative to CWL to consider for fit
+            dW       = [minWL(i) maxWL(i)] - CWL(i);
 
             wp1      = CWL(i) - 64/ppnm;      % lowest wavelength (nm) = CWL - Npix/2*resolution
             cutID    = sort(findClosestId2Val(RefX,CWL(i)+dW'));
@@ -216,7 +219,7 @@ for i=1:Ndet
 
             p0 = [wp1    ppnm  1.5  -0.1  eps  eps  ];
             LB = [wp1_L  1e-4  0.1  -1    -Inf -Inf ];
-            UB = [wp1_U  0.2   10   1     Inf  Inf  ];
+            UB = [wp1_U  0.4   10   1     Inf  Inf  ];
             ftol= 5e-7;
             stol= 5e-7;
     end

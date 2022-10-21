@@ -89,17 +89,17 @@ switch TYPE
             data{i} = rawdata(idx,2);
         end
 
-        opts.Interpreter = 'tex';
-        CWL = inputdlg({["Enter central wavenumbers for each detector";"(estimates are good, 0 to skip):";"Probe 1 [Left] (cm^{-1}):"];'Probe 2 [Right] (cm^{-1}):'},'Probe Calibration',[1,60],{'0','0'},opts);
-        if isempty(CWL)
-            error('Empty wavenumbers!')
-        end
-        CWL = str2double(CWL);
-        if sum(CWL)==0
-            error('Need at least one nonzero probe CWL!')
-        end
-
-        app.CAL_data.CWL = 1e7./CWL; % To NANOMETERS
+%         opts.Interpreter = 'tex';
+%         CWL = inputdlg({["Enter central wavenumbers for each detector";"(estimates are good, 0 to skip):";"Probe 1 [Left] (cm^{-1}):"];'Probe 2 [Right] (cm^{-1}):'},'Probe Calibration',[1,60],{'0','0'},opts);
+%         if isempty(CWL)
+%             error('Empty wavenumbers!')
+%         end
+%         CWL = str2double(CWL);
+%         if sum(CWL)==0
+%             error('Need at least one nonzero probe CWL!')
+%         end
+% 
+%         app.CAL_data.CWL = 1e7./CWL; % To NANOMETERS
 end
 
 app.CAL_data.CalType = TYPE;
