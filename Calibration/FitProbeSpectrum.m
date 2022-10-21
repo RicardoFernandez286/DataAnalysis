@@ -54,8 +54,8 @@ hold(axS,'on');
     plot(axS,cm(:,1),I1Norm,'o','Color',[0 0.5 0],'MarkerSize',4,'DisplayName','Det 1');    
     plot(axS,cm(:,2),I2Norm,'o','Color',[0  0  1],'MarkerSize',4,'DisplayName','Det 2');
 
-    plot(axS,cm_fit,g1_plt,'Color',[0 0.5 0],'LineWidth',1,'DisplayName','Det 1 (Fit)')
-    plot(axS,cm_fit,g2_plt,'Color',[0  0  1],'LineWidth',1,'DisplayName','Det 2 (Fit)')
+    plot(axS,cm_fit,g1_plt,'Color',[0 0.5 0],'LineWidth',1,'DisplayName','Det 1 (Fit)','HandleVisibility','off')
+    plot(axS,cm_fit,g2_plt,'Color',[0  0  1],'LineWidth',1,'DisplayName','Det 2 (Fit)','HandleVisibility','off')
 hold(axS,'off');
 
 xlabel(axS,'Wavenumbers (cm^{-1})','FontWeight','bold');
@@ -66,11 +66,14 @@ axS.FontSize = 14;
 
 yline(axS,0.5,'--','HandleVisibility','off');
 xline(axS,meanW0,'--','HandleVisibility','off');
+xline(axS,pFit1(2),'-.','HandleVisibility','off','Color',[0 0.5 0]);
+xline(axS,pFit2(2),'-.','HandleVisibility','off','Color',[0 0 1]);
 yline(axS,0,'-','HandleVisibility','off');
 
 xlim(axS,[minX maxX])
 S = sprintf('FWHM = %.4g / %.4g cm^{-1};  w0 = %.4g / %.4g cm^{-1}',pFit1(3),pFit2(3),pFit1(2),pFit2(2));
 
+legend(axS,'location','best')
 % fprintf('\nGaussian Fit Info (D%i):\n FWHM = %.4g cm-1\n w0   = %.4g cm-1\n\n',1,pFit1(3),pFit1(2))
 % fprintf('Gaussian Fit Info (D%i):\n FWHM = %.4g cm-1\n w0   = %.5g cm-1\n',2,pFit2(3),pFit2(2))
 
