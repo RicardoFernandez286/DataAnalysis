@@ -66,8 +66,8 @@ axS.FontSize = 14;
 
 yline(axS,0.5,'--','HandleVisibility','off');
 xline(axS,meanW0,'--','HandleVisibility','off');
-xline(axS,pFit1(2),'-.','HandleVisibility','off','Color',[0 0.5 0]);
-xline(axS,pFit2(2),'-.','HandleVisibility','off','Color',[0 0 1]);
+xline(axS,pFit1(2),'-','HandleVisibility','off','Color',[0 0.5 0],'LineWidth',2);
+xline(axS,pFit2(2),'-','HandleVisibility','off','Color',[0 0 1],'LineWidth',2);
 yline(axS,0,'-','HandleVisibility','off');
 
 xlim(axS,[minX maxX])
