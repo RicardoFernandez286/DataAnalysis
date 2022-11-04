@@ -1,6 +1,6 @@
-% function  dataStruct = load2DIR_RALraw(dataStruct,varargin)
+function  dataStruct = load2DIR_RALraw(dataStruct,varargin)
 
-% Description: This function loads pre-processed 2DIR data from the ULTRA LIFEtime experiment at the
+% Description: This function loads RAW 2DIR data from the ULTRA LIFEtime experiment at the
 % Central Laser Facility of the Rutherford Appelton Laboratory.
 %
 % Usage: dataStruct = load2DIR_RALraw(dataStruct)
@@ -24,7 +24,7 @@
 %     interferogram     (Cell array)
 %     signal			(Cell array)
 %
-% Ricardo Fernandez-Teran / 13.05.2021 / v0.9a
+% Ricardo Fernandez-Teran / 19.10.2022 / v1.0a
 
 %% DEBUG
 rootdir         = 'D:\GoogleDrive\RESULTS\From James\2DIR DATA';
@@ -53,6 +53,44 @@ datadir_fn  = {datadir_fl.name};
 fn          = fn(contains(fn,'Avg Diff','ignorecase',1));
 
 alldata     = dlmread([datadir filesep fn{1} '.csv'],',',0,1);
+
+% If there is an w0 file in the current ROOTDIR, use it to set the rotating frame frequency.
+% Otherwise, plot relative to w0
+if exist([datadir filesep 'w0.csv'],'file') == 2
+	rotframe = readmatrix([datadir filesep 'w0.csv']);
+    w0  = rotframe(1);
+    dt1 = rotframe(2);
+elseif varargin{2} == 0
+    w0  = 0;
+    dt1 = 1;
+else
+    prompt = {'Enter rotating frame frequency (\omega_{r}, in cm^{-1}):','Enter t_{1} time step (in fs):'};
+    dlgtitle = 'Rotating Frame Settings';
+    definput = {'1200','15'};
+    dims = [1 40];
+    opts.Interpreter = 'tex';
+    answer = inputdlg(prompt,dlgtitle,dims,definput,opts);
+    
+    if isempty(answer)
+        w0  = 0;
+        dt1 = 1;
+    else
+        w0  = str2double(answer{1});
+        dt1 = str2double(answer{2});
+        try
+            writematrix([w0;dt1],[datadir filesep 'w0.csv']);
+        catch
+            warning('Error writing rotating frame info file to default path');
+            fp = uigetdir('Where to save rotating frame file?','w0.csv');
+            if fp == 0
+                warning('Nowhere to save the rotating frame file :(');
+            else
+                writematrix([w0;dt1],[fp filesep 'w0.csv']);
+            end          
+%             warndlg('Error writing rotating frame info file','Error writing file');
+        end
+    end
+end
 
 %%
 rawdata     = alldata(2:end,:);
@@ -83,13 +121,13 @@ signal4D    = zeros(Npixels,Ndelays,Nbins,Nphases);
 for i=1:Ndelays
     binIdx_del      = (t1ranges(i)+1):t1ranges(i+1);
     binIdx_phC      = [0 (1:4)*Nbins];
-    for j=1:4
+    for j=1:Nphases
         signal4D(:,i,:,j) = rawdata(:,binIdx_del((binIdx_phC(j)+1):binIdx_phC(j+1))); 
     end
 end
 
-%% Calculate Phase Cycling
-% signal = + 1 - 2 + 3 - 4
+%% Calculate Phase Cycling [ASSUMING 4 FRAME, NO CHOP: p1{0,0,pi,pi} p2{0,pi,0,pi}]
+% Signal = + A - B + C - D
 
 k=1;
 signal = cell(Ndelays,1);
@@ -106,6 +144,21 @@ for m=1:Ndelays
     signal{m,k} = squeeze(sum(sig,3));
 %     scattering{m,k}  = squeeze(sum(scatt,3));
 end
+
+% Data Inputs:
+%     cmprobe           (Double)
+%     bins              (Double)
+%     t2delays          (Double)
+%     Ndelays           (Double)
+%     Nspectra          (Double)
+%     Ndatastates       (Double)
+%     Nbins             (Double)
+%     Nslowmod          (Double)
+%     count             (Cell array)
+%     probe             (Cell array)
+%     reference         (Cell array)
+%     interferogram     (Cell array)
+%     signal			(Cell array)
 
 %%
 % Create progress bar and clear error string
