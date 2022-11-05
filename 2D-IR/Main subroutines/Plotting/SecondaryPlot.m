@@ -73,10 +73,15 @@ switch what
             label  = ' mOD';
         end
         yyaxis(where,'left')
-        plot(where,time,y_data,'-ob','LineWidth',0.5,'MarkerSize',0.5);
+            plot(where,time,y_data,'-ob','LineWidth',0.5,'MarkerSize',0.5);
         ylabel(where,'Signal (V / mOD)','FontWeight','bold')
+        zl = yline(where,0);
+        zl.Color = [0.5 0.5 0.5];
         axis(where,'tight')
         hold(where,'on');
+        if max(abs(y_data)) > 0
+            ylim(where,[-max(abs(y_data)) max(abs(y_data))]);
+        end
         % Plot the apodization function and bin zero
         yyaxis(where,'right')
         plot(where,time,apodize_function,'-r','LineWidth',2);
@@ -85,8 +90,6 @@ switch what
         ylim(where,[-1,1]);
         hold(where,'off')
         xlim(where,[min(time) max(time)]);
-        zl = yline(where,0);
-        zl.Color = [0.5 0.5 0.5];
         % Show info about maximum/minimum values
         maxvalue    = num2str(max(y_data),'%.3g');
         minvalue    = num2str(min(y_data),'%.3g');
@@ -97,6 +100,7 @@ switch what
 %             text(where,0.635,0.9,['Contrast: ' contrast '%'],'Units','normalized','FontSize',10);
 %         end
         yyaxis(where,'left')
+
     case 'ph' % Plot phasing data
         if dataStruct.isShaper ~= 1
             %%% Plot the pump spectrum (real part of FFT[pyro])

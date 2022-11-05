@@ -90,7 +90,7 @@ else
 end
 
 % Hardcoded settings
-    DetSz           = [96 96]; % No. of probe pixels of each detector
+    DetSz           = dataStruct.DetSz;
     filter_type     = 'Mean';
     filter_points   = 10;
     zeropad_npoints = 1;
@@ -137,7 +137,7 @@ end
 %         dataStruct.WaitBar = waitbar(0,'Loading data...');
         dataStruct.WBfigure            = uifigure;
         dataStruct.WBfigure.Position(3:4) = [405 175];
-        dataStruct.WaitBar             = uiprogressdlg(dataStruct.WBfigure,'Title','2D-IR data processing...','Message','Loading data...','Icon','info','ShowPercentage','on','Cancelable','on');
+        dataStruct.WaitBar             = uiprogressdlg(dataStruct.WBfigure,'Title','2D-IR data processing...','Message','Applying new processing settings...','Icon','info','ShowPercentage','on','Cancelable','on');
     end
     
 %% Process the data
@@ -252,7 +252,7 @@ end
     phase_coeff{m,k}    = NaN;
 
 % Phase the data (MCT data + interferogram)
-    phasingterm{m,k}            = exp(-1i*fittedPhase{m,k});
+    phasingterm{m,k}            = exp(-1i.*fittedPhase{m,k});
     phased_FFTZPint{m,k}        = FFT_ZPint{m,k}.*phasingterm{m,k};
 
 % Do pump correction

@@ -2,6 +2,8 @@ function  dataStruct = load2DIR_UoS(dataStruct,varargin)
 
 % Description:  This function loads 2DIR data in the file format 
 %               from the setup at the University of Sheffield
+%               (Also compatible with the LIFEtime 2D-IR datasets loaded by load2DIR_RALraw)
+%
 % Usage: dataStruct = load2DIR_UoS(dataStruct)
 % Inputs:
 %   dataStruct structure with fields:
@@ -23,7 +25,7 @@ function  dataStruct = load2DIR_UoS(dataStruct,varargin)
 %     interferogram     (Cell array)
 %     signal			(Cell array)
 %
-% Ricardo Fernandez-Teran / 21.04.2022 / v3.0b
+% Ricardo Fernandez-Teran / 05.11.2022 / v3.1c
 
 %% READ from dataStruct
 if isempty(varargin) || varargin{1} == 1
@@ -34,7 +36,8 @@ end
 
 datafilename    = dataStruct.datafilename;
 rootdir         = dataStruct.rootdir;
-DetSz           = [96 96 32 32]; % Sizes of [probe1 probe2 ref1 ref2] in pixels
+DetSz           = [96 96]; % Sizes of [probe1 probe2 ref1 ref2] in pixels
+Ndet            = length(DetSz);
 
 %% Load all the necessary files after checking that they exist
 datadir     = [rootdir filesep datafilename];
@@ -97,7 +100,7 @@ if Mcomplete == 1 % if measurement is completed
     est_probe   = cell(1,2);
     
     % Estimate probe axis, arbitrary calibration factors
-    for i=1:2
+    for i=1:Ndet
         switch Gratings(i)
             case 0 % 120 l/mm
                 ppnm    = 0.168;
@@ -177,7 +180,7 @@ for k=1:2 % Ndetectors
     if Mcomplete ~= 1
         Gratings        = [];
         CWL             = [];
-        est_probe{k}    = 1:DetSz(k);
+        est_probe{k}    = (1:DetSz(k))';
     end
 end
 
@@ -187,7 +190,8 @@ signal = signal_temp(delID,:);
     dataStruct.Gratings      = Gratings;
     dataStruct.CWL           = CWL;
     dataStruct.est_probe     = est_probe; % Estimated probe from spectrograph info
-    
+    dataStruct.DetSz         = DetSz;
+
     dataStruct.isSimulation  = 0;
     dataStruct.isShaper      = 1;
     dataStruct.cmprobe       = cmprobe;
@@ -212,5 +216,8 @@ dataStruct.t2_startFit   = [];
 dataStruct.FitInput      = [];
 
 else
+    if ShowWaitBar
+        delete(dataStruct.WBfigure);
+    end
     error('Not a valid 2D-IR dataset: empty folder or corrupt data')
 end

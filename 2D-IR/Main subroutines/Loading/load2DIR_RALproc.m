@@ -1,4 +1,4 @@
-function  dataStruct = load2DIR_RALproc(dataStruct,bkg_sub,bkgIdx,recalcBkg,varargin)
+function  dataStruct = load2DIR_RALproc(dataStruct,bkg_sub,bkgIdx,varargin)
 
 % Description: This function loads pre-processed 2DIR data from the ULTRA LIFEtime experiment at the
 % Central Laser Facility of the Rutherford Appelton Laboratory.
@@ -31,7 +31,7 @@ DetSz = [128 128]; % Probe 1 / Probe 2
 dt1 = 1; % Since the data is already in frequency domain
 
 SIGN = +1; % In case I want to invert the data for whatever reason (e.g. wrong signal calculation)
-w0p = 1200;
+w0p = 0;
 
 %% READ from dataStruct
 if isempty(varargin)
