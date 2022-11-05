@@ -35,7 +35,7 @@ function  dataStruct = load2DIR_RALraw(dataStruct,varargin)
 %% HARDCODED Settings
 binShift    = -2;
 DetSz       = [128 128];
-signalSign  = -1; % the signal is upside dowm
+signalSign  = -1; % the signal is upside down
 
 Nphases     = 4;
 phase_cy    = [+1 -1 +1 -1]; % SIGNAL
