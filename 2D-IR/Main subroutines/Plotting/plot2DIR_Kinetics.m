@@ -61,7 +61,7 @@ pump_index  = zeros(Ndelays,L);
 for i=1:L
     probe_index(i)          = findClosestId2Val(ProbeAxis,probe_search(i));
     for m=1:Ndelays
-        pump_index(m,i)     = findClosestId2Val(PumpAxis{m,1},pump_search(i));
+        pump_index(m,i)     = findClosestId2Val(PumpAxis{m,k},pump_search(i));
     end
 end
 
@@ -81,7 +81,7 @@ for i=1:L
     
     % Get the data and normalise (if needed)
     for m=1:Ndelays
-        kindata(m,i) = PROC_2D_DATA{m,1}(pump_index(m,i),probe_index(i));
+        kindata(m,i) = PROC_2D_DATA{m,k}(pump_index(m,i),probe_index(i));
     end
     
     switch normalise
@@ -241,12 +241,12 @@ if strcmp(saveTraces,'On')
 %     wavenumbers=transpose(dataStruct.cmprobe(k));
     if EnT == 0
         filename    = [dataStruct.rootdir filesep dataStruct.datafilename '_traces.dat'];
-        data        = [[[0;PumpAxis{1,1}(pump_index(1,:))],[0;ProbeAxis(probe_index)]]';[dataStruct.t2delays(2:end),kindata(2:end,:)]];
+        data        = [[[0;PumpAxis{1,k}(pump_index(1,:))],[0;ProbeAxis(probe_index)]]';[dataStruct.t2delays(2:end),kindata(2:end,:)]];
     else
         filename    = [dataStruct.rootdir filesep dataStruct.datafilename '_EnT_traces.dat'];
-        data        = [[[0;PumpAxis{1,1}(pump_index(1,:))],[0;ProbeAxis(probe_index)]]';[dataStruct.t2delays,[diagFW xpeakFW diagBW xpeakBW]]];
+        data        = [[[0;PumpAxis{1,k}(pump_index(1,:))],[0;ProbeAxis(probe_index)]]';[dataStruct.t2delays,[diagFW xpeakFW diagBW xpeakBW]]];
     end
-    dlmwrite(filename,data);
+    writematrix(data,filename);
 end
 
 end
