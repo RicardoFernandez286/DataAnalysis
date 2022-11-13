@@ -2,10 +2,12 @@ function [Dbest,res,CConc,Sfit,FitStruct] = fitHandler(doFit,PP_Data,KineticMode
 
 %% Hardcoded settings
 doParallel = true;
+FillNaNs   = true;
 
 %% Disable some warnings
 warning('off','MATLAB:Axes:NegativeLimitsInLogAxis');
 warning('off','MATLAB:Axes:NegativeDataInLogAxis');
+
 warning('off','MATLAB:singularMatrix');
 warning('off','MATLAB:illConditionedMatrix');
 warning('off','MATLAB:nearlySingularMatrix');
@@ -71,6 +73,12 @@ LB_all = [LB_IRF LB_Tau];
 Dexp   = PP_Data.rawsignal{1};
 t      = PP_Data.delays;
 WL     = PP_Data.cmprobe{1};
+
+% Fill in missing NaNs
+if sum(isnan(Dexp(:))) > 0 && FillNaNs == true
+    Dexp = fillmissing(Dexp,'pchip');
+    warning('Some NaN values were encountered in current dataset and were interpolated. If you do not want this behaviour, check the data and try again.')
+end
 
 %% Read Cut Settings and Cut Data
 if CutData == 1
