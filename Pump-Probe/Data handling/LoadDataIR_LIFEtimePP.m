@@ -16,9 +16,9 @@ datadir_fn  = {datadir_fl.name};
 
 % Identify No. of Runs (!)
 % Ideally just 1 run but if name was not changed then there will be >1
-Nruns = sum(contains(datadir_fn(:),'run','IgnoreCase',1) & contains(datadir_fn(:),'avg','IgnoreCase',1));
+Nruns = sum(contains(datadir_fn(:),'run','IgnoreCase',1) & contains(datadir_fn(:),'avg diff','IgnoreCase',1));
 runID = [];
-for i = find(contains(datadir_fn(:),'avg','IgnoreCase',1))'
+for i = find(contains(datadir_fn(:),'avg diff','IgnoreCase',1))'
     [~,fn1,~]    =  fileparts(datadir_fn{i});
     runID = [runID sscanf(fn1,'Run %i %s')];
 end
