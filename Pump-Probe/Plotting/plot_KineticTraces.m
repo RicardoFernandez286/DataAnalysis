@@ -1,4 +1,4 @@
-function [figNum,k,ydata] = plot_KineticTraces(DataStruct,DET,data,overlay,figNum,Normalise,varargin)
+function [figNum,k,ydata,yFit,res] = plot_KineticTraces(DataStruct,DET,data,overlay,figNum,Normalise,varargin)
 
 %% Hardcoded Settings
 FontSize = 16; % 18 for papers (single column figure), 14 for presentations (can vary)
@@ -11,6 +11,9 @@ if ~isempty(varargin)
     end
 end
 
+% Empty variables in case they are not overwritten
+res     = [];
+yFit    = [];
 %% Get the data to be plotted
 % Get the values to find in the WAVELENGTH vector
 value = DataStruct.SelTraces(:,1); % column 1= Wavelength
@@ -49,19 +52,20 @@ if overlay == 2
         FitData = DataStruct.FitData{DET};
         switch Normalise
             case 0
-                yFit = FitData(:,index);
+                yFit    = FitData(:,k);
             case 1
-                maxval = max(data(:,index));
-                minval = min(data(:,index));
-                if abs(maxval) >= abs(minval)
-                    yFit = FitData(:,index)./maxval;
-                else
-                    yFit = FitData(:,index)./minval;
-                end
+                maxval  = max(data(:,k),[],1);
+                minval  = min(data(:,k),[],1);
+                sgn     = sign(abs(maxval)-abs(minval));
+                posT    = find(~isnan(FitData(:,k)),1);
+%                 posT    = DataStruct.delays > 0;
+                ydata   = sgn.*data(:,k)./max(abs(data(posT:end,k)));
+                yFit    = sgn.*FitData(:,k)./max(abs(data(posT:end,k)));
         end
         res = ydata - yFit;
     end
 end
+
 %% Make figure and axes
 if overlay == 1
     h =  findobj('type','figure');
@@ -117,7 +121,11 @@ if overlay == 2
     for n=1:L
        plot(axes2,DataStruct.delays,ydata(:,n),'o','MarkerSize',5,'MarkerEdgeColor',cmap(n,:),'MarkerFaceColor','none','HandleVisibility','off');
        plot(axes2,DataStruct.delays,yFit(:,n),'-','LineWidth',2,'Color',cmap(n,:),'DisplayName',[num2str(DataStruct.cmprobe{DET}(index(n)),'%.1f') ' ' DataStruct.Xunits]);
-       plot(resaxes,DataStruct.delays,res(:,n),ResPlotStyle,'MarkerSize',5,'Color',cmap(n,:),'MarkerEdgeColor',cmap(n,:),'MarkerFaceColor','none','DisplayName',[num2str(DataStruct.cmprobe{DET}(index(n)),'%.1f') ' ' DataStruct.Xunits]);
+       if Normalise == 1
+           plot(resaxes,DataStruct.delays,100.*res(:,n),ResPlotStyle,'MarkerSize',5,'Color',cmap(n,:),'MarkerEdgeColor',cmap(n,:),'MarkerFaceColor','none','DisplayName',[num2str(DataStruct.cmprobe{DET}(index(n)),'%.1f') ' ' DataStruct.Xunits]);
+       else
+           plot(resaxes,DataStruct.delays,res(:,n),ResPlotStyle,'MarkerSize',5,'Color',cmap(n,:),'MarkerEdgeColor',cmap(n,:),'MarkerFaceColor','none','DisplayName',[num2str(DataStruct.cmprobe{DET}(index(n)),'%.1f') ' ' DataStruct.Xunits]);
+       end
        xline(resaxes,0,'HandleVisibility','off');
        yline(resaxes,0,'HandleVisibility','off');
     end
@@ -184,7 +192,11 @@ elseif overlay == 2
 
    resaxes.FontSize  = FontSize;
    xlabel(resaxes,['Delays',' (',DataStruct.timescale,')'],'FontSize',FontSize,'FontWeight','bold');
-   ylabel(resaxes,'Res. (mOD)','FontSize',FontSize,'FontWeight','bold');
+   if Normalise == 1
+        ylabel(resaxes,'% Res.','FontSize',FontSize,'FontWeight','bold');
+   else
+        ylabel(resaxes,'Res. (mOD)','FontSize',FontSize,'FontWeight','bold');
+   end
    xlabel(axes2,[]);
    
    resaxes.Units     = 'normalized';
