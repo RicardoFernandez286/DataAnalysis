@@ -209,6 +209,11 @@ end
 % should be removed (only if using a grating)
 minwl = min(cmprobe);
 maxwl = max(cmprobe);
+
+if unique(diff(cmprobe))==1 
+    cut2ndOrder = 0;
+end
+
 if maxwl >= 2*minwl && cut2ndOrder
     NewMaxwl        = 2*minwl;
     NewMaxwl_index  = findClosestId2Val(cmprobe,NewMaxwl);
