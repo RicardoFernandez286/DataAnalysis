@@ -2,7 +2,7 @@ function [cm,lam] = CalibrateWLAxis(CAL_data,FitLimits,doFit)
 % Subroutine to calibrate the wavelength axis of a spectrometer, using a centering and scaling approach.
 % Will output the fitted cm-1 and nm axes
 % The number of columns of cm and lam = Ndet (given by the size of the AbsSolvent cell in the CAL_data structure).
-% Ricardo Fernandez-Teran / 24.06.2022 / v3.0c
+% Ricardo Fernandez-Teran / 08.02.2023 / v3.2d
 
 %% Read from input structure
 CalType     = CAL_data.CalType;
@@ -40,16 +40,21 @@ for i=1:Ndet
     % If we're doing IR calibration, convert standard spectral axis to nm since the grating is linear in nm
     % The X axis of the reference [standard] spectrum is converted to nm, and the Y experimental data is flipped around
     switch CalType
-        case {1,4} % {UoS 2DIR/TRIR, UZH Lab 2}
+        case {1,4} % {UoS 2DIR/TRIR, UZH Lab 1,2,4, UniGE TRIR new}
             Gratings    = CAL_data.Gratings;
             CWL         = CAL_data.CWL;
             RefX        = 1e7./RefX;
             MeasY       = flipud(MeasY);
+        case {2,3} % UniGE 
+            CWL         = FitLimits{3,1};
+            maxWL       = FitLimits{1,1};
+            minWL       = FitLimits{2,1};
+            ppnmT       = FitLimits{4,1};
         case {6,7} % {RAL Abs, Ral Int}
             CWL         = 1e7./[FitLimits{3,1:2}];
-            maxWL    = 1e7./[FitLimits{1,1:2}]; % max WL = min cm-1
-            minWL    = 1e7./[FitLimits{2,1:2}]; % min WL = max cm-1
-            ppnmT    = [FitLimits{4,1:2}];
+            maxWL       = 1e7./[FitLimits{1,1:2}]; % max WL = min cm-1
+            minWL       = 1e7./[FitLimits{2,1:2}]; % min WL = max cm-1
+            ppnmT       = [FitLimits{4,1:2}];
 
             RefX        = 1e7./RefX;
             MeasY       = flipud(MeasY);
@@ -82,8 +87,14 @@ for i=1:Ndet
             RefY_cut    = RefY(cutID(1):cutID(2));
         
         case 2    % UniGE TA 
-            minRefX  = 345;
-            maxRefX  = 690;
+%             minRefX  = 345;
+%             maxRefX  = 690;
+
+            ppnm = ppnmT;
+            wp1 = CWL(1) - 260./ppnm;
+
+            minRefX = minWL(1);
+            maxRefX = maxWL(1);
 
             cutID    = sort(findClosestId2Val(RefX,[minRefX maxRefX]));
             [RefX_cut,srt_id] = sort(RefX(cutID(1):cutID(2)));
@@ -94,8 +105,13 @@ for i=1:Ndet
             RefY_cut = RefY_cut./max(RefY_cut);
             
         case 3     % UniGE nsTA 
-            minRefX  = 370;
-            maxRefX  = 690;
+%             minRefX  = 370;
+%             maxRefX  = 690;
+            ppnm = ppnmT;
+            wp1 = CWL(1) - 260./ppnm;
+
+            minRefX = minWL(1);
+            maxRefX = maxWL(1);
 
             cutID    = sort(findClosestId2Val(RefX,[minRefX maxRefX]));
             [RefX_cut,srt_id] = sort(RefX(cutID(1):cutID(2)));
@@ -190,15 +206,17 @@ for i=1:Ndet
             ftol= 5e-7;
             stol= 5e-7;
         case 2 % UniGE TA
-            p0 = [310 1.05  0.6 -0.1 1 1];
-            LB = [150 0.5   0.1 -Inf -Inf -Inf];
-            UB = [400 2     10   Inf  Inf Inf ];
+%             p0 = [310 1.05  0.6 -0.1 1 1];
+            p0 = [wp1       ppnm  0.6 0.1 0.1 0.1];
+            LB = [wp1-100   0.5   0.1 -10 -10 -10];
+            UB = [wp1+100   2     10   10  10 10 ];
             ftol= 5e-7;
             stol= 5e-7;
         case 3 % UniGE nsTA
-            p0 = [330 1.33  0.58 -0.1 1     1];
-            LB = [100 0.1   0.1  -1 -Inf -Inf];
-            UB = [400 2     10   1  Inf  Inf ];
+%             p0 = [330 1.33  0.58 -0.1 1     1];
+            p0 = [wp1       1.33  0.58 -0.1 1     1];
+            LB = [wp1-100   0.1   0.1  -1 -Inf -Inf];
+            UB = [wp1+100   2     10   1  Inf  Inf ];
             ftol= 1e-6;
             stol= 1e-6;
         case 4 % UZH Lab 2
