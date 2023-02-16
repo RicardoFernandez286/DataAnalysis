@@ -333,7 +333,12 @@ if IsFixIRF(1) == 1
 else
     t0      = pFit(1);
     t0err   = pErr(1);
-    fprintf('t0   = %.3f ± %.3f %s\n',t0,t0err,timescale)
+    switch Method
+        case 'Constrained Fit (fmincon)'
+            fprintf('t0   = %.3f %s\n',t0,timescale)
+        otherwise
+            fprintf('t0   = %.3f ± %.3f %s\n',t0,t0err,timescale)
+    end
 end
 if GauIRF == 1
     if IsFixIRF(2) == 1
