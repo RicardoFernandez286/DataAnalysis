@@ -141,7 +141,7 @@ switch Method
             t1 = input('  Enter Tau1 (TCSPC) in ns: ');
             t2 = input('  Enter Tau2 (TCSPC) in ns: ');
             a1 = input('  Enter A1   (TCSPC) in %:  ');
-            a2 = input('  Enter A2   (TCSPC) in %:  ');
+            a2 = 100-a1;
             TCSPC = [t1 t2 a1 a2];
 end
 %% Do fit or calculate
