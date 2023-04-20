@@ -9,9 +9,9 @@ fullName        = [rootdir filesep datafilename];
 %% Read Data
 % Read the files if the directory is correctly populated
 fid             = fopen(fullName);
-units           = textscan(fid,'%s \n');
+    units = fgetl(fid);
 fclose(fid);
-units           = strsplit(units{:}{:},'*');
+units           = strsplit(units,'*');
 
 timescale       = units{1};
 Xunits          = units{2};
