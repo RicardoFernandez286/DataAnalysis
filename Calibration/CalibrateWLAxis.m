@@ -2,7 +2,7 @@ function [cm,lam] = CalibrateWLAxis(CAL_data,FitLimits,doFit)
 % Subroutine to calibrate the wavelength axis of a spectrometer, using a centering and scaling approach.
 % Will output the fitted cm-1 and nm axes
 % The number of columns of cm and lam = Ndet (given by the size of the AbsSolvent cell in the CAL_data structure).
-% Ricardo Fernandez-Teran / 08.02.2023 / v3.2d
+% Ricardo Fernandez-Teran / 02.05.2023 / v3.5e
 
 %% Read from input structure
 CalType     = CAL_data.CalType;
@@ -121,6 +121,7 @@ for i=1:Ndet
             RefY     = RefY./max(RefY_cut);
             RefY_cut = RefY_cut./max(RefY_cut);
         case 4     % UZH Lab 2
+            Npix     = length(MeasY);
             switch Gratings(i) 
                 case 100 % 100 l/mm
                     minRefX = CWL(i) - 350;
@@ -134,8 +135,13 @@ for i=1:Ndet
                     minRefX = CWL(i) - 100;
                     maxRefX = CWL(i) + 100;
                     ppnm    = 0.034;             % pixels per nm = 1/resolution;
+                otherwise
+                    minRefX = 1e7./2050;
+                    maxRefX = 1e7./2200;
+                    CWL     = 1e7./2108;
+                    ppnm    = 0.1434;
             end
-            wp1         = CWL(i) - 32/ppnm;      % lowest wavelength (nm) = CWL - Npix/2*resolution
+            wp1         = CWL(i) - Npix/(2.*ppnm);      % lowest wavelength (nm) = CWL - Npix/2*resolution
             cutID       = sort(findClosestId2Val(RefX,[minRefX maxRefX]));
             RefX_cut    = RefX(cutID(1):cutID(2));
             RefY_cut    = RefY(cutID(1):cutID(2));
@@ -163,6 +169,25 @@ for i=1:Ndet
             cutID    = sort(findClosestId2Val(RefX,CWL(i)+dW'));
             RefX_cut = RefX(cutID(1):cutID(2));
             RefY_cut = RefY(cutID(1):cutID(2));
+        case {8,9} % UniGE TRIR new (MESS)
+            switch Gratings(i) 
+                case 150 % 100 l/mm
+                    minRefX = CWL(i) - 150;
+                    maxRefX = CWL(i) + 150;
+                    ppnm    = 0.137;             % pixels per nm = 1/resolution;
+                case 100 % 150 l/mm
+                    minRefX = CWL(i) - 250;
+                    maxRefX = CWL(i) + 250;
+                    ppnm    = 0.068;             % pixels per nm = 1/resolution;
+                case 50
+                    minRefX = CWL(i) - 500;
+                    maxRefX = CWL(i) + 500;
+                    ppnm    = 0.034;             % pixels per nm = 1/resolution;
+            end
+            wp1         = CWL(i) - 32/ppnm;      % lowest wavelength (nm) = CWL - Npix/2*resolution
+            cutID       = sort(findClosestId2Val(RefX,[minRefX maxRefX]));
+            RefX_cut    = RefX(cutID(1):cutID(2));
+            RefY_cut    = RefY(cutID(1):cutID(2));
     end
 
     %% Define Fit Functions
@@ -220,7 +245,7 @@ for i=1:Ndet
             ftol= 1e-6;
             stol= 1e-6;
         case 4 % UZH Lab 2
-            p0 = [wp1  ppnm  1    -0.1  eps eps];
+            p0 = [wp1  ppnm  1    -0.4  eps eps];
             LB = [1e3  1e-4  0.1  -1    -1  -1 ];
             UB = [1e4  0.25  10   1     1   1  ];
             ftol= 5e-7;
@@ -238,6 +263,12 @@ for i=1:Ndet
             p0 = [wp1    ppnm  1.5  -0.1  eps  eps  ];
             LB = [wp1_L  1e-4  0.1  -1    -Inf -Inf ];
             UB = [wp1_U  0.4   10   1     Inf  Inf  ];
+            ftol= 5e-7;
+            stol= 5e-7;
+        case {8,9} % UniGE TRIR New
+            p0 = [wp1  ppnm  1    -0.1  eps eps];
+            LB = [1e3  1e-4  0.1  -1    -1  -1 ];
+            UB = [1e4  0.25  10   1     1   1  ];
             ftol= 5e-7;
             stol= 5e-7;
     end
@@ -290,7 +321,7 @@ for i=1:Ndet
     end
 
     switch CalType
-        case {1,4,6,7} % IR setups UoS and UZH Lab 2
+        case {1,4,6,7} % IR setups UoS, MESS New and MESS Lab2
             plot(ax,1e7./RefX,RefY,'k')
             hold(ax,'on');
             plot(ax,1e7./RefX_cut,plot_fun(Pfit(i,:)),'r','LineWidth',2)

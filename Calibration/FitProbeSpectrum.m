@@ -1,5 +1,11 @@
 function FitProbeSpectrum(CAL_data)
 
+if length(CAL_data.Air) == 1
+    CAL_data.Air{2} = CAL_data.Air{1};
+    CAL_data.Air{2} = CAL_data.Air{1};
+    CAL_data.cm     = [CAL_data.cm,CAL_data.cm];
+end
+
 %% Get the data and normalise it first
 I1Norm = CAL_data.Air{1}./max(CAL_data.Air{1});
 I2Norm = CAL_data.Air{2}./max(CAL_data.Air{2});
