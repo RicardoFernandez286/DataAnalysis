@@ -6,6 +6,9 @@ datafilename    = dataStruct.datafilename;
 %% Check that all files exist and read them
 fullName        = [rootdir filesep datafilename];
 
+%% Hardcoded settings
+convertTimescale = 0; % Will convert ps data to ns
+
 %% Read Data
 % Read the files if the directory is correctly populated
 fid             = fopen(fullName);
@@ -39,6 +42,15 @@ rawsignal       = fillmissing(rawsignal, 'linear');
 Nscans = NaN;
 noise  = zeros(size(rawsignal));
 
+% Convert ps to ns if requested
+if convertTimescale == 1
+    switch timescale
+        case 'ps'
+            timescale = 'ns';
+            delays = delays./1000;
+            warning('Delays have been converted to ns!')
+    end
+end
 %% Read the plot ranges
 mintime     = min(delays); %#ok<*NASGU> 
 maxtime     = max(delays);
