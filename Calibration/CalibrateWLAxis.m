@@ -40,7 +40,7 @@ for i=1:Ndet
     % If we're doing IR calibration, convert standard spectral axis to nm since the grating is linear in nm
     % The X axis of the reference [standard] spectrum is converted to nm, and the Y experimental data is flipped around
     switch CalType
-        case {1,4} % {UoS 2DIR/TRIR, UZH Lab 1,2,4, UniGE TRIR new}
+        case {1,4} % {UoS 2DIR/TRIR; UZH Lab 1,2,4}
             Gratings    = CAL_data.Gratings;
             CWL         = CAL_data.CWL;
             RefX        = 1e7./RefX;
@@ -62,6 +62,11 @@ for i=1:Ndet
             % Remove NaNs from measured data
             MeasX = MeasX(~isnan(MeasY));
             MeasY = MeasY(~isnan(MeasY));
+        case {8,9} % UniGE TRIR new
+            Gratings    = CAL_data.Gratings;
+            CWL         = CAL_data.CWL;
+            RefX        = 1e7./RefX;
+            MeasY       = flipud(MeasY);
     end
 
     %% Cut off relevant part of reference spectrum -- set initial guesses for fit parameters
@@ -89,7 +94,6 @@ for i=1:Ndet
         case 2    % UniGE TA 
 %             minRefX  = 345;
 %             maxRefX  = 690;
-
             ppnm = ppnmT;
             wp1 = CWL(1) - 260./ppnm;
 
@@ -169,13 +173,14 @@ for i=1:Ndet
             cutID    = sort(findClosestId2Val(RefX,CWL(i)+dW'));
             RefX_cut = RefX(cutID(1):cutID(2));
             RefY_cut = RefY(cutID(1):cutID(2));
-        case {8,9} % UniGE TRIR new (MESS)
+        case {8,9} % UniGE TRIR new (MESS)          
             switch Gratings(i) 
-                case 150 % 100 l/mm
-                    minRefX = CWL(i) - 150;
-                    maxRefX = CWL(i) + 150;
-                    ppnm    = 0.137;             % pixels per nm = 1/resolution;
-                case 100 % 150 l/mm
+                case 150 % 150 l/mm
+                    CWL(i) = CWL(i) - 30;
+                    minRefX = CWL(i) - 200;
+                    maxRefX = CWL(i) + 200;
+                    ppnm    = 0.130;             % pixels per nm = 1/resolution;
+                case 75 % 100 l/mm
                     minRefX = CWL(i) - 250;
                     maxRefX = CWL(i) + 250;
                     ppnm    = 0.068;             % pixels per nm = 1/resolution;
@@ -292,7 +297,7 @@ for i=1:Ndet
     end
 
     switch CalType
-        case {1,4,6,7} % IR Setups UoS, UZH Lab 2, RAL LIFEtime
+        case {1,4,6,7,8,9} % IR Setups UoS, UZH Lab 2, RAL LIFEtime, UniGE
             MeasX       = 1:Npix(i);
             lam(:,i)    = flipud(MeasX(:)./Pfit(i,2) + Pfit(i,1));
         case 5
@@ -321,7 +326,7 @@ for i=1:Ndet
     end
 
     switch CalType
-        case {1,4,6,7} % IR setups UoS, MESS New and MESS Lab2
+        case {1,4,6,7,8,9} % IR setups UoS, MESS New and MESS Lab2; TRIR UniGE
             plot(ax,1e7./RefX,RefY,'k')
             hold(ax,'on');
             plot(ax,1e7./RefX_cut,plot_fun(Pfit(i,:)),'r','LineWidth',2)
