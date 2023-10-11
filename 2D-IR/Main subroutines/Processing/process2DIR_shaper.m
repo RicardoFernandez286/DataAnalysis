@@ -37,6 +37,9 @@ dummy = 'nothing';
 % dummy = 'diff'; % Can be the dummy number of 'diff' (will plot 2 - 1) - more options coming soon
 dummydiff = 3;
 
+
+
+dataStruct.isShaper = 1;
 %% READ from dataStruct
 if isempty(varargin)
     ShowWaitBar = true;
@@ -99,11 +102,42 @@ end
 
 % If there is an w0 file in the current ROOTDIR, use it to set the rotating frame frequency.
 % Otherwise, plot relative to w0
-if exist([rootdir filesep 'w0.csv'],'file') == 2
-	w0 = readmatrix([rootdir filesep 'w0.csv']);
+if exist([rootdir filesep datafilename filesep 'w0.csv'],'file') == 2
+	rotframe = readmatrix([rootdir filesep datafilename filesep 'w0.csv']);
+    w0  = rotframe(1);
+    dt1 = rotframe(2);
+elseif varargin{2} == 0
+    w0  = 0;
+    dt1 = 1;
 else
-    w0 = 0;
+    prompt = {'Enter rotating frame frequency (\omega_{r}, in cm^{-1}):','Enter t_{1} time step (in fs):'};
+    dlgtitle = 'Rotating Frame Settings';
+    definput = {'1450','15'};
+    dims = [1 40];
+    opts.Interpreter = 'tex';
+    answer = inputdlg(prompt,dlgtitle,dims,definput,opts);
+    
+    if isempty(answer)
+        w0  = 0;
+        dt1 = 1;
+    else
+        w0  = str2double(answer{1});
+        dt1 = str2double(answer{2});
+        try
+            writematrix([w0;dt1],[datadir filesep 'w0.csv']);
+        catch
+            warning('Error writing rotating frame info file to default path');
+            fp = uigetdir('Where to save rotating frame file?','w0.csv');
+            if fp == 0
+                warning('Nowhere to save the rotating frame file :(');
+            else
+                writematrix([w0;dt1],[fp filesep 'w0.csv']);
+            end          
+%             warndlg('Error writing rotating frame info file','Error writing file');
+        end
+    end
 end
+
 
 % Hardcoded settings
     filter_type     = 'Mean';
@@ -202,7 +236,7 @@ binspecmax(m,k) = 1;
     end
     
 % Calculate the pump frequency axis from interferogram by using HeNe counting
-    dt1 = unique(diff(t1delays{m,k}(:,2)));
+% dt1 = unique(diff(t1delays{m,k}(:,2)));
     Resolution(m,k)             = 1/(N_FTpoints{m,k}*dt1*c_0);
     PumpAxis{m,k}               = ((1:1:N_FTpoints{m,k})-1)'.*Resolution(m,k)+w0;
     
@@ -258,59 +292,77 @@ else
     magnitude_FFTsig{m,k}       = abs(FFT_ZPsig{m,k});
 end
     
-% %% PROBE AXIS CALIBRATION USING SCATTERING - LINEAR FIT OF THE MAXIMA ALONG THE DIAGONAL
-% if m==1 && k==1
-%       % Get a list of the maxima of the interferogram (N_FTpoints/50 around the spectral max) 
-%       %%%! TO DO: needs to be redefined in terms of cm-1
-%         P                       = floor(N_FTpoints{m,k}/50);
-%         fitrange                = (binspecmax(m,k)-P):(binspecmax(m,k)+P);
-%         Npixels                 = size(magnitude_FFTsig{m,k},2);
-%         pixels                  = transpose(1:1:Npixels);
-%         % Get the maxima for probe calibration    
-%         magFFT                  = abs(FFT_ZPsig{m,k});
-%         [~,maxindex]            = max(magFFT(fitrange,:));
-%         scattering_maxima       = PumpAxis{m,k}(fitrange(maxindex));
-% %        % Do the fit [OLD WAY]
-% %         freq_coeff              = polyfit(pixels,scattering_maxima,probe_fitorder);
-% %         freq_fit                = transpose(polyval(freq_coeff,pixels));
-%         
-%         % Do the fit [NEW WAY - ROBUST]
-%         switch probe_fitorder
-%             case 1
-%                 model       = 'poly1';
-%             case 2
-%                 model       = 'poly2';
-%         end
-%         warning('off','curvefit:fit:iterationLimitReached');
-%         mdl                     = fit(pixels,scattering_maxima,model,'Robust','Bisquare');
-%         freq_fit                = mdl(pixels);
+%% PROBE AXIS CALIBRATION USING SCATTERING - LINEAR FIT OF THE MAXIMA ALONG THE DIAGONAL
+if m==bkgIdx
+      % Get a list of the maxima of the interferogram (N_FTpoints/50 around the spectral max) 
+      %%%! TO DO: needs to be redefined in terms of cm-1
+      switch probe_calib 
+            % 0=No calibration, use generated probe axis
+            % 1=Doing calibration from scattering, use the results (TBD)
+            % 2=Using saved probe (in file)
+            case {0,1}
+                probe       = cmprobe;
+            case 2
+                probe       = saved_probe;
+      end
+
+        minProbe_est_idx        = findClosestId2Val(PumpAxis{m,k},min(probe));  
+        maxProbe_est_idx        = findClosestId2Val(PumpAxis{m,k},max(probe));          
+        fitrange                = minProbe_est_idx:maxProbe_est_idx;
+        Npixels                 = size(magnitude_FFTsig{m,k},2);
+        pixels                  = transpose(1:1:Npixels);
+        % Get the maxima for probe calibration    
+        magFFT                  = abs(FFT_ZPsig{m,k});
+        [~,maxindex]            = max(magFFT(fitrange,:));
+        scattering_maxima_d     = PumpAxis{m,k}(fitrange(maxindex));
+%        % Do the fit [OLD WAY]
+%         freq_coeff              = polyfit(pixels,scattering_maxima,probe_fitorder);
+%         freq_fit                = transpose(polyval(freq_coeff,pixels));
+        
+        % Do the fit [NEW WAY - ROBUST]
+        switch probe_fitorder
+            case 1
+                model       = 'poly1';
+            case 2
+                model       = 'poly2';
+        end
+        warning('off','curvefit:fit:iterationLimitReached');
+        mdl                     = fit(pixels(20:50),scattering_maxima_d(20:50),model,'Robust','Bisquare');
+        freq_fit_tmp            = mdl(pixels);
 %       % Decide which kind of probe axis to use. It will anyway store all of them
 %         switch probe_calib
 %             case 1
 %             % Check if the Probe Axis makes sense, otherwise use either the stored one
 %                 if issorted(freq_fit)
-%                     ProbeAxis       = freq_fit;
+%                     ProbeAxis{k}  = freq_fit;
 %                 else
-%                     ProbeAxis       = cmprobe;
+%                     ProbeAxis{k}  = cmprobe{k};
 %                 end
 %             case 0
-%                 ProbeAxis       = cmprobe;
+%                 ProbeAxis{k}      = cmprobe{k};
 %             case 2
-%                 ProbeAxis       = saved_probe;
+%                 ProbeAxis{k}      = saved_probe{k};
 %         end
-%       
-% end
 
-switch probe_calib
-    case 0
-        ProbeAxis{k}    = cmprobe;
-    case 2
-        ProbeAxis{k}    = saved_probe;
+    freq_fit{k}         = freq_fit_tmp;   %#ok<*AGROW> 
+    scattering_maxima{k}= scattering_maxima_d;
+    
+    switch probe_calib 
+        % 0=No calibration, use generated probe axis
+        % 1=Doing calibration from scattering, use the results (TBD)
+        % 2=Using saved probe (in file)
+        case 1
+            ProbeAxis{k}        = freq_fit_tmp;
+        case 0
+            ProbeAxis{k}        = cmprobe;
+        case 2
+            ProbeAxis{k}        = saved_probe;
+    end
 end
 %% Subtract the scattering background (if enabled) and correct the sign of the signals
 % If DEBUG is OFF, don't consider the sign of the pump  
 if debug==0
-    SignPump(m,k)=1;
+    SignPump(m,k)=-1;
 elseif debug==1 % If debug is ON, consider the sign of the pump
     SignPump(m,k)=sign(real(phased_FFTZPint{m,k}(binspecmax(m,k))));
 end
@@ -371,10 +423,11 @@ end
 
 %% WRITE to dataStruct
     dataStruct.ProbeAxis           = ProbeAxis;
-    dataStruct.freq_fit            = [];
-    dataStruct.scattering_maxima   = [];
     dataStruct.PumpAxis            = PumpAxis;
-    
+
+    dataStruct.scattering_maxima   = scattering_maxima;
+    dataStruct.freq_fit            = freq_fit;
+
     dataStruct.t1delays            = t1delays;
     dataStruct.interferogram       = interferogram;
     dataStruct.binzero             = binzero;

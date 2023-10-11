@@ -422,7 +422,6 @@ end
 
 %% WRITE to dataStruct
     dataStruct.ProbeAxis           = ProbeAxis;
-    dataStruct.freq_fit            = [];
     dataStruct.PumpAxis            = PumpAxis;
     
     dataStruct.scattering_maxima   = scattering_maxima;

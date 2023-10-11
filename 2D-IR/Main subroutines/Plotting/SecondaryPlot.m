@@ -4,6 +4,11 @@ if dataStruct.isSimulation == 1
     return
 end
 
+% fh=figure;
+% where=axes('parent',fh);
+% where=gca;
+% hold(where,'on');
+
 %% Clear the axes
 cla(where,'reset')
 hold(where,'off')
