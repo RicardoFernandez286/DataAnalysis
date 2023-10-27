@@ -362,7 +362,7 @@ end
 %% Subtract the scattering background (if enabled) and correct the sign of the signals
 % If DEBUG is OFF, don't consider the sign of the pump  
 if debug==0
-    SignPump(m,k)=-1;
+    SignPump(m,k)=1;
 elseif debug==1 % If debug is ON, consider the sign of the pump
     SignPump(m,k)=sign(real(phased_FFTZPint{m,k}(binspecmax(m,k))));
 end
