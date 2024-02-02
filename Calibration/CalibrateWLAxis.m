@@ -180,9 +180,9 @@ for i=1:Ndet
                     minRefX = CWL(i) - 200;
                     maxRefX = CWL(i) + 200;
                     ppnm    = 0.130;             % pixels per nm = 1/resolution;
-                case 75 % 100 l/mm
-                    minRefX = CWL(i) - 250;
-                    maxRefX = CWL(i) + 250;
+                case 75 % 75 l/mm
+                    minRefX = CWL(i) - 400;
+                    maxRefX = CWL(i) + 400;
                     ppnm    = 0.068;             % pixels per nm = 1/resolution;
                 case 50
                     minRefX = CWL(i) - 500;

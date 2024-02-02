@@ -392,17 +392,24 @@ case 'Raw'
             % the signal is already there. Nothing to calculate
         case 'Wobbler'
             temp_sig=cell(Ndelays,Nslowmod*Nspectra); temp_int=cell(Ndelays,Nslowmod*Nspectra);
-            % Calculate the signal by taking the sum of all 4 states
-            for k=0:Nslowmod*Nspectra-1
-                for m=1:Ndelays
-                  ds                = 1:Ndatastates;
-                  temp_sig{m,k+1}   = sum(cat(3,signal{m,ds+k*Ndatastates}),3)/4;
-                  temp_int{m,k+1}   = sum(cat(3,interferogram{m,ds+k*Ndatastates}),3)/4; 
-                end
+%             % Calculate the signal by taking the sum of all 4 states
+%             for k=0:Nslowmod*Nspectra-1
+%                 for m=1:Ndelays
+%                   ds                = 1:Ndatastates;
+% %                   temp_sig{m,k+1}   = sum(cat(3,signal{m,ds+k*Ndatastates}),3)/4;
+%                   temp_sig{m,k+1}   = signal{m,1}-signal{m,2}+signal{m,3}-signal{m,4};
+%                   temp_int{m,k+1}   = sum(cat(3,interferogram{m,ds+k*Ndatastates}),3)/4; 
+%                 end
+%             end
+            
+            % Calculate the signal by taking A-B+C-D
+            for m=1:Ndelays
+                signal{m,1}=signal{m,1}-signal{m,2}+signal{m,3}-signal{m,4}; % Chopper ON - OFF
+                interferogram{m,1}=interferogram{m,1}-interferogram{m,2}+interferogram{m,3}-interferogram{m,4};
             end
-            % Save calculated signal and interferogram
-            signal                  = temp_sig;
-            interferogram           = temp_int;
+%             % Save calculated signal and interferogram
+%             signal                  = temp_sig;
+%             interferogram           = temp_int;
         end
     case '4PM' % This case applies when we have four point modulation
         temp_sig=cell(Ndelays,Nslowmod*Nspectra); temp_int=cell(Ndelays,Nslowmod*Nspectra);
