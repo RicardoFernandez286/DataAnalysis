@@ -446,7 +446,6 @@ case 'Raw'
 case 'Signal'
     for k=1:Nslowmod*Ninterleave*Nspectra*Ndummies
     for m=1:Ndelays
-        Ndatastates = 1;
         % Update the Wait Bar
         if ShowWaitBar
             progress = progress+1;
@@ -461,8 +460,8 @@ case 'Signal'
       % Counts here are all 1's. Load them to ensure consistency...
         count{m,k}          = csvread([filename '_count' ShortEndings{m,k}]);
       % Load the interferogram and signal
-        interferogram{m,k}  = csvread([filename '_interferogram' ShortEndings{m,k}]);
-        signal{m,k}         = csvread([filename '_signal' ShortEndings{m,k}]);
+        interferogram{m,k}  = Ndatastates*csvread([filename '_interferogram' ShortEndings{m,k}]);
+        signal{m,k}         = Ndatastates*csvread([filename '_signal' ShortEndings{m,k}]);
       % Save only the first column of the interferogram
         interferogram{m,k}  = interferogram{m,k}(:,1);
       % Find the NaN in the arrays
@@ -491,6 +490,8 @@ case 'Signal'
 % %       %Normalize the interferogram
 % %       interferogram{m,k}  = interferogram{m,k}./mean(interferogram{m,k});
     end
+    
+    Ndatastates = 1;
     
     % Continue with the slow modulation, it's either OFF or 4PM (polarisations and so on... TBI - not needed yet)
         switch SlowMod

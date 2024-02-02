@@ -341,7 +341,7 @@ end
 
 % Show the colorbar
 hcb     =   colorbar(plotaxis);
-ylabel(hcb,'2D signal (a.u.)','FontWeight','bold')
+ylabel(hcb,'S_{2D-IR} (mOD cm^{1/2})','FontWeight','bold','interpreter','tex')
 hcb.LineWidth       = 0.1;
 hcb.TickLength      = 0.025;
 hcb.TickDirection   = 'out';

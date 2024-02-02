@@ -288,10 +288,11 @@ switch slice_options{slice_typeindx}
         ProbeAxis       = ProbeAxis(selProbe);
         % Initialize variables
         data            = zeros(length(ProbeAxis),Ndelays);
-a=0;
+
         % Get the data to be plotted
+        res = mean(diff(PumpAxis{PopDelay,k}));
         for m=1:Ndelays
-            data(:,m)   = sum(PROC_2D_DATA{m,k}(min(pump_indexes):max(pump_indexes),selProbe),1)';
+            data(:,m)   = sum(PROC_2D_DATA{m,k}(min(pump_indexes):max(pump_indexes),selProbe),1)' * 2*sqrt(res); % sum * 2*sqrt(res) [Donaldson normalisation, doi:10.1021/acs.analchem.2c04287]
             if doNormalise == 1
                 data(:,m) = data(:,m)./max(abs(data(:,m)));
             end
@@ -327,7 +328,7 @@ a=0;
         % Title, axis labels and legend
         axes2.FontSize = 14;
         xlabel(axes2,[x_axis ' wavelength (cm^{-1})'],'FontSize',12,'FontWeight','bold');
-        ylabel(axes2,'2D signal (a.u.)','FontSize',12,'FontWeight','bold')
+        ylabel(axes2,'Pump-Integrated 2D-IR Signal (mOD)','FontSize',12,'FontWeight','bold')
         title(axes2,plot_title,'FontSize',10)
         axis(axes2,'tight');
 

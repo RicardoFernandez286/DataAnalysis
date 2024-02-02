@@ -77,7 +77,7 @@ apodise_method  = app.I2D_ApodisationFunction.Value;
 phase_method    = app.I2D_PhaseFitFunction.Value;
 phase_points    = app.I2D_PhaseFitRangeEdit.Value;
 probe_calib     = app.I2D_AutocalibrateprobeaxisCheckBox.Value;
-pumpcorrection  = app.I2D_PumpcorrectionCheckBox.Value;
+pumpcorrection  = 0;
 
 %%% Determine whether the data is transient 2D or not, then read the mode
 if dataStruct.Transient2D == 1
@@ -271,7 +271,8 @@ end
     
 % Calculate the FFT and phase
     FFT_ZPint{m,k}              = fft(phased_ZPint{m,k});
-    FFT_ZPsig{m,k}              = fft(phased_ZPsig{m,k});
+    % FFT_ZPsig{m,k}              = fft(phased_ZPsig{m,k});
+    FFT_ZPsig{m,k}              = fft(apo_signal{m,k},N_FTpoints{m,k});
     
     ZP_phase{m,k}               = zeros(size(phased_ZPint{m,k}));
     
@@ -288,7 +289,7 @@ if pumpcorrection == 1
     phased_FFTZPsig{m,k}        = real(FFT_ZPsig{m,k}.*phasingterm{m,k})./(abs(phased_FFTZPint{m,k}*ones(1,length(cmprobe))));
     magnitude_FFTsig{m,k}       = abs(FFT_ZPsig{m,k}-mean(FFT_ZPsig{m,k}))./(real(phased_FFTZPint{m,k}*ones(1,length(cmprobe))));
 else
-    phased_FFTZPsig{m,k}        = real(FFT_ZPsig{m,k}.*phasingterm{m,k});
+    phased_FFTZPsig{m,k}        = real(FFT_ZPsig{m,k});
     magnitude_FFTsig{m,k}       = abs(FFT_ZPsig{m,k});
 end
     
@@ -369,7 +370,7 @@ end
 
 end % Ndelays
 end % Ndatastates
-
+%%
 for k=1:Nspectra*Ndummies*Nslowmod
 for m=1:Ndelays
     % Background subtraction
@@ -378,11 +379,34 @@ for m=1:Ndelays
     else
         PROC_2D_DATA{m,k}       = phased_FFTZPsig{m,k}*SignPump(m,k);
     end
+    
+    % Scale 2DIR spectra to get it in mOD/sqrt(cm-1)  [Donaldson2022, doi:10.1021/acs.analchem.2c04287]
+    PROC_2D_DATA{m,k} = PROC_2D_DATA{m,k} * sqrt(c_0*dt1/N_FTpoints{1,1}) * 2;
+    % PROC_2D_DATA{m,k} = PROC_2D_DATA{m,k} /sqrt(c_0*dt1*N_FTpoints{1,1}) * 2;
 end
 end
 
-%% Scale 2DIR spectra to get it in mOD/sqrt(cm-1)  [Donaldson2022, doi:10.1021/acs.analchem.2c04287]
-PROC_2D_DATA = PROC_2D_DATA*sqrt(c_0*dt1/N_FTpoints{1,1})*2;
+%% Sanity check for intensities
+    % for m=1:Ndelays
+    m=4;
+
+    fh=figure(1);
+    clf(fh)
+
+    t0_spec = signal{m,1}(1,:) - signal{1,1}(1,:);
+    sumspec = sum(PROC_2D_DATA{m,1}(1:(N_FTpoints{1,1}/2),:),1);
+    plot(ProbeAxis{1,1}, t0_spec,'DisplayName','t0')
+    hold on
+    plot(ProbeAxis{1,1},sumspec* 2*sqrt(Resolution(m)),'DisplayName','int2D')
+    title(['t_{2} = ' num2str(dataStruct.t2delays(m)) ' ps'])
+    yline(0,'HandleVisibility','off')
+    legend
+    axis('tight')
+    drawnow
+    pause(0.1)
+    % end
+%%
+a=0;
 
 %% Transient 2D IR processing
 % % Determine whether it is a transient 2D dataset or not, then do the stuff
