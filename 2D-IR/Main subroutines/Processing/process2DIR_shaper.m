@@ -381,6 +381,9 @@ for m=1:Ndelays
 end
 end
 
+%% Scale 2DIR spectra to get it in mOD/sqrt(cm-1)  [Donaldson2022, doi:10.1021/acs.analchem.2c04287]
+PROC_2D_DATA = PROC_2D_DATA*sqrt(c_0*dt1/N_FTpoints{1,1})*2;
+
 %% Transient 2D IR processing
 % % Determine whether it is a transient 2D dataset or not, then do the stuff
 if Transient2D

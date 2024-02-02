@@ -126,6 +126,8 @@ switch slice_options{slice_typeindx}
             end
         end
         
+        % data = data./max(abs(data(ProbeAxis>1841,:,:)),[],1);
+
         % Plot each pump wavelength in one new figure
         for p=1:L
             % Create a new figure
