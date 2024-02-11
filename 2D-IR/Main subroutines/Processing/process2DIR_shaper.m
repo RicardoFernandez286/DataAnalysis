@@ -381,32 +381,36 @@ for m=1:Ndelays
     end
     
     % Scale 2DIR spectra to get it in mOD/sqrt(cm-1)  [Donaldson2022, doi:10.1021/acs.analchem.2c04287]
-    PROC_2D_DATA{m,k} = PROC_2D_DATA{m,k} * sqrt(c_0*dt1/N_FTpoints{1,1}) * 2;
-    % PROC_2D_DATA{m,k} = PROC_2D_DATA{m,k} /sqrt(c_0*dt1*N_FTpoints{1,1}) * 2;
+    PROC_2D_DATA{m,k} = PROC_2D_DATA{m,k} * sqrt(c_0*dt1/N_FTpoints{1,1}) * 2; % Don't need to divide by Nphases because no chopping was done.
 end
 end
 
-%% Sanity check for intensities
-    % for m=1:Ndelays
-    m=4;
-
-    fh=figure(1);
-    clf(fh)
-
-    t0_spec = signal{m,1}(1,:) - signal{1,1}(1,:);
-    sumspec = sum(PROC_2D_DATA{m,1}(1:(N_FTpoints{1,1}/2),:),1);
-    plot(ProbeAxis{1,1}, t0_spec,'DisplayName','t0')
-    hold on
-    plot(ProbeAxis{1,1},sumspec* 2*sqrt(Resolution(m)),'DisplayName','int2D')
-    title(['t_{2} = ' num2str(dataStruct.t2delays(m)) ' ps'])
-    yline(0,'HandleVisibility','off')
-    legend
-    axis('tight')
-    drawnow
-    pause(0.1)
-    % end
-%%
-a=0;
+% %% Sanity check for intensities
+%     for m=1:Ndelays
+%     % m=2;
+% 
+%     fh=figure(1);
+%     clf(fh)
+% 
+%     t0_spec = signal{m,1}(1,:) - signal{1,1}(1,:);
+%     sumspec = sum(PROC_2D_DATA{m,1}(1:(N_FTpoints{1,1}/2-1),:),1);
+%     plot(ProbeAxis{1,1}, t0_spec,'DisplayName','t0')
+%     hold on
+%     plot(ProbeAxis{1,1},sumspec* 2*sqrt(Resolution(m)),'DisplayName','int2D')
+%     hold off
+% 
+%     % % Difference between the two
+%     % plot(ProbeAxis{1,1},t0_spec - sumspec* 2*sqrt(Resolution(m)))
+% 
+%     title(['t_{2} = ' num2str(dataStruct.t2delays(m)) ' ps'])
+%     yline(0,'HandleVisibility','off')
+%     legend
+%     axis('tight')
+%     drawnow
+%     pause(0.1)
+%     end
+% %%
+% a=0;
 
 %% Transient 2D IR processing
 % % Determine whether it is a transient 2D dataset or not, then do the stuff

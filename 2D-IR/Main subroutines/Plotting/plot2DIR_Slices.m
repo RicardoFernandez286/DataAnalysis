@@ -29,10 +29,13 @@ PumpAxis            = dataStruct.PumpAxis;
 Ndelays             = dataStruct.Ndelays;
 t2delays            = dataStruct.t2delays;
 PROC_2D_DATA        = dataStruct.PROC_2D_DATA;
-datafilename        = string(dataStruct.datafilename);
 doNormalise         = dataStruct.Normalise;
-doSave              = dataStruct.SaveData;
 
+doSave              = dataStruct.SaveData;
+rootdir             = dataStruct.rootdir;
+[~,datafilename]    = fileparts(dataStruct.datafilename);
+
+res = mean(diff(PumpAxis{1,1}));
 
 switch slice_options{slice_typeindx}
     case 'Diagonal'
@@ -123,11 +126,15 @@ switch slice_options{slice_typeindx}
             % Get the data
             for p=1:L
                 data(:,m,p)     = transpose(PROC_2D_DATA{m,k}(pump_indexes{m}(p),probe_indexes));
+                if doNormalise
+                    data(:,m,p) = data(:,m,p)./max(abs(data(:,m,p)));
+                    ylabeltext = 'Norm. 2D-IR signal';
+                else
+                    ylabeltext = 'S_{2D-IR} (mOD cm^{1/2})';
+                end
             end
         end
         
-        % data = data./max(abs(data(ProbeAxis>1841,:,:)),[],1);
-
         % Plot each pump wavelength in one new figure
         for p=1:L
             % Create a new figure
@@ -160,7 +167,7 @@ switch slice_options{slice_typeindx}
             % Title, axis labels and legend
             axes2.FontSize = 14;
             xlabel(axes2,[x_axis ' wavelength (cm^{-1})'],'FontSize',14,'FontWeight','bold');
-            ylabel(axes2,'2D signal (a.u.)','FontSize',14,'FontWeight','bold')
+            ylabel(axes2,ylabeltext,'FontSize',14,'FontWeight','bold')
             title(axes2,plot_title,'FontSize',10)
             axis(axes2,'tight');
 
@@ -172,7 +179,30 @@ switch slice_options{slice_typeindx}
             % Add zero line
             hline = yline(axes2,0,'HandleVisibility','off');
             hline.Color = [0.5 0.5 0.5];
+            
+            % Save to file
+            if doSave
+                timeUnits = 'ps';
+                probeUnits = 'cm-1';   
+                XYZdata = [[0,ProbeAxis(:)'];[t2delays(:),data(:,:,p)'*2*sqrt(res)]];
+                try 
+                    fname = [rootdir filesep datafilename '_PuTr_' num2str(PumpAxis{1,1}(pump_indexes{1}(p)),'%.4g') 'wn.pdat'];
+                    writecell({[timeUnits '*' probeUnits]},fname,'FileType','text');
+                    writematrix(XYZdata,fname,'FileType','text','WriteMode','append');
+                    disp(['Data was saved in ' fname]);
+                catch ME
+                    warning('Error saving PDAT to default path. Choose new path to continue...')
+                    writefolder = uigetdir([],'Choose destination folder to save PDAT file...');
+                    fname = [writefolder filesep datafilename '_PuTr_' num2str(PumpAxis{1,1}(pump_indexes{1}(p)),'%.4g') 'wn.pdat'];
+                    writecell({[timeUnits '*' probeUnits]},fname,'FileType','text');
+                    writematrix(XYZdata,fname,'FileType','text','WriteMode','append');
+                    disp(['Data was saved in ' fname]);               
+                end
+            end
         end
+
+
+
     
     case 'Along fixed probe WL'
         % Get the desired values to plot from user
@@ -290,11 +320,13 @@ switch slice_options{slice_typeindx}
         data            = zeros(length(ProbeAxis),Ndelays);
 
         % Get the data to be plotted
-        res = mean(diff(PumpAxis{PopDelay,k}));
         for m=1:Ndelays
             data(:,m)   = sum(PROC_2D_DATA{m,k}(min(pump_indexes):max(pump_indexes),selProbe),1)' * 2*sqrt(res); % sum * 2*sqrt(res) [Donaldson normalisation, doi:10.1021/acs.analchem.2c04287]
-            if doNormalise == 1
+            if doNormalise
                 data(:,m) = data(:,m)./max(abs(data(:,m)));
+                ylabeltext = 'Norm. 2D-IR signal';
+            else
+                ylabeltext = 'Pump-Integrated 2D-IR Signal (mOD)';
             end
         end
         
@@ -328,7 +360,7 @@ switch slice_options{slice_typeindx}
         % Title, axis labels and legend
         axes2.FontSize = 14;
         xlabel(axes2,[x_axis ' wavelength (cm^{-1})'],'FontSize',12,'FontWeight','bold');
-        ylabel(axes2,'Pump-Integrated 2D-IR Signal (mOD)','FontSize',12,'FontWeight','bold')
+        ylabel(axes2,ylabeltext,'FontSize',12,'FontWeight','bold')
         title(axes2,plot_title,'FontSize',10)
         axis(axes2,'tight');
 
@@ -342,6 +374,24 @@ switch slice_options{slice_typeindx}
         hline.Color = [0.5 0.5 0.5];
         
         %%% Write data to file
+        if doSave
+            timeUnits = 'ps';
+            probeUnits = 'cm-1';   
+            XYZdata = [[0,ProbeAxis(:)'];[t2delays(:),data'*2*sqrt(res)]];
+            try 
+                fname = [rootdir filesep datafilename '_PuInt_' num2str(PumpAxis{1,1}(min(pump_indexes)),'%.4g') '-' num2str(PumpAxis{1,1}(max(pump_indexes)),'%.4g') 'wn.pdat'];
+                writecell({[timeUnits '*' probeUnits]},fname,'FileType','text');
+                writematrix(XYZdata,fname,'FileType','text','WriteMode','append');
+                disp(['Data was saved in ' fname]);
+            catch ME
+                warning('Error saving PDAT to default path. Choose new path to continue...')
+                writefolder = uigetdir([],'Choose destination folder to save PDAT file...');
+                fname = [writefolder filesep datafilename '_PuInt_' num2str(PumpAxis{1,1}(min(pump_indexes)),'%.4g') '-' num2str(PumpAxis{1,1}(max(pump_indexes)),'%.4g') 'wn.pdat'];
+                writecell({[timeUnits '*' probeUnits]},fname,'FileType','text');
+                writematrix(XYZdata,fname,'FileType','text','WriteMode','append');
+                disp(['Data was saved in ' fname]);               
+            end
+        end
 
     case 'Integrate along probe axis'
         switch interactivemode
