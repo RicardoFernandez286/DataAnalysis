@@ -290,7 +290,7 @@ end
 
 % Phase the data (MCT data + interferogram)
     phasingterm{m,k}            = exp(-1i*fittedPhase{m,k});
-    phased_FFTZPint{m,k}        = FFT_ZPint{m,k}.*phasingterm{m,k};
+    phased_FFTZPint{m,k}        = FFT_ZPint{m,k}.*phasingterm{m,k}./max(abs(FFT_ZPint{m,k}));
 
 % Do pump correction
 if pumpcorrection == 1
@@ -358,12 +358,18 @@ for k=1:Nspectra*Ndummies*Nslowmod
 for m=1:Ndelays
     % Background subtraction
     if bkg_sub==1 && m~=bkgIdx
-        PROC_2D_DATA{m,k}       = (phased_FFTZPsig{m,k}-phased_FFTZPsig{bkgIdx,k})*SignPump(m,k);
+        PROC_2D_DATA{m,k}       = (phased_FFTZPsig{m,k} - phased_FFTZPsig{bkgIdx,k})*SignPump(m,k);
     else
         PROC_2D_DATA{m,k}       = phased_FFTZPsig{m,k}*SignPump(m,k);
     end
+    
+    dt1 = HeNe;
+    % Scale 2DIR spectra to get it in mOD/sqrt(cm-1)  [Donaldson2022, doi:10.1021/acs.analchem.2c04287]
+    PROC_2D_DATA{m,k} = PROC_2D_DATA{m,k} * sqrt(c_0*dt1/N_FTpoints{1,1}) * 2; % Don't need to divide by Nphases because no chopping was done.
 end
 end
+
+
 %% Transient 2D IR processing
 % % Determine whether it is a transient 2D dataset or not, then do the stuff
 if Transient2D

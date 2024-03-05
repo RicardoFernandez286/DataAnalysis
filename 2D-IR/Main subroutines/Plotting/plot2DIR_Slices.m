@@ -181,23 +181,24 @@ switch slice_options{slice_typeindx}
             hline.Color = [0.5 0.5 0.5];
             
             % Save to file
-            if doSave
-                timeUnits = 'ps';
-                probeUnits = 'cm-1';   
-                XYZdata = [[0,ProbeAxis(:)'];[t2delays(:),data(:,:,p)'*2*sqrt(res)]];
-                try 
-                    fname = [rootdir filesep datafilename '_PuTr_' num2str(PumpAxis{1,1}(pump_indexes{1}(p)),'%.4g') 'wn.pdat'];
-                    writecell({[timeUnits '*' probeUnits]},fname,'FileType','text');
-                    writematrix(XYZdata,fname,'FileType','text','WriteMode','append');
-                    disp(['Data was saved in ' fname]);
-                catch ME
-                    warning('Error saving PDAT to default path. Choose new path to continue...')
-                    writefolder = uigetdir([],'Choose destination folder to save PDAT file...');
-                    fname = [writefolder filesep datafilename '_PuTr_' num2str(PumpAxis{1,1}(pump_indexes{1}(p)),'%.4g') 'wn.pdat'];
-                    writecell({[timeUnits '*' probeUnits]},fname,'FileType','text');
-                    writematrix(XYZdata,fname,'FileType','text','WriteMode','append');
-                    disp(['Data was saved in ' fname]);               
-                end
+            switch doSave
+                case 'On'
+                    timeUnits = 'ps';
+                    probeUnits = 'cm-1';   
+                    XYZdata = [[0,ProbeAxis(:)'];[t2delays(:),data(:,:,p)'*2*sqrt(res)]];
+                    try 
+                        fname = [rootdir filesep datafilename '_PuTr_' num2str(PumpAxis{1,1}(pump_indexes{1}(p)),'%.4g') 'wn.pdat'];
+                        writecell({[timeUnits '*' probeUnits]},fname,'FileType','text');
+                        writematrix(XYZdata,fname,'FileType','text','WriteMode','append');
+                        disp(['Data was saved in ' fname]);
+                    catch ME
+                        warning('Error saving PDAT to default path. Choose new path to continue...')
+                        writefolder = uigetdir([],'Choose destination folder to save PDAT file...');
+                        fname = [writefolder filesep datafilename '_PuTr_' num2str(PumpAxis{1,1}(pump_indexes{1}(p)),'%.4g') 'wn.pdat'];
+                        writecell({[timeUnits '*' probeUnits]},fname,'FileType','text');
+                        writematrix(XYZdata,fname,'FileType','text','WriteMode','append');
+                        disp(['Data was saved in ' fname]);               
+                    end
             end
         end
 
@@ -374,23 +375,24 @@ switch slice_options{slice_typeindx}
         hline.Color = [0.5 0.5 0.5];
         
         %%% Write data to file
-        if doSave
-            timeUnits = 'ps';
-            probeUnits = 'cm-1';   
-            XYZdata = [[0,ProbeAxis(:)'];[t2delays(:),data'*2*sqrt(res)]];
-            try 
-                fname = [rootdir filesep datafilename '_PuInt_' num2str(PumpAxis{1,1}(min(pump_indexes)),'%.4g') '-' num2str(PumpAxis{1,1}(max(pump_indexes)),'%.4g') 'wn.pdat'];
-                writecell({[timeUnits '*' probeUnits]},fname,'FileType','text');
-                writematrix(XYZdata,fname,'FileType','text','WriteMode','append');
-                disp(['Data was saved in ' fname]);
-            catch ME
-                warning('Error saving PDAT to default path. Choose new path to continue...')
-                writefolder = uigetdir([],'Choose destination folder to save PDAT file...');
-                fname = [writefolder filesep datafilename '_PuInt_' num2str(PumpAxis{1,1}(min(pump_indexes)),'%.4g') '-' num2str(PumpAxis{1,1}(max(pump_indexes)),'%.4g') 'wn.pdat'];
-                writecell({[timeUnits '*' probeUnits]},fname,'FileType','text');
-                writematrix(XYZdata,fname,'FileType','text','WriteMode','append');
-                disp(['Data was saved in ' fname]);               
-            end
+        switch doSave
+            case 'On'
+                timeUnits = 'ps';
+                probeUnits = 'cm-1';   
+                XYZdata = [[0,ProbeAxis(:)'];[t2delays(:),data'*2*sqrt(res)]];
+                try 
+                    fname = [rootdir filesep datafilename '_PuInt_' num2str(PumpAxis{1,1}(min(pump_indexes)),'%.4g') '-' num2str(PumpAxis{1,1}(max(pump_indexes)),'%.4g') 'wn.pdat'];
+                    writecell({[timeUnits '*' probeUnits]},fname,'FileType','text');
+                    writematrix(XYZdata,fname,'FileType','text','WriteMode','append');
+                    disp(['Data was saved in ' fname]);
+                catch ME
+                    warning('Error saving PDAT to default path. Choose new path to continue...')
+                    writefolder = uigetdir([],'Choose destination folder to save PDAT file...');
+                    fname = [writefolder filesep datafilename '_PuInt_' num2str(PumpAxis{1,1}(min(pump_indexes)),'%.4g') '-' num2str(PumpAxis{1,1}(max(pump_indexes)),'%.4g') 'wn.pdat'];
+                    writecell({[timeUnits '*' probeUnits]},fname,'FileType','text');
+                    writematrix(XYZdata,fname,'FileType','text','WriteMode','append');
+                    disp(['Data was saved in ' fname]);               
+                end
         end
 
     case 'Integrate along probe axis'
