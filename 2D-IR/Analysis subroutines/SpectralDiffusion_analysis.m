@@ -65,12 +65,12 @@ Npixels             = length(ProbeAxis);
 Interp_method       = 'InterpFT'; % 2D FFT, InterpFT, Mesh, None. Default = InterpFT
 % Fit_type            = 'Quadratic'; % 'Quadratic' 'None' - Sets the type of fit to calculate the minima along the slices
 
-Interp_order        = 5; % Multiplies Npixels by a factor to interpolate in the probe dimension
-Nfitpoints          = 3;
+Interp_order        = 6; % Multiplies Npixels by a factor to interpolate in the probe dimension
+Nfitpoints          = 4;
 N_pointsParabola    = round(Interp_order*Nfitpoints); % No. of X points to fit a parabola on each side of the peak: [-x (peak) +x]
 N_points_IvCLS      = 8;
 
-intensity_threshold = 80/100; % Intensity threshold for the linear fit to get the CLS or IvCLS
+intensity_threshold = 60/100; % Intensity threshold for the linear fit to get the CLS or IvCLS
 textcolor           = 'none'; % 'none' or RGB color
 fit_method          = 'LSQ'; % 'GA' or 'LSQ' for Genetic algorithm or Least-squares
 
@@ -186,8 +186,8 @@ for q=1:L
             probe_indexes       = probe_idxrange(1):1:probe_idxrange(end);
             pump_indexes        = pump_idxrange(1):1:pump_idxrange(end);
             Npeaks              = length(pump_indexes);
-            min_values          = zeros(Npeaks,Ndelays);
-            SpecDif_ind         = zeros(length(t2delays),1);
+            min_values          = NaN*zeros(Npeaks,Ndelays);
+            SpecDif_ind         = NaN*zeros(length(t2delays),1);
             pump_cut            = cell(Ndelays,1);
             CLS_Xdata           = cell(Ndelays,1);
             CLS_Ydata           = cell(Ndelays,1);
@@ -205,8 +205,11 @@ for q=1:L
                     end_probe       = min(peak_pos(i)+N_pointsParabola,length(Interp_ProbeAxis));
                     probe_segment   = Interp_ProbeAxis(start_probe:end_probe);
                     data_segment    = Interp_Data{m,k}(pump_indexes(i),start_probe:end_probe);
-                    coeff           = polyfit(probe_segment,data_segment,2);
-                    min_values(i,m) = -coeff(2)/(2*coeff(1));
+                    coeff           = polyfit(probe_segment,data_segment,6);
+                    fitData = polyval(coeff,probe_segment);
+                    [~,min_idx]     = min(fitData);
+                    min_values(i,m) = probe_segment(min_idx);
+                    % min_values(i,m) = -coeff(2)/(2*coeff(1));
                     if diagnosticPlot == 1
                         cmap= jet(Npeaks);
                         plot(diagnosticAx,probe_segment,data_segment./max(abs(data_segment(:))),'o','MarkerSize',3,'Color',cmap(i,:));
