@@ -205,6 +205,15 @@ else
     end
 end
 
+% If there is a calibrated probe file, use it. Otherwise, use the normal one
+if exist([rootdir filesep datafilename filesep 'CalibratedProbe.csv'],'file') == 2
+    cmprobe     = csvread([rootdir filesep datafilename filesep 'CalibratedProbe.csv']);
+elseif exist([rootdir filesep 'CalibratedProbe.csv'],'file') == 2
+    cmprobe     = csvread([rootdir filesep 'CalibratedProbe.csv']);
+else
+    cmprobe     = csvread([filename '_wavenumbers.csv']);
+end
+
 % In TRUVIS, the 2nd order can overlap with the main band, in which case it
 % should be removed (only if using a grating)
 minwl = min(cmprobe);
