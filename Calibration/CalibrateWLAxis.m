@@ -7,7 +7,7 @@ function [cm,lam] = CalibrateWLAxis(CAL_data,FitLimits,doFit)
 %% Read from input structure
 CalType     = CAL_data.CalType;
 
-CalType = 10;
+% CalType = 10;
 
 switch CalType
     case {1,6,7}; Ndet = 2;
