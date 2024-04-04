@@ -1,6 +1,6 @@
 function  dataStruct = load2DIRlab1(dataStruct,varargin)
 
-% Description: This function loads all 2DIR data in the file format from the Lab 1 & Lab 4 MESS program.
+% Description: This function loads all 2DIR data in the file format from the MESS program.
 % Usage: dataStruct = load2DIRlab1(dataStruct)
 % Inputs:
 %   dataStruct structure with fields:
