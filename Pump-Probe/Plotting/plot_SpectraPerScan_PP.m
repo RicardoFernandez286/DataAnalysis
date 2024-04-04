@@ -72,7 +72,7 @@ switch app.PP_DataFormat.Value
             ScanData(:,1) = TempScanData(:,k);
         end
         ScanData = transpose(ScanData);
-    case {'UZH TRIR [new]','UZH TRUVIS [new]'} % Lab 1 & Lab 4
+    case {'UZH/UniGE TRIR [MESS]','UZH TRUVIS [new]'} % Lab 1 & Lab 4
         % The first scan has no _n.csv termination
         ending          = '_sp0_sm0_du0_';
         Nscans          = dataStruct.Nscans;

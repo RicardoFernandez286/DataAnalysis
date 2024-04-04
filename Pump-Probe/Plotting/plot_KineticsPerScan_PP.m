@@ -73,7 +73,7 @@ switch app.PP_DataFormat.Value
             caption = "Scan 1";
             ScanData(:,1) = TempScanData(:,k);
         end
-    case {'UZH TRIR [new]','UZH TRUVIS [new]'}
+    case {'UZH/UniGE TRIR [MESS]','UZH TRUVIS [new]'}
         % The first scan has _0.csv termination, then _(n-1).csv
         ending      = '_sp0_sm0_du0_';
         RawDelays   = csvread([app.rootdir filesep datafilename filesep datafilename '_delays.csv']);
