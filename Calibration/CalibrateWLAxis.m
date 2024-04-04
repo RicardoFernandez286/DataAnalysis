@@ -7,6 +7,8 @@ function [cm,lam] = CalibrateWLAxis(CAL_data,FitLimits,doFit)
 %% Read from input structure
 CalType     = CAL_data.CalType;
 
+CalType = 10;
+
 switch CalType
     case {1,6,7}; Ndet = 2;
     otherwise;    Ndet = 1;
@@ -45,7 +47,7 @@ for i=1:Ndet
             CWL         = CAL_data.CWL;
             RefX        = 1e7./RefX;
             MeasY       = flipud(MeasY);
-        case {2,3} % UniGE 
+        case {2,3,10} % UniGE 
             CWL         = FitLimits{3,1};
             maxWL       = FitLimits{1,1};
             minWL       = FitLimits{2,1};
@@ -193,6 +195,20 @@ for i=1:Ndet
             cutID       = sort(findClosestId2Val(RefX,[minRefX maxRefX]));
             RefX_cut    = RefX(cutID(1):cutID(2));
             RefY_cut    = RefY(cutID(1):cutID(2));
+        case 10     % UniGE TRUVIS II
+            ppnm = ppnmT;
+            wp1 = CWL(1) - Npix/(2.*ppnm);
+
+            minRefX = minWL(1);
+            maxRefX = maxWL(1);
+
+            cutID    = sort(findClosestId2Val(RefX,[minRefX maxRefX]));
+            [RefX_cut,srt_id] = sort(RefX(cutID(1):cutID(2)));
+            RefY_cut = RefY(cutID(1):cutID(2));
+            RefY_cut = RefY_cut(srt_id);
+
+            RefY     = RefY./max(RefY_cut);
+            RefY_cut = RefY_cut./max(RefY_cut);
     end
 
     %% Define Fit Functions
@@ -276,6 +292,12 @@ for i=1:Ndet
             UB = [1e4  0.25  10   1     1   1  ];
             ftol= 5e-7;
             stol= 5e-7;
+        case 10 % UniGE TRUVIS II
+            p0 = [wp1  ppnm  1    -0.1  eps eps];
+            LB = [300  0.1  0.1  -1    -1  -1 ];
+            UB = [450  2  10   1     1   1  ];
+            ftol= 5e-7;
+            stol= 5e-7;
     end
     
     if doFit == 1
@@ -300,14 +322,14 @@ for i=1:Ndet
         case {1,4,6,7,8,9} % IR Setups UoS, UZH Lab 2, RAL LIFEtime, UniGE
             MeasX       = 1:Npix(i);
             lam(:,i)    = flipud(MeasX(:)./Pfit(i,2) + Pfit(i,1));
-        case 5
+        case 5 % UniGE NIR-TA with prisms
             % Need to numerically invert the pixel(lambda) function to get lambda(pixel)
             wl_map      = 1e7./(5000:0.1:20000)';
             pix_fun_map = @(p) p(1).*1000./25.*sin(th_out(wl_map,p(3)) - th_out(WL_r,p(3))) + p(2);
             idxAll      = (1:length(MeasY_all{1}))';
             lam_map     = pix_fun_map(Pfit(i,:));
             lam(:,i)    = wl_map(knnsearch(lam_map,idxAll));
-        otherwise 
+        otherwise % UV-Vis setups with gratings
             lam(:,i)    = MeasX/Pfit(i,2) + Pfit(i,1); 
     end
     cm(:,i)         = 1e7./lam(:,i);
@@ -339,7 +361,7 @@ for i=1:Ndet
             title(ax,['Detector ' num2str(i)],'FontWeight','bold');
             ax.FontSize = 16;
         
-        case {2,3,5}
+        case {2,3,5,10}
             plot(ax,RefX,RefY,'k')
             hold(ax,'on');
                 plot(ax,RefX_cut,plot_fun(Pfit(i,:)),'r','LineWidth',2)
