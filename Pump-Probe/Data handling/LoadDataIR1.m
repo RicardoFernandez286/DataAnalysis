@@ -33,8 +33,15 @@ slowmodID       = fopen([filename '_slowModulation.csv']);
     ModB            = strsplit(fgetl(slowmodID),':'); % IR pol
     ModC            = strsplit(fgetl(slowmodID),':'); % UV pol
     ModSpec         = strsplit(fgetl(slowmodID),':');
-    % In Lab 4, the piezo modulation is slow, so it is also included (in Lab 1 this would return -1)
-    ModPiezo        = fgetl(slowmodID);
+    
+    %% LAB 4
+    % % In Lab 4, the piezo modulation is slow, so it is also included (in Lab 1 this would return -1)
+    % ModPiezo        = fgetl(slowmodID);
+    ModPiezo = -1;
+    %% UniGE
+    % At UniGE, the third modulation are the waveplates
+    ModWP = strsplit(fgetl(slowmodID),':');
+
     % Close the file
 fclose(slowmodID); clear slowmodID;
 
@@ -43,14 +50,15 @@ N_modA          = sum(~isnan(str2num(ModA{2})),2);
 N_modB          = sum(~isnan(str2num(ModB{2})),2);
 N_modC          = sum(~isnan(str2num(ModC{2})),2);
 N_modSpec       = sum(~isnan(str2num(ModSpec{2})),2);
+N_modWP         = sum(~isnan(str2num(ModWP{2})),2);
 % If any of them is zero (i.e. all NaN's), make it equal to 1 (i.e. 1 modulation = no modulation)
-AllSlowMod                          = [N_modA N_modB N_modC N_modSpec];
+AllSlowMod                          = [N_modA N_modB N_modC N_modSpec N_modWP];
 AllSlowMod(AllSlowMod==0)           = 1;
 N_modA          = AllSlowMod(1);
 N_modB          = AllSlowMod(2);
 N_modC          = AllSlowMod(3);
 N_modSpec       = AllSlowMod(4);
-
+N_modWP         = AllSlowMod(5);
 % Get the spectrometer wavelengths
 SpectrometerWL      = str2num(ModSpec{2});
 
@@ -134,8 +142,8 @@ tempnoise   = cell(Nslowmod,Nspectra);
 for m=1:Nslowmod
     for k=1:Nspectra
         ending            = ['_sp' num2str(k-1) '_sm' num2str(m-1) '_du0.csv'];
-        tempsignal{m,k}   = csvread([filename '_signal' ending]);
-        tempnoise{m,k}    = csvread([filename '_signal_noise' ending]);
+        tempsignal{m,k}   = readmatrix([filename '_signal' ending],'FileType','text');
+        tempnoise{m,k}    = readmatrix([filename '_signal_noise' ending],'FileType','text');
     end
 end
 
@@ -181,6 +189,36 @@ switch anisotropy
         
         rawsignal         = (par + 2.*perp)./3;
         noise             = (par_n + 2.*perp_n)./3;
+    case 'UniGE Magic Angle (calc.)'
+        par               = tempsignal{1,1};
+        perp              = tempsignal{3,1};
+        par_n             = tempnoise{1,1};
+        perp_n            = tempnoise{3,1};
+        
+        rawsignal         = (par + 2.*perp)./3;
+        noise             = (par_n + 2.*perp_n)./3;
+    case 'UniGE Magic Angle (exp.)'
+        rawsignal         = tempsignal{2,1};
+        noise             = tempnoise{2,1};
+    case 'UniGE Anisotropy'
+        par               = tempsignal{1,1};
+        perp              = tempsignal{3,1};
+        par_n             = tempnoise{1,1};
+        perp_n            = tempnoise{3,1};
+        
+        rawsignal         = (par - perp)./(par + 2.*perp);
+        noise             = abs(((par+2.*perp)-(par-perp))./(par+2.*perp).^2).*par_n + abs((-(par+2.*perp)-2.*(par-perp))./(par+2.*perp).^2).*perp_n;
+    case 'UniGE MA check'
+        par               = tempsignal{1,1};
+        perp              = tempsignal{3,1};
+        par_n             = tempnoise{1,1};
+        perp_n            = tempnoise{3,1};
+        
+        MA                = tempsignal{2,1};
+        MA_n              = tempnoise{2,1};
+      
+        rawsignal         = MA - (par + 2.*perp)./3;
+        noise             = MA_n + (par_n + 2.*perp_n)./3;
 end
 
 if recalcscans == 1
