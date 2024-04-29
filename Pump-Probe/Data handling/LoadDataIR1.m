@@ -219,6 +219,9 @@ switch anisotropy
       
         rawsignal         = MA - (par + 2.*perp)./3;
         noise             = MA_n + (par_n + 2.*perp_n)./3;
+    case 'UniGE Pol. diff. (Par-Perp)'
+        rawsignal         = tempsignal{1,1}-tempsignal{3,1};
+        noise             = tempnoise{1,1}+tempnoise{3,1};
 end
 
 if recalcscans == 1

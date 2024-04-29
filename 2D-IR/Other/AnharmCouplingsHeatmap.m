@@ -9,7 +9,7 @@ ModeLabels = ["A'(2)" "A''" "A'(1)"];
 % ModeLabels = ["{\nu}_{Ar}" "2" "3" "4" "5" "6" "7" "8" "9" "10" "{\nu}_{C=O}^{(s)}" "{\nu}_{C=O}^{(a)}" "A'(2)" "A''" "A'(1)"];
 
 molec = 'sfelkgh';
-cmapID = 'Mrainbow';
+cmapID = 'Blues9';
 
 minC = -7;
 maxC = 19;
@@ -28,34 +28,49 @@ sy   = sx;
 c1   = 0;
 XPeak= 0.25;
 
-percentScale = 10;
+percentScale = 100;
 Ncontours = 40;
 plot_skip = 2;
 showContours = 1;
 contCol = [0.5 0.5 0.5];
 
 freqs = [...
-2246.58
-2247.41
-2287.95
-2288.41
-4476.82
-4493.97
-4554.29
-4575.48
-4476.78
-4533.91
-4534.37
-4534.78
-4535.23
-4554.94
+1347.79
+1355.30
+1771.71
+1773.36
+2162.24
+2182.75
+2686.65
+2706.11
+3525.79
+3544.99
+4305.75
+4355.46
+2689.83
+3119.50
+3121.14
+3499.44
+3518.64
+3127.00
+3128.64
+3506.65
+3526.82
+3525.70
+3933.93
+3954.42
+3935.57
+3956.07
+4316.28
 ];
 
 int = [...
-322.2218
-6.0782
-215.9876
-8.6518
+27.4202
+201.3195
+393.8422
+0.8226
+221.0262
+2170.4066
 ];
 
 %% Frequency input
@@ -218,8 +233,8 @@ if PlotW1W3 == 1
 end
 
 h_map = heatmap(fh,anh,'MissingDataLabel','','CellLabelFormat','%0.1f','MissingDataColor',NanCol,'FontSize',16);
-% colormap(othercolor(cmapID,Nmodes*5));
-colormap(darkb2r(minC,maxC,Nmodes*4,2));
+colormap(othercolor(cmapID,Nmodes*5));
+% colormap(darkb2r(minC,maxC,Nmodes*4,2));
 
 warning('off','MATLAB:structOnObject');
 
