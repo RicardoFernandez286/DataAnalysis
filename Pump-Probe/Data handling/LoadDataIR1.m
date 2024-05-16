@@ -195,17 +195,27 @@ switch anisotropy
         par_n             = tempnoise{1,1};
         perp_n            = tempnoise{3,1};
         
+        par = par - mean(par(1:3,:));
+        perp = perp - mean(perp(1:3,:));
+
         rawsignal         = (par + 2.*perp)./3;
         noise             = (par_n + 2.*perp_n)./3;
     case 'UniGE Magic Angle (exp.)'
-        rawsignal         = tempsignal{2,1};
+        MA                = tempsignal{2,1};
+        
+        rawsignal         = MA - mean(MA(1:3,:));
         noise             = tempnoise{2,1};
+
+
     case 'UniGE Anisotropy'
         par               = tempsignal{1,1};
         perp              = tempsignal{3,1};
         par_n             = tempnoise{1,1};
         perp_n            = tempnoise{3,1};
         
+        par = par - mean(par(1:3,:));
+        perp = perp - mean(perp(1:3,:));
+
         rawsignal         = (par - perp)./(par + 2.*perp);
         noise             = abs(((par+2.*perp)-(par-perp))./(par+2.*perp).^2).*par_n + abs((-(par+2.*perp)-2.*(par-perp))./(par+2.*perp).^2).*perp_n;
     case 'UniGE MA check'
@@ -214,9 +224,14 @@ switch anisotropy
         par_n             = tempnoise{1,1};
         perp_n            = tempnoise{3,1};
         
+        par = par - mean(par(1:3,:));
+        perp = perp - mean(perp(1:3,:));
+
         MA                = tempsignal{2,1};
         MA_n              = tempnoise{2,1};
       
+        MA = MA - mean(MA(1:3,:));
+
         rawsignal         = MA - (par + 2.*perp)./3;
         noise             = MA_n + (par_n + 2.*perp_n)./3;
     case 'UniGE Pol. diff. (Par-Perp)'
@@ -302,7 +317,7 @@ dataStruct.corrdata     = {};
 if dataStruct.recalcBkg == 0
     % Subtract the first negative delay from all the dataset by default - otherwise take the inputs
     dataStruct.mintimeBkg = dataStruct.delays(1);
-    dataStruct.maxtimeBkg = dataStruct.delays(1);
+    dataStruct.maxtimeBkg = dataStruct.delays(2);
 end
     Idx = findClosestId2Val(dataStruct.delays,[dataStruct.mintimeBkg dataStruct.maxtimeBkg]);
     % Do the background subtraction and change status in handles.rawcorr
