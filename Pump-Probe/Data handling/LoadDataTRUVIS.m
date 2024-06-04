@@ -211,7 +211,7 @@ if exist([rootdir filesep datafilename filesep 'CalibratedProbe.csv'],'file') ==
 elseif exist([rootdir filesep 'CalibratedProbe.csv'],'file') == 2
     cmprobe     = csvread([rootdir filesep 'CalibratedProbe.csv']);
 else
-    cmprobe     = csvread([filename '_wavenumbers.csv']);
+    cmprobe     = csvread([filename '_wavelengths.csv']);
 end
 
 % In TRUVIS, the 2nd order can overlap with the main band, in which case it
