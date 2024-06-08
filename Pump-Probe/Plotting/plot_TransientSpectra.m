@@ -95,16 +95,22 @@ switch IncludeSSspec
         linkaxes([ax1,ax2],'x');
         where = ax2;
     case 0
-        % Create a new figure with consistent format
-        fh = figure();
-        fh.Name = [DataStruct.rawcorr ' DATA - TRANSIENT SPECTRA of "' DataStruct.datafilename '"'];
-        fh.Position(3)  = 890;
-        fh.Position(4)  = 425;
-        fh.Color        = [1 1 1];
-        % Define the axes
-        ax2 = axes('Parent',fh);
-        axes(ax2);
-        ax2.Units     = 'pixels';
+        switch overlay
+            case 0
+                % Create a new figure with consistent format
+                fh = figure();
+                fh.Name = [DataStruct.rawcorr ' DATA - TRANSIENT SPECTRA of "' DataStruct.datafilename '"'];
+                fh.Position(3)  = 890;
+                fh.Position(4)  = 425;
+                fh.Color        = [1 1 1];
+                % Define the axes
+                ax2 = axes('Parent',fh);
+                axes(ax2);
+                ax2.Units     = 'pixels';
+            case 1
+                ax2=gca;
+        end
+
         where = ax2;
 end
 
