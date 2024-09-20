@@ -42,6 +42,10 @@ rawsignal       = fillmissing(rawsignal, 'linear');
 Nscans = NaN;
 noise  = zeros(size(rawsignal));
 
+% Sort in ascending nm/cm-1
+[cmprobe, idx] = sort(cmprobe,'ascend');
+rawsignal = rawsignal(:,idx);
+
 % Convert ps to ns if requested
 if convertTimescale == 1
     switch timescale
