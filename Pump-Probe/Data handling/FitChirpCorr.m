@@ -6,6 +6,8 @@ function chirpSt = FitChirpCorr(dataStruct,rootfolder,k)
 %
 % Ricardo Fernández-Terán / v1.0a / 22.11.2021
 
+warning('off','optimlib:levenbergMarquardt:InfeasibleX0');
+
 %% Read from dataStruct
 delays      = dataStruct.delays;
 probeAxis   = dataStruct.cmprobe{k};
@@ -100,16 +102,35 @@ switch mode
     case 'Automatic'
         %%% Fit a Gaussian response and take the WL-dependent t0 parameter to do the chirp fit
         % 1D Gaussian with 1st and 2nd derivative
-        % Parameters: 1=t0  2=FWHM  3=Amplitude  4=Amp 1st deriv  5=Amp 2nd deriv   6 = Offset
+        % Parameters: 1=t0  2=FWHM  3=Amplitude  4=Amp 1st deriv  5=Amp 2nd deriv  6=Offset  7=ExpTau 8=ExpAmp
+        %
         G0 = @(p,t) exp(-log(2).*((t-p(1))./p(2)).^2);
         G1 = @(p,t) -2.*log(2)./(p(2).^2).*(t-p(1)).*G0(p,t);
         G2 = @(p,t) 2.*log(2).*(-p(2).^2 + 2.*log(2).*(t-p(1)).^2)./(p(2).^4).*G0(p,t);
+        
+        s  = @(p) p(2)/(2*sqrt(2*log(2)));
+        E1 = @(p,t) p(8)*0.5*exp(-1./p(7).*(t-p(1) - 0.5.*1/p(7).*s(p).^2)).*(1+erf((t-p(1)-1./p(7).*s(p).^2)./(s(p).*sqrt(2))));
 
-        ArtFit = @(p,t) p(3).*G0(p,t) + p(4).*G1(p,t) + p(5).*G2(p,t) + p(6);
+        %%% Fit Gaussian + derivatives
+        % ArtFit = @(p,t) p(3).*G0(p,t) + p(4).*G1(p,t) + p(5).*G2(p,t) + p(6);
+        % P0  = [0.1  0.1   1     0.1   0.1  0.1     ];
+        % LB  = [-5   0     -50   -50  -50  -50   ];
+        % UB  = [5    1     50    50   50   50    ];
+        
+        %% Fit Gaussian + derivatives + exponential
+        ArtFit = @(p,t) p(3).*G0(p,t) + p(4).*G1(p,t) + p(5).*G2(p,t) + p(6) + E1(p,t);
+        P0  = [0.1  0.1   1     0.1   0.1  0.1  2 1];
+        LB  = [-5   0     -10   -10  -10  -10   0 -10];
+        UB  = [5    1     10    10   10   10    5 10];
 
-        P0  = [0.1  0.1   1     1    1    1     ];
-        LB  = [-5   0     -50   -50  -50  -50   ];
-        UB  = [5    1     50    50   50   50    ];
+        % % Fit ExpConvGauss only
+        % Parameters: 1=t0  2=FWHM  3=Offset 4=ExpTau 5=ExpAmp
+        % ArtFit= @(p,t) p(3) + p(5)*0.5*exp(-1./p(4).*(t-p(1) - 0.5.*1/p(4).*s(p).^2)).*(1+erf((t-p(1)-1./p(4).*s(p).^2)./(s(p).*sqrt(2))));
+        % P0 = [1 0.1 0.1 0.5 1];
+        % UB = [5   1   10  5   10];
+        % LB = [-5  0   -10 0   -10];
+        
+        doFit = 1;
 
         % Prepare an array where we will store the results
         Pfit = zeros(NfitPix,length(P0));
@@ -122,6 +143,7 @@ switch mode
                         'MaxFunctionEvaluations',1e4,...
                         'steptolerance',5e-10,...
                         'OptimalityTolerance',5e-10,...
+                        'Algorithm','levenberg-marquardt',...
                         'display','off');
         
         qf = uifigure;
@@ -135,17 +157,25 @@ switch mode
         end
 
         % Do the fits
-        wb = waitbar(0);            
+        wb = waitbar(0);     
+        
         for j=1:NfitPix
             i=fitPixels(j);
-            [P0(3),idM] = max(abs(Z(:,i)));
+            
+            % Normalise the data and store norm to reconstruct from fit
+            yData = Z(:,i);
+            nf(j) = max(abs(yData));
+            yData_n = yData./nf(j);
+
+            [~,idM] = max(abs(yData_n));
+            P0(3)   = yData_n(idM);
             P0(1)   = delays(idM);
             UB(1)   = P0(1) + 1;
             LB(1)   = P0(1) - 1;
-            UB(3:6) = 10*P0(3);
-            LB(3:6) = -10*P0(3); 
+            % UB(3:6) = 10*P0(3);
+            % LB(3:6) = -10*P0(3); 
             
-            % Do NOT include derivative terms (?)
+            % Do/do not include derivative terms
             switch inclDeriv
                 case 'No'
                     LB(4:5) = 0;
@@ -157,11 +187,31 @@ switch mode
                     UB(4)   = 0;
                     LB(4)   = 0;
             end
-            Pfit(j,:) = lsqcurvefit(ArtFit,P0,delays,Z(:,i),LB,UB,options);
-            Dfit(:,j) = ArtFit(Pfit(j,:),delays);
+
+
+            
+            if doFit == 1
+                Pfit(j,:) = lsqcurvefit(ArtFit,P0,delays,yData_n,LB,UB,options);
+            else
+                Pfit(j,:) = P0;
+            end
+
+            Dfit(:,j) = nf(j).*ArtFit(Pfit(j,:),delays);
             waitbar(j/NfitPix,wb,['Fitting chirp correction... (' num2str(j) ' of ' num2str(NfitPix) ')'])
+            
+            % % Plot the single pixel fits
+            % fh=figure(1);
+            % clf(fh)
+            % ax = axes('parent',fh);
+            % hold(ax,'on')
+            % plot(delays,Z(:,i),'o')
+            % plot(delays,Dfit(:,j),'-')
+            % hold(ax,'off')
+            % drawnow;
         end
         delete(wb);
+        %%
+        % return
     case 'Step Function (Auto)'
         %%% Fit a Gaussian response + step and take the WL-dependent t0 parameter to do the chirp fit
         % 1D Gaussian with 1st and 2nd derivative
@@ -267,14 +317,15 @@ switch ChirpEquation
         % Need to work in THz and fs
         Pfit(:,1) = Pfit(:,1).*1000;
         delays    = delays.*1000;
-            
-        probeAxis = 1e7./probeAxis;
-        fitWL     = 1e7./fitWL;
         
+        % % If probe = cm-1
+        % probeAxis = 1e7./probeAxis;
+        % fitWL     = 1e7./fitWL;
+         
         CWL       = mean([min(fitWL) max(fitWL)]);
         
-        probeAxis = c0./probeAxis;
-        fitWL     = c0./fitWL;
+        probeAxis = 1e3*c0./probeAxis;
+        fitWL     = 1e3*c0./fitWL;
 
         % Expand around the central wavelength
         nu0     = c0./CWL;     
@@ -282,7 +333,7 @@ switch ChirpEquation
         chirpFun= @(p,nu) p(1) + 1./nu.*SpPhase(p,nu);
         
 %         C0 = [1.3e3 125   -25    20    -20 ];
-        C0 = [1.3e3  eps   -200   -350   0  ];
+        C0 = [1.3e3  eps   -1.5   -1.5   0  ];
         UB = [1e6   1E10    1e10    0   0 ];
         LB = [-1e6  -1E10  -1e10   -0  0];
 end
@@ -303,8 +354,8 @@ end
         opt2.Display    = 'off';
 
 % Cfit    = lsqcurvefit(chirpFun,C0,fitWL,Pfit(:,1),LB,UB,options);
-Cfit    = robustlsqcurvefit(chirpFun,C0,fitWL,Pfit(:,1),LB,UB,'bisquare',opt2);
-% Cfit = C0;
+% Cfit    = robustlsqcurvefit(chirpFun,C0,fitWL,Pfit(:,1),LB,UB,'bisquare',opt2);
+Cfit = C0;
 
 % Plot Everything
 %%% Plot fitted chirp data
@@ -402,6 +453,7 @@ switch ChirpEquation
         xlabel(ax2,'Frequency (THz)','FontWeight','bold');
         xline(ax,nu0);
         ax2.XDir='reverse';
+        ax.XDir='reverse';
 %         ylim(ax,[-pi,pi]);
 %         yline(ax,Cfit(1));
 end   
@@ -441,6 +493,8 @@ switch mode
         ax.FontSize = 16;
         ax.TickLength = [0.02 0.02];
 end
+
+return
 
 f = msgbox('Fit done! Please verify the results, then click OK.');
 uiwait(f);
