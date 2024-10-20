@@ -7,7 +7,7 @@ function chirpSt = FitChirpCorr(dataStruct,rootfolder,k)
 % Ricardo Fernández-Terán / v1.0a / 22.11.2021
 
 warning('off','optimlib:levenbergMarquardt:InfeasibleX0');
-
+debugChirp = 1;
 %% Read from dataStruct
 delays      = dataStruct.delays;
 probeAxis   = dataStruct.cmprobe{k};
@@ -111,17 +111,17 @@ switch mode
         s  = @(p) p(2)/(2*sqrt(2*log(2)));
         E1 = @(p,t) p(8)*0.5*exp(-1./p(7).*(t-p(1) - 0.5.*1/p(7).*s(p).^2)).*(1+erf((t-p(1)-1./p(7).*s(p).^2)./(s(p).*sqrt(2))));
 
-        %%% Fit Gaussian + derivatives
-        % ArtFit = @(p,t) p(3).*G0(p,t) + p(4).*G1(p,t) + p(5).*G2(p,t) + p(6);
-        % P0  = [0.1  0.1   1     0.1   0.1  0.1     ];
-        % LB  = [-5   0     -50   -50  -50  -50   ];
-        % UB  = [5    1     50    50   50   50    ];
+        %% Fit Gaussian + derivatives
+        ArtFit = @(p,t) p(3).*G0(p,t) + p(4).*G1(p,t) + p(5).*G2(p,t) + p(6);
+        P0  = [0.1  0.1   1     0.1   0.1  0.1     ];
+        LB  = [-5   0     -500   -500  -500  -500   ];
+        UB  = [5    1     500    500   500   500    ];
         
-        %% Fit Gaussian + derivatives + exponential
-        ArtFit = @(p,t) p(3).*G0(p,t) + p(4).*G1(p,t) + p(5).*G2(p,t) + p(6) + E1(p,t);
-        P0  = [0.1  0.1   1     0.1   0.1  0.1  2 1];
-        LB  = [-5   0     -10   -10  -10  -10   0 -10];
-        UB  = [5    1     10    10   10   10    5 10];
+        % %% Fit Gaussian + derivatives + exponential
+        % ArtFit = @(p,t) p(3).*G0(p,t) + p(4).*G1(p,t) + p(5).*G2(p,t) + p(6) + E1(p,t);
+        % P0  = [0.1  0.05   1     0.1   0.1  0.1  2 1];
+        % LB  = [-5   0     -10   -10  -10  -10   0 -10];
+        % UB  = [5    1     10    10   10   10    5 10];
 
         % % Fit ExpConvGauss only
         % Parameters: 1=t0  2=FWHM  3=Offset 4=ExpTau 5=ExpAmp
@@ -199,15 +199,24 @@ switch mode
             Dfit(:,j) = nf(j).*ArtFit(Pfit(j,:),delays);
             waitbar(j/NfitPix,wb,['Fitting chirp correction... (' num2str(j) ' of ' num2str(NfitPix) ')'])
             
-            % % Plot the single pixel fits
-            % fh=figure(1);
-            % clf(fh)
-            % ax = axes('parent',fh);
-            % hold(ax,'on')
-            % plot(delays,Z(:,i),'o')
-            % plot(delays,Dfit(:,j),'-')
-            % hold(ax,'off')
-            % drawnow;
+            if debugChirp==1
+                % Plot the single pixel fits
+                switch i
+                    case 1
+                    fh=figure(i+1);
+                    clf(fh)
+                    ax = axes('parent',fh);
+                    xlabel('Delay (ps)', 'FontSize',16, 'FontWeight','bold');
+                    ylabel('{\Delta}A (mOD)', 'FontSize',16, 'FontWeight','bold')
+                end
+                plot(delays,Z(:,i),'o')
+                hold(ax,'on')
+                plot(delays,Dfit(:,j),'-')
+                hold(ax,'off')
+                title(ax,['\lambda = ' num2str(probeAxis(i),4) ' nm'])
+                xlim(ax,[-1,3]);
+                drawnow;
+            end
         end
         delete(wb);
         %%
@@ -354,8 +363,8 @@ end
         opt2.Display    = 'off';
 
 % Cfit    = lsqcurvefit(chirpFun,C0,fitWL,Pfit(:,1),LB,UB,options);
-% Cfit    = robustlsqcurvefit(chirpFun,C0,fitWL,Pfit(:,1),LB,UB,'bisquare',opt2);
-Cfit = C0;
+Cfit    = robustlsqcurvefit(chirpFun,C0,fitWL,Pfit(:,1),LB,UB,'bisquare',opt2);
+% Cfit = C0;
 
 % Plot Everything
 %%% Plot fitted chirp data
@@ -493,8 +502,6 @@ switch mode
         ax.FontSize = 16;
         ax.TickLength = [0.02 0.02];
 end
-
-return
 
 f = msgbox('Fit done! Please verify the results, then click OK.');
 uiwait(f);

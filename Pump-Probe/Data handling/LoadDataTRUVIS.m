@@ -6,7 +6,7 @@ function dataStruct = LoadDataTRUVIS(dataStruct,SpectrumToDisplay,varargin)
 % v5.0b / 25.05.2022 / Ricardo Fernández-Terán
 
 dataStruct.removeduplicates = 1;
-cut2ndOrder = 1;
+cut2ndOrder = 0;
 %% READ from dataStruct
 rootdir         = dataStruct.rootdir;
 datafilename    = dataStruct.datafilename;
@@ -36,8 +36,15 @@ slowmodID       = fopen([filename '_slowModulation.csv']);
     ModB            = strsplit(fgetl(slowmodID),':'); % IR pol
     ModC            = strsplit(fgetl(slowmodID),':'); % UV pol
     ModSpec         = strsplit(fgetl(slowmodID),':');
-    % In Lab 4, the piezo modulation is slow, so it is also included (in Lab 1 this would return -1)
-    ModPiezo        = fgetl(slowmodID);
+    
+    %% LAB 4
+    % % In Lab 4, the piezo modulation is slow, so it is also included (in Lab 1 this would return -1)
+    % ModPiezo        = fgetl(slowmodID);
+    ModPiezo = -1;
+    %% UniGE
+    % At UniGE, the third modulation are the waveplates
+    ModWP = strsplit(fgetl(slowmodID),':');
+
     % Close the file
 fclose(slowmodID); clear slowmodID;
 
@@ -46,14 +53,15 @@ N_modA          = sum(~isnan(str2num(ModA{2})),2);
 N_modB          = sum(~isnan(str2num(ModB{2})),2);
 N_modC          = sum(~isnan(str2num(ModC{2})),2);
 N_modSpec       = sum(~isnan(str2num(ModSpec{2})),2);
+N_modWP         = sum(~isnan(str2num(ModWP{2})),2);
 % If any of them is zero (i.e. all NaN's), make it equal to 1 (i.e. 1 modulation = no modulation)
-AllSlowMod                          = [N_modA N_modB N_modC N_modSpec];
+AllSlowMod                          = [N_modA N_modB N_modC N_modSpec N_modWP];
 AllSlowMod(AllSlowMod==0)           = 1;
 N_modA          = AllSlowMod(1);
 N_modB          = AllSlowMod(2);
 N_modC          = AllSlowMod(3);
 N_modSpec       = AllSlowMod(4);
-
+N_modWP         = AllSlowMod(5);
 % Get the spectrometer wavelengths
 SpectrometerWL      = str2num(ModSpec{2});
 
@@ -68,21 +76,32 @@ end
 % Consider anisotropy or magic angle signal calculation
 if ~isempty(varargin)
     anisotropy = varargin{1};
+    recalcscans = varargin{2};
 else
     anisotropy = 'NONE';
+    recalcscans = 0;
 end
 
 % Count the number of scans
 tempdir         = [rootdir filesep datafilename filesep 'temp'];
 tempdirOUT      = [rootdir filesep datafilename 'temp'];
+Nscans          = NaN;
 % Check if the temp dir is outside (Lab 1)
 if exist(tempdir,'dir') == 0
-   tempdir      = tempdirOUT;
+    if exist(tempdirOUT,'dir') ~= 0
+        tempdir = tempdirOUT;
+        Nscans  = 0;
+    end
+else
+    Nscans = 0;
 end
-tempfilelist    = dir(tempdir);
-tempfilenames   = {tempfilelist.name};
-% Select only "signal" files - Count the (total) number of datastates
-Nscans          = round(length(tempfilenames(contains(tempfilenames,"signal",'IgnoreCase',1)))/(3.*Nslowmod));
+
+if ~isnan(Nscans)
+    tempfilelist    = dir(tempdir);
+    tempfilenames   = {tempfilelist.name};
+    % Select only "signal" files - Count the (total) number of datastates
+    Nscans          = round(length(tempfilenames(contains(tempfilenames,"signal",'IgnoreCase',1)))/(3.*Nslowmod));
+end
 
 % Whatever is not a 4-point modulation is a real "modulation"
 mod             = Nslowmod/N_4PM;
@@ -106,16 +125,28 @@ switch N_4PM
     case 4
         piezomod = '4PM';
 end
+
 delays          = csvread([filename '_delays.csv']);
-cmprobe         = csvread([filename '_wavelengths.csv']);
+% If there is a calibrated probe file, use it. Otherwise, use the normal one
+if exist([rootdir filesep datafilename filesep 'CalibratedProbe.csv'],'file') == 2
+    cmprobe     = csvread([rootdir filesep datafilename filesep 'CalibratedProbe.csv']);
+elseif exist([rootdir filesep 'CalibratedProbe.csv'],'file') == 2
+    cmprobe     = csvread([rootdir filesep 'CalibratedProbe.csv']);
+else
+    cmprobe     = csvread([filename '_wavelengths.csv']);
+end
 
 % Read the actual data
-rawsignal={}; noise={};
+rawsignal   = {};
+noise       = {};
+tempsignal  = cell(Nslowmod,Nspectra);
+tempnoise   = cell(Nslowmod,Nspectra);
+
 for m=1:Nslowmod
     for k=1:Nspectra
         ending            = ['_sp' num2str(k-1) '_sm' num2str(m-1) '_du0.csv'];
-        tempsignal{m,k}   = csvread([filename '_signal' ending]);
-        tempnoise{m,k}    = csvread([filename '_signal_noise' ending]);
+        tempsignal{m,k}   = readmatrix([filename '_signal' ending],'FileType','text');
+        tempnoise{m,k}    = readmatrix([filename '_signal_noise' ending],'FileType','text');
     end
 end
 
@@ -161,48 +192,59 @@ switch anisotropy
         
         rawsignal         = (par + 2.*perp)./3;
         noise             = (par_n + 2.*perp_n)./3;
+    case 'UniGE Magic Angle (calc.)'
+        par               = tempsignal{1,1};
+        perp              = tempsignal{3,1};
+        par_n             = tempnoise{1,1};
+        perp_n            = tempnoise{3,1};
+        
+        par = par - mean(par(1:3,:));
+        perp = perp - mean(perp(1:3,:));
+
+        rawsignal         = (par + 2.*perp)./3;
+        noise             = (par_n + 2.*perp_n)./3;
+    case 'UniGE Magic Angle (exp.)'
+        MA                = tempsignal{2,1};
+        
+        rawsignal         = MA - mean(MA(1:3,:));
+        noise             = tempnoise{2,1};
+
+
+    case 'UniGE Anisotropy'
+        par               = tempsignal{1,1};
+        perp              = tempsignal{3,1};
+        par_n             = tempnoise{1,1};
+        perp_n            = tempnoise{3,1};
+        
+        par = par - mean(par(1:3,:));
+        perp = perp - mean(perp(1:3,:));
+
+        rawsignal         = (par - perp)./(par + 2.*perp);
+        noise             = abs(((par+2.*perp)-(par-perp))./(par+2.*perp).^2).*par_n + abs((-(par+2.*perp)-2.*(par-perp))./(par+2.*perp).^2).*perp_n;
+    case 'UniGE MA check'
+        par               = tempsignal{1,1};
+        perp              = tempsignal{3,1};
+        par_n             = tempnoise{1,1};
+        perp_n            = tempnoise{3,1};
+        
+        par = par - mean(par(1:3,:));
+        perp = perp - mean(perp(1:3,:));
+
+        MA                = tempsignal{2,1};
+        MA_n              = tempnoise{2,1};
+      
+        MA = MA - mean(MA(1:3,:));
+
+        rawsignal         = MA - (par + 2.*perp)./3;
+        noise             = MA_n + (par_n + 2.*perp_n)./3;
+    case 'UniGE Pol. diff. (Par-Perp)'
+        rawsignal         = tempsignal{1,1}-tempsignal{3,1};
+        noise             = tempnoise{1,1}+tempnoise{3,1};
 end
 
-% If Nspec = 0, then we have ONE spectrometer state (i.e. the spectrometer doesn't move)
-% Otherwise, we have Nspec spectrometer states
-% Recalculate the wavenumber axis according to which state is read
-if N_modSpec >= 2
-    WL_nm       = 10^7./cmprobe;
-    NewCentreWL = SpectrometerWL(SpectrumToDisplay);
-    ShiftWL     = NewCentreWL-WL_nm(floor(length(WL_nm)/2));
-    cmprobe     = 10^7./(WL_nm + ShiftWL);
-end
-
-% Determine whether the electronic delay was used (ns) or the delay stage (fs)
-fid         = fopen([filename '_meta.txt']); 
-metadata    = textscan(fid,'%s','delimiter','\n');
-metadata    = metadata{:};
-fclose(fid);
-ED_con_LN   = find(~cellfun(@isempty,strfind(metadata,'Electronic delay:')));
-ED_con_txt  = strsplit(metadata{ED_con_LN(1)},': ');
-ED_con_TF   = ~contains(ED_con_txt{2},'Not','IgnoreCase',1);
-UV_con_LN   = find(~cellfun(@isempty,strfind(metadata,'UV stage:')));
-UV_con_txt  = strsplit(metadata{UV_con_LN(1)},': ');
-UV_con_TF   = ~contains(UV_con_txt{2},'Not','IgnoreCase',1);
-Stage_LN    = find(~cellfun(@isempty,strfind(metadata,'Stage: ')));
-if isempty(Stage_LN)
-    if ED_con_TF && ~UV_con_TF
-        % If both are connected, assume it is the EDelay
-        dataStruct.timescale = 'ns';
-    else
-        % Otherwise, assume it is the UV stage
-        delays = delays/1000;
-        dataStruct.timescale = 'ps';
-    end
-else
-    Stage_txt   = strsplit(metadata{Stage_LN(1)},'Stage: ');
-    switch Stage_txt{2}
-        case 'Elec delay'
-            dataStruct.timescale = 'ns';
-        case 'UV delay'
-            delays = delays/1000;
-            dataStruct.timescale = 'ps'; 
-    end
+if recalcscans == 1
+    rawsignal       = dataStruct.rawsignal;
+    noise           = dataStruct.noise;
 end
 
 % If there is a calibrated probe file, use it. Otherwise, use the normal one
@@ -229,6 +271,16 @@ if maxwl >= 2*minwl && cut2ndOrder
     rawsignal       = rawsignal(:,1:NewMaxwl_index);
     noise           = noise(:,1:NewMaxwl_index);
     cmprobe         = cmprobe(1:NewMaxwl_index);
+end
+
+% This needs a rework, but can't think of an easy way
+% if the negative time delay is <10 ps = <10000 fs then we know we are in ps
+if log10(abs(delays(1))) >= 3
+    delays = delays/1000;
+    dataStruct.timescale = 'ps';
+    % Timescale is in picoseconds! (nicer to understand)
+else
+    dataStruct.timescale = 'ns';
 end
 
 % Read the plot ranges
@@ -272,21 +324,26 @@ dataStruct.AvgNoise     = mean(noise(:));
 dataStruct.MaxNoise     = max(noise(:));
 dataStruct.SNR          = abs(round(zminmax/dataStruct.AvgNoise,3));
 
-
-% Set defaults for background subtraction subunit
-if dataStruct.recalcBkg == 0
-    % Subtract the first negative delay from all the dataset by default - otherwise take the inputs
-    dataStruct.mintimeBkg = dataStruct.delays(1);
-    dataStruct.maxtimeBkg = dataStruct.delays(1);
+switch anisotropy
+    case 'NONE'
+        % Set defaults for background subtraction subunit
+        if dataStruct.recalcBkg == 0
+            % Subtract the first negative delay from all the dataset by default - otherwise take the inputs
+            dataStruct.mintimeBkg = dataStruct.delays(1);
+            dataStruct.maxtimeBkg = dataStruct.delays(1);
+        end
+            Idx = findClosestId2Val(dataStruct.delays,[dataStruct.mintimeBkg dataStruct.maxtimeBkg]);
+            % Do the background subtraction and change status in handles.rawcorr
+            if Idx(2)==1
+                dataStruct.bkg = {dataStruct.rawsignal{1}(1,:)};
+            else
+                dataStruct.bkg = {mean(dataStruct.rawsignal{1}(Idx(1):Idx(2),:))};
+            end
+        dataStruct.corrdata = {dataStruct.rawsignal{1} - dataStruct.bkg{1}};
+    otherwise
+        %do nothing
+        dataStruct.corrdata = dataStruct.rawsignal;
 end
-    Idx = findClosestId2Val(dataStruct.delays,[dataStruct.mintimeBkg dataStruct.maxtimeBkg]);
-    % Do the background subtraction and change status in handles.rawcorr
-    if Idx(2)==1
-        dataStruct.bkg = {dataStruct.rawsignal{1}(1,:)};
-    else
-        dataStruct.bkg = {mean(dataStruct.rawsignal{1}(Idx(1):Idx(2),:))};
-    end
-dataStruct.corrdata = {dataStruct.rawsignal{1} - dataStruct.bkg{1}};
     
 else
     assert(exist([filename '_delays.csv'],'file') ~= 0,'Selected directory does not contain a valid Pump-Probe (Lab 1 or Lab 4) dataset')

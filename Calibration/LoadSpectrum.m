@@ -1,6 +1,6 @@
 function data = LoadSpectrum(app,message,calType)
 % This subroutine loads a probe spectrum for further absorbance calculations
-% Ricardo Fernandez-Teran / 25.08.2023 / v2.0a
+% Ricardo Fernandez-Teran / 20.10.2024 / v3.0a
 
 switch calType
     case 'UoS TRIR';                    TYPE = 1; uifilt = {'*.2D',calType};
@@ -12,6 +12,7 @@ switch calType
     case 'RAL LIFEtime (Intensity)';    TYPE = 7; uifilt = {'*cycle*.csv',calType};
     case 'UniGE TRIR (Intensity)';      TYPE = 8; uifilt = {'*ds0_intensity*.csv',calType};
     case 'UniGE TRIR (Absorbance)';     TYPE = 9; uifilt = {'*ds0_intensity*.csv',calType};
+    case 'UniGE TRUVIS-II (Intensity)'; TYPE = 10; uifilt = {'*ds0_intensity*.csv',calType};
     otherwise;                          TYPE = 0;
 end
 
@@ -101,7 +102,7 @@ switch TYPE
         %         end
         % 
         %         app.CAL_data.CWL = 1e7./CWL; % To NANOMETERS
-    case {8,9}
+    case {8,9,10} % MESS TRIR+TRUVIS
         rawdata = readmatrix([datapath filesep datafile],'FileType','text','Delimiter','\t');
         data{1} = rawdata(:,1);
         

@@ -1,16 +1,15 @@
-function [cm,lam] = CalibrateWLAxis(CAL_data,FitLimits,doFit)
+function [cm,lam,CalType] = CalibrateWLAxis(CAL_data,FitLimits,doFit)
 % Subroutine to calibrate the wavelength axis of a spectrometer, using a centering and scaling approach.
 % Will output the fitted cm-1 and nm axes
 % The number of columns of cm and lam = Ndet (given by the size of the AbsSolvent cell in the CAL_data structure).
 % Ricardo Fernandez-Teran / 02.05.2023 / v3.5e
 
 %% Read from input structure
+
 CalType     = CAL_data.CalType;
 
-% CalType = 10;
-
 switch CalType
-    case {1,6,7}; Ndet = 2;
+    case {1,6,7}; Ndet = 2; % Only Sheffield and RAL had two detectors
     otherwise;    Ndet = 1;
 end
 
@@ -47,7 +46,7 @@ for i=1:Ndet
             CWL         = CAL_data.CWL;
             RefX        = 1e7./RefX;
             MeasY       = flipud(MeasY);
-        case {2,3,10} % UniGE 
+        case {2,3,10} % UniGE TA setups (fsTA, nsTA and TRUVIS-II)
             CWL         = FitLimits{3,1};
             maxWL       = FitLimits{1,1};
             minWL       = FitLimits{2,1};
@@ -237,6 +236,11 @@ for i=1:Ndet
             pix_fun     = @(p) p(1).*1000./25.*sin(th_out(RefX_cut,p(3)) - th_out(WL_r,p(3))) + p(2);
             plot_fun    = @(p) (meas_fun(pix_fun(p))+p(5)).*p(4);
             fit_fun     = @(p) (plot_fun(p) - ref_fun(RefX_cut)).*1e4;
+        case 10 % TRUVIS-II
+            % Parameters: 1=centralWL 2=nm/pix 3=Yscale 4=Yshift
+            % 5:6=lin+quadratic baseline 7=quadratic WL term  8=cubic WL term
+            plot_fun    = @(p) meas_fun((RefX_cut-p(1)).*p(2)+1e-4.*p(7).*(RefX_cut-p(1)).^2+1e-7.*p(8).*(RefX_cut-p(1)).^3).*p(3)+p(4)+1e-6.*p(5).*(RefX_cut-p(1))+1e-6.*p(6).*(RefX_cut-p(1)).^2;
+            fit_fun     = @(p) (plot_fun(p) - ref_fun(RefX_cut)).*1e4;
         otherwise
             % Parameters: 1=centralWL 2=nm/pix 3=Yscale 4=Yshift 5:6=lin+quadratic baseline            
             plot_fun    = @(p) meas_fun((RefX_cut-p(1)).*p(2)).*p(3)+p(4)+1e-6.*p(5).*(RefX_cut-p(1))+1e-6.*p(6).*(RefX_cut-p(1)).^2;
@@ -293,9 +297,9 @@ for i=1:Ndet
             ftol= 5e-7;
             stol= 5e-7;
         case 10 % UniGE TRUVIS II
-            p0 = [wp1  ppnm  1    -0.1  eps eps];
-            LB = [300  0.1  0.1  -1    -1  -1 ];
-            UB = [450  2  10   1     1   1  ];
+            p0 = [wp1  ppnm  1    -0.1  eps eps -4 6];
+            LB = [300  0.1  0.1  -1    -1  -1 -50 -50];
+            UB = [450  2  10   1     1   1   50  50];
             ftol= 5e-7;
             stol= 5e-7;
     end
@@ -329,6 +333,22 @@ for i=1:Ndet
             idxAll      = (1:length(MeasY_all{1}))';
             lam_map     = pix_fun_map(Pfit(i,:));
             lam(:,i)    = wl_map(knnsearch(lam_map,idxAll));
+        case 10 % TRUVIS-II interpolate from function
+            % lam(:,i)    = MeasX/Pfit(i,2) + Pfit(i,1); 
+            % a=0;
+            %%
+            % fh=figure(1);
+            % clf(fh);
+            % ax=axes('Parent',fh);
+            % 
+            shiftfun = @(p,X) (X-p(1)).*p(2)+1e-4.*p(7).*(X-p(1)).^2+1e-7.*p(8).*(X-p(1)).^3;
+            % plot(RefX_cut,shiftfun(Pfit,RefX_cut))
+            
+            xnew = linspace(250,1000,20000);
+            
+            % plot(shiftfun(Pfit,xnew),xnew)
+
+            lam(:,i) = interp1(shiftfun(Pfit,xnew),xnew,1:length(MeasY));
         otherwise % UV-Vis setups with gratings
             lam(:,i)    = MeasX/Pfit(i,2) + Pfit(i,1); 
     end
