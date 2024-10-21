@@ -178,8 +178,8 @@ for i=1:Ndet
             switch Gratings(i) 
                 case 150 % 150 l/mm
                     CWL(i) = CWL(i) - 30;
-                    minRefX = CWL(i) - 200;
-                    maxRefX = CWL(i) + 200;
+                    minRefX = CWL(i) - 220;
+                    maxRefX = CWL(i) + 220;
                     ppnm    = 0.130;             % pixels per nm = 1/resolution;
                 case 75 % 75 l/mm
                     minRefX = CWL(i) - 400;
@@ -209,6 +209,9 @@ for i=1:Ndet
             RefY     = RefY./max(RefY_cut);
             RefY_cut = RefY_cut./max(RefY_cut);
     end
+    %%% Sort calibration in ascending order
+    [RefX_cut,idS] = sort(RefX_cut,'ascend');
+    RefY_cut = RefY_cut(idS);
 
     %% Define Fit Functions
     ref_fun     = griddedInterpolant(RefX_cut,RefY_cut);
