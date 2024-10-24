@@ -104,24 +104,25 @@ switch mode
         % 1D Gaussian with 1st and 2nd derivative
         % Parameters: 1=t0  2=FWHM  3=Amplitude  4=Amp 1st deriv  5=Amp 2nd deriv  6=Offset  7=ExpTau 8=ExpAmp
         %
-        G0 = @(p,t) exp(-log(2).*((t-p(1))./p(2)).^2);
-        G1 = @(p,t) -2.*log(2)./(p(2).^2).*(t-p(1)).*G0(p,t);
-        G2 = @(p,t) 2.*log(2).*(-p(2).^2 + 2.*log(2).*(t-p(1)).^2)./(p(2).^4).*G0(p,t);
+        s  = @(p) p(2)/(2*sqrt(2*log(2))); % p(2) = FWHM, convert to sigma
+        G0 = @(p,t) exp(-log(2).*((t-p(1))./s(p)).^2);
+        G1 = @(p,t) -2.*log(2)./(s(p).^2).*(t-p(1)).*G0(p,t);
+        G2 = @(p,t) 2.*log(2).*(-s(p).^2 + 2.*log(2).*(t-p(1)).^2)./(s(p).^4).*G0(p,t);
         
-        s  = @(p) p(2)/(2*sqrt(2*log(2)));
         E1 = @(p,t) p(8)*0.5*exp(-1./p(7).*(t-p(1) - 0.5.*1/p(7).*s(p).^2)).*(1+erf((t-p(1)-1./p(7).*s(p).^2)./(s(p).*sqrt(2))));
-
-        %% Fit Gaussian + derivatives
-        ArtFit = @(p,t) p(3).*G0(p,t) + p(4).*G1(p,t) + p(5).*G2(p,t) + p(6);
-        P0  = [0.1  0.1   1     0.1   0.1  0.1     ];
-        LB  = [-5   0     -500   -500  -500  -500   ];
-        UB  = [5    1     500    500   500   500    ];
         
-        % %% Fit Gaussian + derivatives + exponential
-        % ArtFit = @(p,t) p(3).*G0(p,t) + p(4).*G1(p,t) + p(5).*G2(p,t) + p(6) + E1(p,t);
-        % P0  = [0.1  0.05   1     0.1   0.1  0.1  2 1];
-        % LB  = [-5   0     -10   -10  -10  -10   0 -10];
-        % UB  = [5    1     10    10   10   10    5 10];
+        % %% Fit Gaussian + derivatives
+        % ArtFit = @(p,t) p(3).*G0(p,t) + p(4).*G1(p,t) + p(5).*G2(p,t) + p(6);
+        % P0  = [0.1  0.1   1     0.1   0.1  0.1     ];
+        % LB  = [-5   0     -500   -500  -500  -500   ];
+        % UB  = [5    1     500    500   500   500    ];
+
+        %% Fit Gaussian + derivatives + exponential
+        % p(7)=tau_exp p(8)=amp_exp
+        ArtFit = @(p,t) p(3).*G0(p,t) + p(4).*G1(p,t) + p(5).*G2(p,t) + p(6) + E1(p,t);
+        P0  = [0.1  0.1   1     0.1   0.1  0.1  1 1];
+        LB  = [-5   0     -10   -10  -10  -10   0 -10];
+        UB  = [5    1     10    10   10   10    5 10];
 
         % % Fit ExpConvGauss only
         % Parameters: 1=t0  2=FWHM  3=Offset 4=ExpTau 5=ExpAmp
