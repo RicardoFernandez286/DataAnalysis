@@ -4,7 +4,7 @@ function chirpSt = FitChirpCorr(dataStruct,rootfolder,k)
 % dispersion equation to give a general time-dependent chirp, which can
 % then be saved to a file.
 %
-% Ricardo Fernández-Terán / v1.0a / 22.11.2021
+% Ricardo Fernández-Terán / v2.0a / 25.10.2024
 
 warning('off','optimlib:levenbergMarquardt:InfeasibleX0');
 debugChirp = 1;
