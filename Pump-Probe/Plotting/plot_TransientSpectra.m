@@ -109,6 +109,17 @@ switch IncludeSSspec
                 ax2.Units     = 'pixels';
             case 1
                 ax2=gca;
+            case 2
+                % Create a new figure with consistent format
+                fh = figure();
+                fh.Name = [DataStruct.rawcorr ' DATA - TRANSIENT SPECTRA of "' DataStruct.datafilename '"'];
+                fh.Position(3)  = 890;
+                fh.Position(4)  = 425;
+                fh.Color        = [1 1 1];
+                % Define the axes
+                ax2 = axes('Parent',fh);
+                axes(ax2);
+                ax2.Units     = 'pixels';
         end
 
         where = ax2;
