@@ -1,4 +1,5 @@
 function dataStruct = LoadData_nsTAUniGE(dataStruct)
+tic;
 %% READ from dataStruct
 rootdir         = dataStruct.rootdir;
 datafilename    = dataStruct.datafilename;
@@ -11,7 +12,10 @@ sign=+1;
 
 %% Read Data
 % Read the files if the directory is correctly populated
-text            = fscanf(fopen(fullName),'%c');
+fid             = fopen(fullName);
+text            = fscanf(fid,'%c');
+fclose(fid);
+
 head_n          = count(text,'%');
 
 alldata         = readmatrix(fullName,'FileType','text','NumHeaderLines',head_n,'CommentStyle','%s');
@@ -20,6 +24,7 @@ delays          = unique(alldata(:,1))*1e9; % convert to ns
 alldata         = alldata.*sign;
 Ndelays         = length(delays);
 Npixels         = size(alldata,1)./Ndelays;
+%Npixels         = int16(size(alldata,1)./Ndelays);
 
 %%% Remove data after 10 microseconds
 % rmvIdx          = delays >= 1e4;
@@ -46,9 +51,11 @@ for j=1:Ndelays
     tmpnoise(j,:)   = alldata(idxPix,5);
 end
 
-% figure;
+% fh=figure;
+% axes('parent',fh)
 % plot(delays,cts);
-
+% title(['Total cts: ' num2str(sum(cts))]);
+% ax=gca; ax.YScale='log'; ax.XScale='log';
 %% Remove points with zero counts
 rmvIdx              = (cts == 0);
 tmpsignal(rmvIdx,:) = [];
@@ -115,3 +122,6 @@ dataStruct.corrdata{1}  = dataStruct.rawsignal{1} - dataStruct.bkg{1};
 
 dataStruct.timescale = 'ns';
 fclose('all');
+
+tl=toc;
+disp(['Loading took ' num2str(tl) ' s'])
