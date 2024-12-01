@@ -403,8 +403,8 @@ for i=1:nC
 end
 hold(ax,'off')
 title(ax,'Concentration Profiles');
-xline(ax,t0);
-yline(ax,0);
+xline(ax,t0,'handlevisibility','off');
+yline(ax,0,'handlevisibility','off');
 axis(ax,'tight');
 ax.Box = 'on';
 ax.FontSize = FontSize;
