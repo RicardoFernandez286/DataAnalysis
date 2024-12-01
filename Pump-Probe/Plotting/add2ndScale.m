@@ -1,6 +1,13 @@
 fh = gcf;
 ax1 = gca;
 
+if fh.Position(3) == 700
+    fh.Position(3)  = 800;
+    fh.Position(4)  = 425;
+    fh.Color = 'w';
+    title(ax1,'');
+end
+
 ax1.Units = 'pixels';
 ax1.Position = [80 75 675 290];
 ax1.Units = 'normalized';
@@ -37,7 +44,7 @@ ax_top.Position = ax1.Position;
 ax_top.YAxisLocation = 'right';
 ax_top.XAxisLocation = 'top';
 ax_top.Box = 'off';
-ax_top.Color = 'none';
+ax_top.Color = 'white';
 ax_top.FontSize  = FontSize-2;
 
 linkaxes([ax1,ax_top],'y');
