@@ -170,6 +170,7 @@ if doFit == 1
     tfit=toc;
     [~,Dbest,CConc,Sfit] = FitFunc(pFit,t,Kmat_Fun,C0,Dexp,GauIRF,FixTAU,IsFixTau,FixIRF,IsFixIRF,Model_pFID);
     res     = Dexp-Dbest;
+    
     chi2    = norm(res).^2./(numel(res)-length(pFit)-Nfix-1);
     if exitflag == -1
         pErr = NaN.*zeros(Nvars,1);
@@ -210,6 +211,9 @@ FitStruct.IsFixTau  = IsFixTau;
 FitStruct.IsFixIRF  = IsFixIRF;
 FitStruct.chi2      = chi2;
 FitStruct.FitDone   = doFit;
+FitStruct.tSel      = t;
+FitStruct.WLSel     = WL;
+FitStruct.KineticModel = KineticModel;
 %% If the data was previously cut, fill with NaNs
 if CutData == 1
     Dbest(selT,selWL)   = Dbest;
