@@ -5,15 +5,12 @@ function [CConc,tIRF,simIRF,NConc] = IRF_Kmat(t,K,C0,w,t0)
 % 
 % Usage:        [CConc,tIRF,simIRF,NConc] = IRF_Kmat(t,K,C0,w,t0)
 %
-% Inputs:       t = time axis (nt x 1);  k = array of rate constants;  C0 = initial concentration vector (N x 1).
-%               OFEfunc = a function handle to a system of differential equations, taking concentration and time inputs.
-%               MakePlot = true or false (boolean) to decide whether a plot of the results is wanted or not.
-%               NameArray = a string array with the names of the species to be plotted (optional).
+% Inputs:       t = time axis (nt x 1);  K = K matrix for the system;  C0 = initial concentration vector (N x 1).
 %
 % Outputs:      Ct = concentration matrix (nt x N)
 %
-% Tested and implemented in MATLAB R2021b / runs in MATLAB R2022a
-% v1.1 / 2022.08.27 / Ricardo Fernández-Terán
+% Tested and implemented in MATLAB R2021b / runs in MATLAB R2024a
+% v1.2 / 2024.12.12 / Ricardo Fernández-Terán
 % 
 
 %% Disable some warnings
