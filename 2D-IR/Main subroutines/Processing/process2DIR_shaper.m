@@ -77,7 +77,7 @@ apodise_method  = app.I2D_ApodisationFunction.Value;
 phase_method    = app.I2D_PhaseFitFunction.Value;
 phase_points    = app.I2D_PhaseFitRangeEdit.Value;
 probe_calib     = app.I2D_AutocalibrateprobeaxisCheckBox.Value;
-pumpcorrection  = 0;
+pumpcorrection  = app.I2D_PumpcorrectionCheckBox.Value;
 
 %%% Determine whether the data is transient 2D or not, then read the mode
 if dataStruct.Transient2D == 1
@@ -283,6 +283,7 @@ end
 % Phase the data (MCT data + interferogram)
     phasingterm{m,k}            = exp(-1i*fittedPhase{m,k});
     phased_FFTZPint{m,k}        = FFT_ZPint{m,k}.*phasingterm{m,k};
+    
 
 % Do pump correction
 if pumpcorrection == 1

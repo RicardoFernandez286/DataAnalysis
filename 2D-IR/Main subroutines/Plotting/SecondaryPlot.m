@@ -34,6 +34,12 @@ if dataStruct.isShaper ~= 1
     fittedPhase         = dataStruct.fittedPhase{m,k};
     ZP_phase            = dataStruct.ZP_phase{m,k};
     phasepoints         = dataStruct.phasepoints{m,k};
+else
+    % Read phasing data (shaper version)
+    phased_FFTZPint     = dataStruct.phased_FFTZPint{m,k};
+    fittedPhase         = dataStruct.fittedPhase{m,k};
+    ZP_phase            = dataStruct.ZP_phase{m,k};
+    phasepoints         = [];
 end
 
 % Read time-domain data
@@ -107,7 +113,7 @@ switch what
         yyaxis(where,'left')
 
     case 'ph' % Plot phasing data
-        if dataStruct.isShaper ~= 1
+        % if dataStruct.isShaper ~= 1
             %%% Plot the pump spectrum (real part of FFT[pyro])
             yyaxis(where,'left')
             p1 = plot(where,PumpAxis,abs(phased_FFTZPint),'-b','LineWidth',2,'DisplayName','|\mathcal{F}(Int)|');
@@ -124,17 +130,19 @@ switch what
             %%% Plot the phase and the fit
             yyaxis(where,'right')
             hold(where,'on')
-            % Fitted points
-            p4 = plot(where,PumpAxis(phasepoints),wrapToPi(fittedPhase(phasepoints)),'dg','LineWidth',0.1,'MarkerSize',6,'DisplayName','Fitted phase');
-            p5 = plot(where,PumpAxis,wrapToPi(fittedPhase),'-g','LineWidth',3,'DisplayName','Fitted phase');
-            % Original phase
-            p6 = plot(where,PumpAxis,wrapToPi(ZP_phase),'-r','LineWidth',1,'DisplayName','Calculated phase');
-            ylabel(where,'Phase (rad)','FontWeight','bold')
-            % Adjust the limits (Y axis - phase)
-            ylim(where,[-pi,pi])
-            yticks(where,[-2*pi -3*pi/2 -pi -pi/2 0 pi/2 pi 3*pi/2 2*pi ])
-            yticklabels(where,{'-2\pi','-3\pi/2','-\pi','-\pi/2','0','\pi/2','\pi','3\pi/2','2\pi'})
-            % Adjust the limits (X axis)
+            if dataStruct.isShaper ~= 1
+                % Fitted points
+                p4 = plot(where,PumpAxis(phasepoints),wrapToPi(fittedPhase(phasepoints)),'dg','LineWidth',0.1,'MarkerSize',6,'DisplayName','Fitted phase');
+                p5 = plot(where,PumpAxis,wrapToPi(fittedPhase),'-g','LineWidth',3,'DisplayName','Fitted phase');
+                % Original phase
+                p6 = plot(where,PumpAxis,wrapToPi(ZP_phase),'-r','LineWidth',1,'DisplayName','Calculated phase');
+                ylabel(where,'Phase (rad)','FontWeight','bold')
+                % Adjust the limits (Y axis - phase)
+                ylim(where,[-pi,pi])
+                yticks(where,[-2*pi -3*pi/2 -pi -pi/2 0 pi/2 pi 3*pi/2 2*pi ])
+                yticklabels(where,{'-2\pi','-3\pi/2','-\pi','-\pi/2','0','\pi/2','\pi','3\pi/2','2\pi'})
+                % Adjust the limits (X axis)
+            end
             xlim(where,[min(ProbeAxis)*0.95 max(ProbeAxis)*1.05]);
             xlabel(where,'Pump wavenumber (cm^{-1})','FontWeight','bold');
             if plot_all == 1
@@ -143,7 +151,7 @@ switch what
                 legend(where,'boxoff')
                 legend(where,'Location','best')
             end
-        end
+        % end
     case 'pc' % Plot probe calibration (data+fit)
         plot(where,1:length(ProbeAxis),scattering_maxima,'xr','LineWidth',2);
         xlabel(where,'Pixel number','FontWeight','bold');
