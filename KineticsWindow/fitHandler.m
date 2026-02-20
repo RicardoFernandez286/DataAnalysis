@@ -137,12 +137,12 @@ switch Method
             'FunctionTolerance',1e-15,...
             'PlotFcn',{'optimplotfval','optimplotx_txt'});
            
-            fprintf('\nNon-linear constraints require additional input:\n')
-            t1 = input('  Enter Tau1 (TCSPC) in ns: ');
-            t2 = input('  Enter Tau2 (TCSPC) in ns: ');
-            a1 = input('  Enter A1   (TCSPC) in %:  ');
-            a2 = 100-a1;
-            TCSPC = [t1 t2 a1 a2];
+        fprintf('\nNon-linear constraints require additional input:\n')
+        tau1 = input('  Enter Tau1 (TCSPC) in ns: ');
+        tau2 = input('  Enter Tau2 (TCSPC) in ns: ');
+        a1 = input('  Enter A1   (TCSPC) in [0,1]:  ');
+        a2 = 1-a1;
+        TCSPC = [-1./tau1 -1./tau2 a1 a2];
 end
 %% Do fit or calculate
 % Determine whether a fit is to be done or just plot the initial guess
@@ -660,19 +660,19 @@ function [res,Dfit,CConc,Sfit] = FitFunc(p,t,Kmodel,C0,Dexp,GauIRF,FixTAU,IsFixT
     res     = Dexp-Dfit;
 end
 %% This auxiliary function calculates the nonlinear constrains for a specific model
-function [c,ceq] = nlcon1(p,TCSPC,FixTAU,IsFixTau,IsFixIRF)
-    beginTau  = (1+length(IsFixIRF)-sum(IsFixIRF));
-    FitTaus             = p(beginTau:end);
-    AllTaus(IsFixTau)   = FixTAU;
-    AllTaus(~IsFixTau)  = FitTaus;
-    k         = 1./AllTaus;
-   
-    c = [];
-    lam1 = 0.5.*(-sum(k(2:5)) - sqrt(sum(k(2:5)).^2 - 4.*(k(3).*k(4)+k(2).*k(5)+k(3).*k(5)))) + 1./TCSPC(1);
-    lam2 = 0.5.*(-sum(k(2:5)) + sqrt(sum(k(2:5)).^2 - 4.*(k(3).*k(4)+k(2).*k(5)+k(3).*k(5)))) + 1./TCSPC(2);
-   
-    ceq = [lam1,lam2];
-end
+% function [c,ceq] = nlcon1(p,TCSPC,FixTAU,IsFixTau,IsFixIRF)
+%     beginTau  = (1+length(IsFixIRF)-sum(IsFixIRF));
+%     FitTaus             = p(beginTau:end);
+%     AllTaus(IsFixTau)   = FixTAU;
+%     AllTaus(~IsFixTau)  = FitTaus;
+%     k         = 1./AllTaus;
+% 
+%     c = [];
+%     lam1 = 0.5.*(-sum(k(2:5)) - sqrt(sum(k(2:5)).^2 - 4.*(k(3).*k(4)+k(2).*k(5)+k(3).*k(5)))) + 1./TCSPC(1);
+%     lam2 = 0.5.*(-sum(k(2:5)) + sqrt(sum(k(2:5)).^2 - 4.*(k(3).*k(4)+k(2).*k(5)+k(3).*k(5)))) + 1./TCSPC(2);
+% 
+%     ceq = [lam1,lam2];
+% end
 %% Auxiliary function, constraint 2
 function [c,ceq] = nlcon(p,TCSPC,FixTAU,IsFixTau,IsFixIRF)
     beginTau  = (1+length(IsFixIRF)-sum(IsFixIRF));
@@ -682,9 +682,14 @@ function [c,ceq] = nlcon(p,TCSPC,FixTAU,IsFixTau,IsFixIRF)
     k         = 1./AllTaus;
    
     c = [];
-    lam1 = 0.5.*(-sum(k(2:5)) - sqrt(sum(k(2:5)).^2 - 4.*(k(3).*k(4)+k(2).*k(5)+k(3).*k(5)))) + 1./TCSPC(1);
-    lam2 = 0.5.*(-sum(k(2:5)) + sqrt(sum(k(2:5)).^2 - 4.*(k(3).*k(4)+k(2).*k(5)+k(3).*k(5)))) + 1./TCSPC(2);
-    theRatio = (k(4)+k(5)-(1./TCSPC(2)))./((1./TCSPC(1))-k(4)-k(5)) - TCSPC(4)./TCSPC(3);
-   
-    ceq = [lam1,lam2,theRatio];
+
+    Omega   = sum(k(2:5));
+    xi      = k(3).*k(4)+k(2).*k(5)+k(3).*k(5);
+    
+    lam2 = -0.5*(Omega+sqrt(Omega.^2-4*xi));
+    lam3 = -0.5*(Omega-sqrt(Omega.^2-4*xi));
+    a2 = (lam2 + k(4) + k(5))./(lam2-lam3);
+    a3 = -(lam3 + k(4) + k(5))./(lam2-lam3);
+    
+    ceq = [lam2,lam3,a2,a3] - TCSPC;
 end
