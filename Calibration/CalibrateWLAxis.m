@@ -7,7 +7,7 @@ function [cm,lam,CalType] = CalibrateWLAxis(CAL_data,FitLimits,doFit)
 %% Read from input structure
 CalType     = CAL_data.CalType;
 
-useQuad = 1; %
+useQuad = 1; % use quadratic function for IR setup calibration
 
 switch CalType
     case {1,6,7}; Ndet = 2; % Only Sheffield and RAL had two detectors
