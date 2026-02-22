@@ -16,12 +16,19 @@ switch calType
     otherwise;                          TYPE = 0;
 end
 
-[datafile, datapath] = uigetfile(uifilt,message);
+olddir = pwd;
 
 rootdir = app.rootdir;
 if isempty(rootdir)
   rootdir = pwd;
 end
+currdir = pwd; 
+cd(rootdir);
+
+
+[datafile, datapath] = uigetfile(uifilt,message);
+
+
 
 if TYPE == 0
     error('Invalid calibration data type.')
@@ -31,8 +38,6 @@ if datafile == 0
     error('No data selected!')
 end
 
-currdir = pwd; 
-cd(rootdir);
 
 switch TYPE
     case 1 % Uni Sheffield TRIR
@@ -127,4 +132,4 @@ end
 
 app.CAL_data.CalType = TYPE;
 
-cd(currdir);
+cd(olddir);

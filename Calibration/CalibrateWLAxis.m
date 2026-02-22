@@ -5,16 +5,15 @@ function [cm,lam,CalType] = CalibrateWLAxis(CAL_data,FitLimits,doFit)
 % Ricardo Fernandez-Teran / 02.05.2023 / v3.5e
 
 %% Read from input structure
-
 CalType     = CAL_data.CalType;
+
+useQuad = 1;
 
 switch CalType
     case {1,6,7}; Ndet = 2; % Only Sheffield and RAL had two detectors
     otherwise;    Ndet = 1;
 end
-
 MeasY_all   = CAL_data.AbsSolvent;
-
 for i=1:Ndet
     MeasY   = MeasY_all{i};
     Npix(i) = length(MeasY);
@@ -23,7 +22,6 @@ for i=1:Ndet
     % Reference (standard) spectrum
     RefX    = CAL_data.CalX;
     RefY    = CAL_data.CalY;
-
     % Ensure everything is stored as column vectors
     MeasX   = reshape(MeasX,[],1);
     MeasY   = reshape(MeasY,[],1);
@@ -37,7 +35,6 @@ for i=1:Ndet
             [RefX,idRefX]    = sort(RefX,'descend');
             RefY             = RefY(idRefX);
     end
-
     % If we're doing IR calibration, convert standard spectral axis to nm since the grating is linear in nm
     % The X axis of the reference [standard] spectrum is converted to nm, and the Y experimental data is flipped around
     switch CalType
@@ -56,7 +53,6 @@ for i=1:Ndet
             maxWL       = 1e7./[FitLimits{1,1:2}]; % max WL = min cm-1
             minWL       = 1e7./[FitLimits{2,1:2}]; % min WL = max cm-1
             ppnmT       = [FitLimits{4,1:2}];
-
             RefX        = 1e7./RefX;
             MeasY       = flipud(MeasY);
             
@@ -69,7 +65,6 @@ for i=1:Ndet
             RefX        = 1e7./RefX;
             MeasY       = flipud(MeasY);
     end
-
     %% Cut off relevant part of reference spectrum -- set initial guesses for fit parameters
     switch CalType
         case 1 % UoS 2DIR/TRIR
@@ -97,15 +92,12 @@ for i=1:Ndet
 %             maxRefX  = 690;
             ppnm = ppnmT;
             wp1 = CWL(1) - 260./ppnm;
-
             minRefX = minWL(1);
             maxRefX = maxWL(1);
-
             cutID    = sort(findClosestId2Val(RefX,[minRefX maxRefX]));
             [RefX_cut,srt_id] = sort(RefX(cutID(1):cutID(2)));
             RefY_cut = RefY(cutID(1):cutID(2));
             RefY_cut = RefY_cut(srt_id);
-
             RefY     = RefY./max(RefY_cut);
             RefY_cut = RefY_cut./max(RefY_cut);
             
@@ -114,15 +106,12 @@ for i=1:Ndet
 %             maxRefX  = 690;
             ppnm = ppnmT;
             wp1 = CWL(1) - 260./ppnm;
-
             minRefX = minWL(1);
             maxRefX = maxWL(1);
-
             cutID    = sort(findClosestId2Val(RefX,[minRefX maxRefX]));
             [RefX_cut,srt_id] = sort(RefX(cutID(1):cutID(2)));
             RefY_cut = RefY(cutID(1):cutID(2));
             RefY_cut = RefY_cut(srt_id);
-
             RefY     = RefY./max(RefY_cut);
             RefY_cut = RefY_cut./max(RefY_cut);
         case 4     % UZH Lab 2
@@ -153,12 +142,10 @@ for i=1:Ndet
         case 5  % UniGE NIR-TA
             minRefX  = 830;
             maxRefX  = 1450;
-
             cutID    = sort(findClosestId2Val(RefX,[minRefX maxRefX]));
             [RefX_cut,srt_id] = sort(RefX(cutID(1):cutID(2)));
             RefY_cut = RefY(cutID(1):cutID(2));
             RefY_cut = RefY_cut(srt_id);
-
             RefY     = RefY./max(RefY_cut);
             RefY_cut = RefY_cut./max(RefY_cut);
             
@@ -169,7 +156,6 @@ for i=1:Ndet
 %             dW       = [-570 450]; % min/max relative to CWL to consider for fit
 %             dW       = [-400 260]; % min/max relative to CWL to consider for fit
             dW       = [minWL(i) maxWL(i)] - CWL(i);
-
             wp1      = CWL(i) - 64/ppnm;      % lowest wavelength (nm) = CWL - Npix/2*resolution
             cutID    = sort(findClosestId2Val(RefX,CWL(i)+dW'));
             RefX_cut = RefX(cutID(1):cutID(2));
@@ -178,8 +164,8 @@ for i=1:Ndet
             switch Gratings(i) 
                 case 150 % 150 l/mm
                     CWL(i) = CWL(i) - 30;
-                    minRefX = CWL(i) - 220;
-                    maxRefX = CWL(i) + 220;
+                    minRefX = CWL(i) - 180;
+                    maxRefX = CWL(i) + 160;
                     ppnm    = 0.130;             % pixels per nm = 1/resolution;
                 case 75 % 75 l/mm
                     minRefX = CWL(i) - 400;
@@ -197,25 +183,27 @@ for i=1:Ndet
         case 10     % UniGE TRUVIS II
             ppnm = ppnmT;
             wp1 = CWL(1) - Npix/(2.*ppnm);
-
             minRefX = minWL(1);
             maxRefX = maxWL(1);
-
             cutID    = sort(findClosestId2Val(RefX,[minRefX maxRefX]));
             [RefX_cut,srt_id] = sort(RefX(cutID(1):cutID(2)));
             RefY_cut = RefY(cutID(1):cutID(2));
             RefY_cut = RefY_cut(srt_id);
-
             RefY     = RefY./max(RefY_cut);
             RefY_cut = RefY_cut./max(RefY_cut);
     end
     %%% Sort calibration in ascending order
     [RefX_cut,idS] = sort(RefX_cut,'ascend');
     RefY_cut = RefY_cut(idS);
-
+    
     %% Define Fit Functions
     ref_fun     = griddedInterpolant(RefX_cut,RefY_cut);
     meas_fun    = griddedInterpolant(MeasX,MeasY);
+    
+    % STANDARD Linear Function Handle (Old Baseline Method for legacy cases)
+    plot_fun_lin_std = @(p) meas_fun((RefX_cut-p(1)).*p(2)).*p(3)+p(4)+1e-6.*p(5).*(RefX_cut-p(1))+1e-6.*p(6).*(RefX_cut-p(1)).^2;
+    fit_fun_lin_std  = @(p) (plot_fun_lin_std(p) - ref_fun(RefX_cut)).*1e4;
+
     switch CalType
         case 5 % UniGE NIR-TA
             % Refractive index -- Sellmeier equation (lambda in µm)
@@ -228,7 +216,6 @@ for i=1:Ndet
             % Sellmeier coefficients for SF10 (lambda in µm)
             SF10.B  = [1.62153902    0.256287842     1.64447552];
             SF10.C  = [0.0122241457  0.0595736775    147.468793];
-
             % Refractive index of SF10
             nSF10   = @(l) n_l(l,SF10.B,SF10.C);
             
@@ -239,6 +226,32 @@ for i=1:Ndet
             pix_fun     = @(p) p(1).*1000./25.*sin(th_out(RefX_cut,p(3)) - th_out(WL_r,p(3))) + p(2);
             plot_fun    = @(p) (meas_fun(pix_fun(p))+p(5)).*p(4);
             fit_fun     = @(p) (plot_fun(p) - ref_fun(RefX_cut)).*1e4;
+            
+        case {8,9} % UniGE TRIR new - Improved Baseline Logic
+             % Calculate static center for baseline to decouple from shift p(1)
+             refC = mean(RefX_cut);
+             
+             % Redefine Linear function with improved baseline for the pre-fit
+             % Note the change: (RefX_cut-refC) instead of (RefX_cut-p(1))
+             plot_fun_lin_imp = @(p) meas_fun((RefX_cut-p(1)).*p(2)).*p(3) + p(4) + 1e-6.*p(5).*(RefX_cut-refC) + 1e-6.*p(6).*(RefX_cut-refC).^2;
+             fit_fun_lin_imp  = @(p) (plot_fun_lin_imp(p) - ref_fun(RefX_cut)).*1e4;
+             
+             if useQuad
+                 % Parameters: 1=centralWL 2=nm/pix 3=Yscale 4=Yshift
+                 % 5:6=lin+quadratic baseline (centered on refC)
+                 % 7=quadratic WL term  8=cubic WL term
+                 plot_fun_quad    = @(p) meas_fun((RefX_cut-p(1)).*p(2)+1e-4.*p(7).*(RefX_cut-p(1)).^2+1e-7.*p(8).*(RefX_cut-p(1)).^3).*p(3)+p(4)+1e-6.*p(5).*(RefX_cut-refC)+1e-6.*p(6).*(RefX_cut-refC).^2;
+                 fit_fun_quad     = @(p) (plot_fun_quad(p) - ref_fun(RefX_cut)).*1e4;
+                 
+                 % Assign for main fit
+                 fit_fun  = fit_fun_quad;
+                 plot_fun = plot_fun_quad;
+             else
+                 % Assign for main fit
+                 fit_fun  = fit_fun_lin_imp;
+                 plot_fun = plot_fun_lin_imp;
+             end
+             
         case 10 % TRUVIS-II
             % Parameters: 1=centralWL 2=nm/pix 3=Yscale 4=Yshift
             % 5:6=lin+quadratic baseline 7=quadratic WL term  8=cubic WL term
@@ -246,8 +259,8 @@ for i=1:Ndet
             fit_fun     = @(p) (plot_fun(p) - ref_fun(RefX_cut)).*1e4;
         otherwise
             % Parameters: 1=centralWL 2=nm/pix 3=Yscale 4=Yshift 5:6=lin+quadratic baseline            
-            plot_fun    = @(p) meas_fun((RefX_cut-p(1)).*p(2)).*p(3)+p(4)+1e-6.*p(5).*(RefX_cut-p(1))+1e-6.*p(6).*(RefX_cut-p(1)).^2;
-            fit_fun     = @(p) (plot_fun(p) - ref_fun(RefX_cut)).*1e4;
+            plot_fun    = plot_fun_lin_std;
+            fit_fun     = fit_fun_lin_std;
     end
     
     %% Calibration Fit
@@ -287,16 +300,40 @@ for i=1:Ndet
         case {6,7} % RAL LIFEtime
             wp1_L  = CWL(i) - 64/ppnm + dW(1);
             wp1_U  = CWL(i) - 64/ppnm + dW(2);
-
             p0 = [wp1    ppnm  1.5  -0.1  eps  eps  ];
             LB = [wp1_L  1e-4  0.1  -1    -Inf -Inf ];
             UB = [wp1_U  0.4   10   1     Inf  Inf  ];
             ftol= 5e-7;
             stol= 5e-7;
         case {8,9} % UniGE TRIR New
-            p0 = [wp1  ppnm  1    -0.1  eps eps];
-            LB = [1e3  1e-4  0.1  -1    -1  -1 ];
-            UB = [1e4  0.25  10   1     1   1  ];
+            % Define Linear guesses/bounds first
+            p0_lin = [wp1  ppnm  1    -0.1  eps eps];
+            LB_lin = [1e3  1e-4  0.1  -1    -1  -1 ];
+            UB_lin = [1e4  0.25  10   1     1   1  ];
+            
+            if useQuad
+                if doFit == 1
+                    % PRE-FIT LINEAR: Run a quick linear fit to get correct central WL and slope
+                    % Uses the improved baseline function (fit_fun_lin_imp)
+                    opts_lin = optimoptions(@lsqnonlin,'Display','off','TypicalX',p0_lin,'FunctionTolerance',1e-4,'StepTolerance',1e-4);
+                    p_lin_res = lsqnonlin(fit_fun_lin_imp, p0_lin, LB_lin, UB_lin, opts_lin);
+                else
+                    p_lin_res = p0_lin;
+                end
+                
+                % Use linear result to seed the quadratic fit
+                % Params: [p_lin(1:6), quad=0, cubic=0]
+                p0 = [p_lin_res, eps, eps];
+                
+                % Bounds for Quadratic Fit
+                LB = [1e3  1e-4  0.1  -1    -1  -1  -50 -50];
+                UB = [1e4  0.25  10   1     1   1    50  50];
+            else
+                % Standard Linear Fit
+                p0 = p0_lin;
+                LB = LB_lin;
+                UB = UB_lin;
+            end
             ftol= 5e-7;
             stol= 5e-7;
         case 10 % UniGE TRUVIS II
@@ -324,11 +361,20 @@ for i=1:Ndet
     else
         Pfit(i,:)=p0;
     end
-
     switch CalType
-        case {1,4,6,7,8,9} % IR Setups UoS, UZH Lab 2, RAL LIFEtime, UniGE
+        case {1,4,6,7} % IR Setups UoS, UZH Lab 2, RAL LIFEtime
             MeasX       = 1:Npix(i);
             lam(:,i)    = flipud(MeasX(:)./Pfit(i,2) + Pfit(i,1));
+        case {8,9} % UniGE TRIR New
+            if useQuad
+                shiftfun = @(p,X) (X-p(1)).*p(2)+1e-4.*p(7).*(X-p(1)).^2+1e-7.*p(8).*(X-p(1)).^3;
+                % Defined search vector usually for IR is 1000 to 12000 nm
+                xnew     = linspace(1000,12000,50000); 
+                lam(:,i) = interp1(shiftfun(Pfit(i,:),xnew),xnew,flip(1:length(MeasY)),'linear','extrap');
+            else
+                MeasX       = 1:Npix(i);
+                lam(:,i)    = flipud(MeasX(:)./Pfit(i,2) + Pfit(i,1));
+            end
         case 5 % UniGE NIR-TA with prisms
             % Need to numerically invert the pixel(lambda) function to get lambda(pixel)
             wl_map      = 1e7./(5000:0.1:20000)';
@@ -350,13 +396,11 @@ for i=1:Ndet
             xnew = linspace(250,1000,20000);
             
             % plot(shiftfun(Pfit,xnew),xnew)
-
-            lam(:,i) = interp1(shiftfun(Pfit,xnew),xnew,1:length(MeasY));
+            lam(:,i) = interp1(shiftfun(Pfit(i,:),xnew),xnew,1:length(MeasY));
         otherwise % UV-Vis setups with gratings
             lam(:,i)    = MeasX/Pfit(i,2) + Pfit(i,1); 
     end
     cm(:,i)         = 1e7./lam(:,i);
-
     %% Plot Fit Results
     fh(i) = figure(i); %#ok<*AGROW> 
     fh(i).Color = 'w';
@@ -365,18 +409,15 @@ for i=1:Ndet
     clf(fh(i));
     
     ax = axes('parent',fh(i));
-
     if i>1
         fh(i).Position(2) = fh(i-1).Position(2) - fh(i-1).Position(4) - 100;
     end
-
     switch CalType
         case {1,4,6,7,8,9} % IR setups UoS, MESS New and MESS Lab2; TRIR UniGE
             plot(ax,1e7./RefX,RefY,'k')
             hold(ax,'on');
             plot(ax,1e7./RefX_cut,plot_fun(Pfit(i,:)),'r','LineWidth',2)
             hold(ax,'off');
-
             axis(ax,'tight');
             xlim(ax,[min(1e7./RefX_cut)-20 max(1e7./RefX_cut)+20]);
             xlabel(ax,'Real Wavenumbers (cm^{-1})','FontWeight','bold');
@@ -389,7 +430,6 @@ for i=1:Ndet
             hold(ax,'on');
                 plot(ax,RefX_cut,plot_fun(Pfit(i,:)),'r','LineWidth',2)
             hold(ax,'off');
-
             axis(ax,'tight');
             xlim(ax,[min(RefX_cut)-10 max(RefX_cut)+10]);
             xlabel(ax,'Real Wavelength (nm)','FontWeight','bold');
