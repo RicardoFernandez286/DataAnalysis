@@ -134,8 +134,8 @@ switch Method
             'StepTolerance',1e-15,...
             'Display','off',...
             'Algorithm','sqp',...
-            'FunctionTolerance',1e-15,...
-            'PlotFcn',{'optimplotfval','optimplotx_txt'});
+            'FunctionTolerance',1e-15);%,...
+            %'PlotFcn',{'optimplotfval','optimplotx_txt'});
            
         fprintf('\nNon-linear constraints require additional input:\n')
         tau1 = input('  Enter Tau1 (TCSPC) in ns: ');
@@ -163,7 +163,15 @@ if doFit == 1
         case 'Constrained Fit (fmincon)'
             fitfun = @(p) norm(FitFunc(p,t,Kmat_Fun,C0,Dexp,GauIRF,FixTAU,IsFixTau,FixIRF,IsFixIRF,Model_pFID)).^2;
             nlc = @(p) nlcon(p,TCSPC,FixTAU,IsFixTau,IsFixIRF);
-           
+            
+            disp(['Number of taus detected: ' num2str(length(IsFixTau))])
+            switch length(IsFixTau)
+                case 4
+                    disp('3x3 Matrix detected.')
+                case 6
+                    disp('4x4 Matrix detected.')
+            end
+
             [pFit,~,exitflag,output,~,grad,hessian] = fmincon(fitfun,p0_all,[],[],[],[],LB_all,UB_all,nlc,FMCopt);
     end
    
@@ -324,8 +332,8 @@ if doFit == 1
                     exit_str = 'Change in parameters less than StepTol, params. within bounds ± ConstTol.';
             end
             [~,nlc_val] = nlc(pFit);
-            fprintf('\tNon-linear constraints: %.3g | %.3g | %.3g |\n',nlc_val);
-            fprintf('\t%i Iterations, %i Func. Evals.\n',output.iterations,output.funcCount);
+            fprintf('\tNon-linear constraints: %.3g | %.3g | %.3g | %.3g | %.3g',nlc_val);
+            fprintf('\n%i Iterations, %i Func. Evals.\n',output.iterations,output.funcCount);
     end
     fprintf('\t[%s]\n\n',exit_str)
 else
@@ -682,14 +690,31 @@ function [c,ceq] = nlcon(p,TCSPC,FixTAU,IsFixTau,IsFixIRF)
     k         = 1./AllTaus;
    
     c = [];
+    
+    ntaus = length(AllTaus);
+    
+    switch ntaus
+        case 5
+            %%% 3x3 CASE
+            Omega   = sum(k(2:5));
+            xi      = k(3).*k(4)+k(2).*k(5)+k(3).*k(5);
+        
+            lam2 = -0.5*(Omega+sqrt(Omega.^2-4*xi));
+            lam3 = -0.5*(Omega-sqrt(Omega.^2-4*xi));
+            a2 = (lam2 + k(4) + k(5))./(lam2-lam3);
+            a3 = -(lam3 + k(4) + k(5))./(lam2-lam3);
 
-    Omega   = sum(k(2:5));
-    xi      = k(3).*k(4)+k(2).*k(5)+k(3).*k(5);
-    
-    lam2 = -0.5*(Omega+sqrt(Omega.^2-4*xi));
-    lam3 = -0.5*(Omega-sqrt(Omega.^2-4*xi));
-    a2 = (lam2 + k(4) + k(5))./(lam2-lam3);
-    a3 = -(lam3 + k(4) + k(5))./(lam2-lam3);
-    
-    ceq = [lam2,lam3,a2,a3] - TCSPC;
+            ceq = [lam2,lam3,a2,a3] - TCSPC;
+        case 6
+            %%% 4x4 CASE
+            Omega   = sum(k(3:6));
+            xi      = k(3).*k(6) + k(4).*k(5) + k(4).*k(6);
+            
+            lam3 = -0.5*(Omega + sqrt(Omega.^2 - 4*xi));
+            lam4 = -0.5*(Omega - sqrt(Omega.^2 - 4*xi));
+            a3 =  (lam3 + k(5) + k(6)) ./ (lam3 - lam4);
+            a4 = -(lam4 + k(5) + k(6)) ./ (lam3 - lam4);
+            
+            ceq = [lam3,lam4,a3,a4] - TCSPC;
+    end
 end
