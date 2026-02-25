@@ -33,7 +33,9 @@ switch modelIdx
         Kfun_str = '[-k(1)-k(2) 0 0 0 0; k(1) -k(3) 0 0 0; 0 k(3) -k(4) 0 0; k(2) 0 0 -k(5) 0; 0 0 0 k(5) -k(6)]';
     case 11 % 'A -> B -> ; A -> C ->'
         Kfun_str = '[-k(1)-k(2) 0 0; k(1) -k(3) 0; k(2) 0 -k(4)]';
-    case 12 % Custom model
+    case 12 % 'A -> B -> C <=> D; C ->; D ->'
+        Kfun_str = '[-k(1), 0, 0, 0; k(1), -k(2), 0, 0; 0, k(2), -(k(3) + k(4)), k(5); 0, 0, k(3), -(k(5) + k(6))]';
+    case 13 % Custom model
         prompt   = 'Enter K matrix in functional form [i.e. as a function of a vector "k" containing the rate constants (see example)]:';
         title    = 'Define K matrix for target model';
         dims     = [10 50];
