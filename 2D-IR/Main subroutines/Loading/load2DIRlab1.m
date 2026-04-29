@@ -31,7 +31,7 @@ function  dataStruct = load2DIRlab1(dataStruct,varargin)
 
 %% HARDCODED Settings
 autodetect_datatype = 1;
-datatype = 'Raw'; % 'Raw' or 'Signal'
+datatype = 'Signal'; % 'Raw' or 'Signal'
 
 %% READ from dataStruct
 if isempty(varargin)
@@ -347,7 +347,7 @@ case 'Raw'
     % All data should have the same size
     for k=1:Ndatastates*Nslowmod*Ninterleave*Nspectra
         for m=1:Ndelays
-            startcut            = Int_size(m,k)-min(Int_size);
+            startcut            = Int_size(m,k)-min(Int_size(:));
             count{m,k}          = count{m,k}(startcut+1:end);
             probe{m,k}          = probe{m,k}(startcut+1:end,:);
             reference{m,k}      = reference{m,k}(startcut+1:end,:);

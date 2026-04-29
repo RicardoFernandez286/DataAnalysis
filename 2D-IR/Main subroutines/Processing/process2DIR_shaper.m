@@ -37,9 +37,8 @@ dummy = 'nothing';
 % dummy = 'diff'; % Can be the dummy number of 'diff' (will plot 2 - 1) - more options coming soon
 dummydiff = 3;
 
-
-
 dataStruct.isShaper = 1;
+
 %% READ from dataStruct
 if isempty(varargin)
     ShowWaitBar = true;
