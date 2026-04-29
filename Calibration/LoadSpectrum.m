@@ -2,21 +2,23 @@ function data = LoadSpectrum(app,message,calType)
 % This subroutine loads a probe spectrum for further absorbance calculations
 % Ricardo Fernandez-Teran / 20.10.2024 / v3.0a
 
+defname = ''; % Default to empty for standard behaviour
+
 switch calType
     case 'UoS TRIR';                    TYPE = 1; uifilt = {'*.2D',calType};
     case 'UniGE TA';                    TYPE = 2; uifilt = {'*.dat',calType};
     case 'UniGE nsTA';                  TYPE = 3; uifilt = {'*.dat',calType};
-    case 'UZH Lab 2';                   TYPE = 4; uifilt = {'*ds0_intensity*.csv',calType};
+    case 'UZH Lab 2';                   TYPE = 4; uifilt = {'*.csv',calType}; defname = '*ds0_intensity*.csv';
     case 'UniGE NIR-TA';                TYPE = 5; uifilt = {'*.dat',calType};
     case 'RAL LIFEtime (Absorbance)';   TYPE = 6; uifilt = {'*.csv',calType};
-    case 'RAL LIFEtime (Intensity)';    TYPE = 7; uifilt = {'*cycle*.csv',calType};
-    case 'UniGE TRIR (Intensity)';      TYPE = 8; uifilt = {'*ds0_intensity*.csv',calType};
-    case 'UniGE TRIR (Absorbance)';     TYPE = 9; uifilt = {'*ds0_intensity*.csv',calType};
-    case 'UniGE TRUVIS-II (Intensity)'; TYPE = 10; uifilt = {'*ds0_intensity*.csv',calType};
-    otherwise;                          TYPE = 0;
+    case 'RAL LIFEtime (Intensity)';    TYPE = 7; uifilt = {'*.csv',calType}; defname = '*cycle*.csv';
+    case 'UniGE TRIR (Intensity)';      TYPE = 8; uifilt = {'*.csv',calType}; defname = '*ds0_intensity*.csv';
+    case 'UniGE TRIR (Absorbance)';     TYPE = 9; uifilt = {'*.csv',calType}; defname = '*ds0_intensity*.csv';
+    case 'UniGE TRUVIS-II (Intensity)'; TYPE = 10; uifilt = {'*.csv',calType}; defname = '*ds0_intensity*.csv';
+    otherwise;                          TYPE = 0; uifilt = '*.*'; 
 end
 
-[datafile, datapath] = uigetfile(uifilt,message);
+[datafile, datapath] = uigetfile(uifilt, message, defname);
 
 rootdir = app.rootdir;
 if isempty(rootdir)
