@@ -1,10 +1,10 @@
 function chirpSt = FitChirpCorr(dataStruct,rootfolder,k)
 % This routine will fit a dispersion curve by considering a Gaussian IRF
 % with a wavelength-dependent t0. These t0's will be fit to Cauchy's
-% dispersion equation to give a general time-dependent chirp, which can
-% then be saved to a file.
+% dispersion equation (generalised to an arbitrary number of terms) to
+% give a general time-dependent chirp, which can then be saved to a file.
 %
-% Ricardo Fernández-Terán / v2.0a / 25.10.2024
+% Ricardo Fernández-Terán / v3.0a / 03.05.2026
 
 warning('off','optimlib:levenbergMarquardt:InfeasibleX0');
 debugChirp = 1;
@@ -24,9 +24,11 @@ end
 
 chirpSt = [];
 %% Hardcoded settings
-ChirpEquation   = 'Cauchy'; % 'Cauchy' or 'Shaper';
-c0              = 2.99792458e+2;    % Speed of light in nm/fs
-plotpercent     = 50;
+ChirpEquation     = 'Cauchy';        % 'Cauchy' or 'Shaper'
+nCauchyTerms      = 5;               % # of Cauchy terms (>=1): a + b/L^2 + c/L^4 + ...
+CauchyLambdaRef   = [];              % Reference wavelength (nm) for parameter scaling. [] uses mean(fitWL).
+c0                = 2.99792458e+2;   % Speed of light in nm/fs
+plotpercent       = 50;
 %% Read Probe fit ranges
 % probeRanges = [360 380 415 645];
 % probeRanges = [0 1000];
@@ -313,13 +315,30 @@ end
 
 switch ChirpEquation
     case 'Cauchy'
-        % Fit dispersion using Cauchy's Equation (truncated on the 3rd/4th term)
-        % Parameters: 1=a 2=b 3=c; (4=d)  L = Wavelength in nm
-        chirpFun = @(p,L) p(1) + 1e8.*p(2)./(L.^2) + 1e12.*p(3)./(L.^4);% + 1e17.*p(4)./(L.^6);
+        % Generalised Cauchy dispersion truncated at nCauchyTerms:
+        %   t0(L) = p(1) + sum_{n=1}^{nCauchyTerms-1} ( lambda_ref^(2n) * p(n+1) ) / L^(2n)
+        %
+        % The lambda_ref^(2n) prefactors render all higher-order
+        % coefficients dimensionless and of comparable magnitude, which
+        % keeps the least-squares problem well-conditioned regardless of
+        % nCauchyTerms.
+        nTerms      = max(1, round(nCauchyTerms));
+        if isempty(CauchyLambdaRef)
+            lambda_ref = mean(fitWL);
+        else
+            lambda_ref = CauchyLambdaRef;
+        end
+        expVec      = 2*(0:nTerms-1);                 % [0 2 4 6 ...]
+        scaleVec    = lambda_ref.^expVec;             % [1 lambda_ref^2 lambda_ref^4 ...]
 
-        C0 = [3     1       1    ];%    1    ];
-        UB = [5     1e3     1e3  ];%    1e7  ];
-        LB = [-5    -1e3    -1e3 ];%    -1e7 ];
+        chirpFun    = @(p,L) reshape( ...
+                        sum( (scaleVec .* reshape(p,1,[])) ./ (L(:).^expVec), 2 ), ...
+                        size(L) );
+
+        % Initial guess and bounds (parameters are O(1) thanks to the scaling)
+        C0 = [3,    zeros(1, nTerms-1)];
+        UB = [5,    1e2*ones(1, nTerms-1)];
+        LB = [-5,  -1e2*ones(1, nTerms-1)];
     case 'Shaper'
         % Fit dispersion using a Taylor expansion centred at w0 --- ONLY FOR PULSE SHAPER CALIBRATION
         % Parameters: 1=a 2=b 3=c; (4=d)  L = Wavelength in nm   W0 = central wavelength
