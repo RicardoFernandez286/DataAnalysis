@@ -7,13 +7,24 @@ function chirpSt = FitChirpCorr(dataStruct,rootfolder,k)
 % The 'Automatic' branch uses variable projection (VARPRO): the linear
 % amplitudes (Gaussian, derivatives, offset, exponential) are eliminated
 % in closed form at each iteration, leaving only (t0, FWHM, tau_exp) as
-% nonlinear parameters. This is faster, better conditioned, and (using
-% trust-region-reflective) genuinely honours bounds.
+% nonlinear parameters. trust-region-reflective is used so that bounds
+% are genuinely honoured.
 %
-% Ricardo Fernández-Terán / v3.1a / 03.05.2026
+% A two-pass option is provided. Pass 1 fits each pixel independently
+% (cold start). If do2ndPass is true, an intermediate dispersion curve is
+% fit to t0(lambda) and a moving-median smoothing of FWHM and tau_exp is
+% computed; these provide the initial guess for pass 2, which re-fits
+% each pixel and overwrites Pfit.
+%
+% Pixels with non-finite or all-zero data (masked pump scatter, dead
+% detector pixels, etc.) are skipped silently and recorded as NaN in
+% Pfit. Both the intermediate and the final dispersion fits filter out
+% these pixels.
+%
+% Ricardo Fernández-Terán / v3.2a / 03.05.2026
 
 warning('off','optimlib:levenbergMarquardt:InfeasibleX0');
-warning('off', 'MATLAB:rankDeficientMatrix');
+warning('off','MATLAB:rankDeficientMatrix');
 
 debugChirp = 0;
 %% Read from dataStruct
@@ -33,11 +44,14 @@ end
 chirpSt = [];
 %% Hardcoded settings
 ChirpEquation     = 'Cauchy';        % 'Cauchy' or 'Shaper'
-nCauchyTerms      = 5;               % # of Cauchy terms (>=1): a + b/L^2 + c/L^4 + ...
+nCauchyTerms      = 6;               % # of Cauchy terms (>=1): a + b/L^2 + c/L^4 + ...
 CauchyLambdaRef   = [];              % Reference wavelength (nm) for parameter scaling. [] uses mean(fitWL).
 c0                = 2.99792458e+2;   % Speed of light in nm/fs
 plotpercent       = 50;
-warmStart         = false;            % Use previous pixel's nonlinear params as initial guess
+
+do2ndPass         = true;            % Run a second VARPRO pass with smoothed inits
+smoothWindow      = 10;               % Moving-median window (pixels) for FWHM/tau_exp smoothing
+
 %% Read Probe fit ranges
 % probeRanges = [360 380 415 645];
 % probeRanges = [0 1000];
@@ -125,26 +139,28 @@ switch mode
         %   7 = tau_exp (ps)
         %   8 = exponential amplitude
 
-        qf = uifigure;
-        qf.Position(3:4) = [650 170];
-        inclDeriv = uiconfirm(qf,'Include 1st and 2nd derivatives of the Gaussian IRF?','Artifact Fit Options','Options',{'No';'1st Derivative';'2nd Derivative';'1st+2nd Derivatives'},'DefaultOption',1,'Icon','question');
-        delete(qf);
-
-        if isempty(inclDeriv) || strcmp(inclDeriv,'Cancel')
+        inclDeriv = menu('Include 1st and 2nd derivatives of the Gaussian IRF?', ...
+              'No', '1st Derivative', '2nd Derivative', '1st+2nd Derivatives');
+        
+        if inclDeriv == 0
             return
         end
-
+        
         switch inclDeriv
-            case 'No',                  derivMask = [false false];
-            case '1st Derivative',      derivMask = [true  false];
-            case '2nd Derivative',      derivMask = [false true ];
-            case '1st+2nd Derivatives', derivMask = [true  true ];
+            case 1  % 'No'
+                derivMask = [false false];
+            case 2  % '1st Derivative'
+                derivMask = [true  false];
+            case 3  % '2nd Derivative'
+                derivMask = [false true ];
+            case 4  % '1st+2nd Derivatives'
+                derivMask = [true  true ];
         end
         useExp = true;
 
-        Pfit = zeros(NfitPix, 8);
+        Pfit = nan(NfitPix, 8);                   % NaN means "pixel skipped"
         Dfit = zeros(Ndelays, NfitPix);
-        nf   = zeros(NfitPix, 1);
+        nf   = ones(NfitPix, 1);
 
         opts_nl = optimoptions(@lsqnonlin, ...
             'Algorithm','trust-region-reflective', ...
@@ -155,77 +171,110 @@ switch mode
             'MaxIterations',5e2, ...
             'MaxFunctionEvaluations',5e3);
 
-        wb       = waitbar(0);
-        pnl_prev = [NaN NaN NaN];
+        % ============ PASS 1: cold start at each pixel ============
+        wb = waitbar(0,'Pass 1: fitting coherent artefact...');
+        figure(wb);
 
         for j = 1:NfitPix
             i        = fitPixels(j);
             yData    = Z(:,i);
-            nf(j)    = max(abs(yData));
-            yData_n  = yData./nf(j);
 
-            [~,idM]  = max(abs(yData_n));
+            [~,idM]  = max(abs(yData));   % NaNs ignored; idM=1 if all-NaN/zero
 
             % Bounds on nonlinear params: [t0, FWHM, tau_exp]
-            LB_nl = [delays(idM)-1, 1e-3, 1e-3];   % was [..., 0, 0]
+            LB_nl = [delays(idM)-1, 1e-3, 1e-3];
             UB_nl = [delays(idM)+1, 1,    5  ];
 
-            % Initial guess: warm-start from previous pixel where possible
-            if warmStart && j > 1 && all(isfinite(pnl_prev))
-                pnl0 = pnl_prev;
-            else
-                pnl0 = [delays(idM), 0.1, 1];
-            end
-            pnl0 = min(max(pnl0, LB_nl), UB_nl);   % clamp into bounds
+            % Cold-start initial guess
+            pnl0  = [delays(idM), 0.1, 1];
 
-            % Run reduced 3D nonlinear LSQ
-            pnl = lsqnonlin(@(p) varpro_resid(p, delays, yData_n, derivMask, useExp), ...
-                            pnl0, LB_nl, UB_nl, opts_nl);
+            [Pfit(j,:), Dfit(:,j), nf(j)] = fitOnePixel(yData, delays, ...
+                pnl0, LB_nl, UB_nl, derivMask, useExp, opts_nl);
 
-            % Recover linear amplitudes and reconstruct the fit
-            [~, A, amps] = varpro_resid(pnl, delays, yData_n, derivMask, useExp);
-
-            Pfit(j,1) = pnl(1);    % t0
-            Pfit(j,2) = pnl(2);    % FWHM
-            Pfit(j,7) = pnl(3);    % tau_exp
-
-            ampIdx    = 1;
-            Pfit(j,3) = amps(ampIdx); ampIdx = ampIdx + 1;            % G0 amp
-            if derivMask(1)
-                Pfit(j,4) = amps(ampIdx); ampIdx = ampIdx + 1;        % G1 amp
-            end
-            if derivMask(2)
-                Pfit(j,5) = amps(ampIdx); ampIdx = ampIdx + 1;        % G2 amp
-            end
-            Pfit(j,6) = amps(ampIdx); ampIdx = ampIdx + 1;            % offset
-            if useExp
-                Pfit(j,8) = amps(ampIdx);                             % exp amp
-            end
-
-            Dfit(:,j) = nf(j).*(A*amps);
-            pnl_prev  = pnl;
-
-            waitbar(j/NfitPix,wb,['Fitting chirp correction... (' num2str(j) ' of ' num2str(NfitPix) ')'])
+            waitbar(j/NfitPix,wb,['Pass 1: fitting... (' num2str(j) ' of ' num2str(NfitPix) ')'])
 
             if debugChirp == 1
-                switch i
-                    case 1
-                        fh = figure(i+1);
-                        clf(fh)
-                        ax = axes('parent',fh);
-                        xlabel('Delay (ps)', 'FontSize',16, 'FontWeight','bold');
-                        ylabel('{\Delta}A (mOD)', 'FontSize',16, 'FontWeight','bold')
+                if j == 1
+                    fh = figure(2);
+                    clf(fh)
+                    ax = axes('parent',fh);
+                    xlabel('Delay (ps)', 'FontSize',16, 'FontWeight','bold');
+                    ylabel('{\Delta}A (mOD)', 'FontSize',16, 'FontWeight','bold')
                 end
-                plot(delays,Z(:,i),'o')
+                plot(ax,delays,Z(:,i),'o')
                 hold(ax,'on')
-                plot(delays,Dfit(:,j),'-')
+                plot(ax,delays,Dfit(:,j),'-')
                 hold(ax,'off')
-                title(ax,['\lambda = ' num2str(probeAxis(i),4) ' nm'])
+                title(ax,['Pass 1 - \lambda = ' num2str(probeAxis(i),4) ' nm'])
                 xlim(ax,[-1,3]);
                 drawnow;
             end
         end
         delete(wb);
+
+        % ============ PASS 2: smoothed initial guesses ============
+        if do2ndPass
+            % Compute smoothed initial guesses:
+            %   t0   from a fitted dispersion curve (Cauchy) or moving median (otherwise)
+            %   FWHM from moving-median smoothing
+            %   tau  from moving-median smoothing
+            [t0_init, fwhm_init, tau_init] = computeSecondPassInits(Pfit, fitWL, ...
+                ChirpEquation, nCauchyTerms, CauchyLambdaRef, smoothWindow);
+
+            wb = waitbar(0,'Pass 2: refining with smoothed initial guesses...');
+
+            for j = 1:NfitPix
+                i      = fitPixels(j);
+                yData  = Z(:,i);
+
+                [~,idM]  = max(abs(yData));
+
+                % Fall back to peak-of-data if the dispersion init is non-finite
+                if isfinite(t0_init(j))
+                    t0_guess = t0_init(j);
+                else
+                    t0_guess = delays(idM);
+                end
+
+                % Bounds anchored on the t0 estimate
+                LB_nl = [t0_guess-1, 1e-3, 1e-3];
+                UB_nl = [t0_guess+1, 1,    5  ];
+
+                % Initial guess from the smoothed neighbourhood
+                %   max(NaN, 1e-3) = 1e-3 in MATLAB, so this is NaN-safe.
+                pnl0  = [t0_guess, max(fwhm_init(j),1e-3), max(tau_init(j),1e-3)];
+
+                [Pfit(j,:), Dfit(:,j), nf(j)] = fitOnePixel(yData, delays, ...
+                    pnl0, LB_nl, UB_nl, derivMask, useExp, opts_nl);
+
+                waitbar(j/NfitPix,wb,['Pass 2: refining... (' num2str(j) ' of ' num2str(NfitPix) ')'])
+
+                if debugChirp == 1
+                    if j == 1
+                        fh = figure(3);
+                        clf(fh)
+                        ax = axes('parent',fh);
+                        xlabel('Delay (ps)', 'FontSize',16, 'FontWeight','bold');
+                        ylabel('{\Delta}A (mOD)', 'FontSize',16, 'FontWeight','bold')
+                    end
+                    plot(ax,delays,Z(:,i),'o')
+                    hold(ax,'on')
+                    plot(ax,delays,Dfit(:,j),'-')
+                    hold(ax,'off')
+                    title(ax,['Pass 2 - \lambda = ' num2str(probeAxis(i),4) ' nm'])
+                    xlim(ax,[-1,3]);
+                    drawnow;
+                end
+            end
+            delete(wb);
+        end
+
+        % Report skipped pixels (data NaN/zero or fit failed)
+        nSkipped = sum(~isfinite(Pfit(:,1)));
+        if nSkipped > 0
+            fprintf('FitChirpCorr: %d of %d pixels skipped (non-finite/empty data or fit failure).\n', ...
+                nSkipped, NfitPix);
+        end
 
     case 'Step Function (Auto)'
         %%% Fit a Gaussian response + step and take the WL-dependent t0 parameter to do the chirp fit
@@ -263,12 +312,10 @@ switch mode
                         'OptimalityTolerance',5e-10,...
                         'display','off');
 
-        qf = uifigure;
-        qf.Position(3:4) = [650 170];
-        inclDeriv = uiconfirm(qf,'Include 1st and 2nd derivatives of the Gaussian IRF?','Artifact Fit Options','Options',{'No';'1st Derivative';'2nd Derivative';'1st+2nd Derivatives'},'DefaultOption',1,'Icon','question');
-        delete(qf);
+        inclDeriv = menu('Include 1st and 2nd derivatives of the Gaussian IRF?', ...
+              'No', '1st Derivative', '2nd Derivative', '1st+2nd Derivatives');
 
-        if strcmp(inclDeriv,'Cancel')
+        if inclDeriv == 0
             figure(app.DataAnalysisGUI_UIFigure);
             return
         end
@@ -286,13 +333,13 @@ switch mode
 
             % Do NOT include derivative terms (?)
             switch inclDeriv
-                case 'No'
+                case 1  % 'No'
                     LB(4:5) = 0;
                     UB(4:5) = 0;
-                case '1st Derivative'
+                case 2  % '1st Derivative'
                     UB(5)   = 0;
                     LB(5)   = 0;
-                case '2nd Derivative'
+                case 3  % '2nd Derivative'
                     UB(4)   = 0;
                     LB(4)   = 0;
             end
@@ -327,7 +374,7 @@ switch ChirpEquation
         % nCauchyTerms.
         nTerms      = max(1, round(nCauchyTerms));
         if isempty(CauchyLambdaRef)
-            lambda_ref = mean(fitWL);
+            lambda_ref = mean(fitWL,'omitnan');
         else
             lambda_ref = CauchyLambdaRef;
         end
@@ -340,7 +387,7 @@ switch ChirpEquation
 
         % Initial guess and bounds (parameters are O(1) thanks to the scaling)
         C0 = [3,    zeros(1, nTerms-1)];
-        UB = [5,    1e2*ones(1, nTerms-1)];
+        UB = [5,    0*1e2*ones(1, nTerms-1)];
         LB = [-5,  -1e2*ones(1, nTerms-1)];
     case 'Shaper'
         % Fit dispersion using a Taylor expansion centred at w0 --- ONLY FOR PULSE SHAPER CALIBRATION
@@ -385,8 +432,10 @@ end
         opt2.TolX       = 1e-10;
         opt2.Display    = 'off';
 
+% Filter out non-finite t0 values (from skipped pixels) before the dispersion fit
+valid_disp = isfinite(Pfit(:,1));
 % Cfit    = lsqcurvefit(chirpFun,C0,fitWL,Pfit(:,1),LB,UB,options);
-Cfit    = robustlsqcurvefit(chirpFun,C0,fitWL,Pfit(:,1),LB,UB,'bisquare',opt2);
+Cfit    = robustlsqcurvefit(chirpFun,C0,fitWL(valid_disp),Pfit(valid_disp,1),LB,UB,'bisquare',opt2);
 % Cfit = C0;
 
 % Plot Everything
@@ -420,7 +469,7 @@ hold(ax,'off');
 
 switch ChirpEquation
     case 'Cauchy'
-        ylim(ax,[mean(Pfit(:,1))-2 mean(Pfit(:,1))+2]) % time is in ps
+        ylim(ax,[mean(Pfit(:,1),'omitnan')-2 mean(Pfit(:,1),'omitnan')+2]) % time is in ps
         title(ax,'Fitted Dispersion Curve','FontWeight','bold');
         ylabel(ax,'Delay (ps)','FontWeight','bold');
         xlabel(ax,'Wavelength (nm)','FontWeight','bold');
@@ -502,20 +551,30 @@ linkaxes([ax,ax2],'x');
 switch mode
     case {'Automatic','Step Function (Auto)'}
         %%% Plot wavelength-dependent FWHM
+        % Pfit(:,2) is FWHM (in ps) for the 'Automatic' branch but sigma
+        % (in ps) for the 'Step Function (Auto)' branch — apply the
+        % conversion factor so that the displayed quantity is always FWHM.
+        switch mode
+            case 'Automatic'
+                fwhmFactor = 1;                     % already FWHM
+            case 'Step Function (Auto)'
+                fwhmFactor = 2*sqrt(2*log(2));      % sigma -> FWHM
+        end
+
         fh = figure(3);
         clf(fh);
         fh.Color = 'w';
         ax = axes('parent',fh);
 
-        plot(ax,fitWL,Pfit(:,2)*1000,'xk')
+        plot(ax,fitWL,Pfit(:,2)*fwhmFactor*1000,'xk')
         axis(ax,'tight');
         xlabel(ax,'Wavelength (nm)','FontWeight','bold');
         ylabel(ax,'IRF FWHM (fs)','FontWeight','bold');
-        ylim(ax,[0 250]);
+        ylim(ax,[0 500]);
         xlim(ax,[min(probeAxis) max(probeAxis)]);
         box(ax,'on');
 
-        meanIRF = mean(Pfit(:,2))*1000;
+        meanIRF = mean(Pfit(:,2),'omitnan')*fwhmFactor*1000;
 
         yline(ax,meanIRF,'--','LineWidth',2,'Color','b');
 
@@ -562,6 +621,134 @@ end
 
 %% ===== Local helpers =====================================================
 
+function [pfit_row, dfit_col, nf_val] = fitOnePixel(yData, delays, ...
+    pnl0, LB_nl, UB_nl, derivMask, useExp, opts_nl)
+% Run a single VARPRO pixel fit and pack the result into the 8-column
+% Pfit row layout.
+%
+%   pfit_row : 1x8 row vector (NaN if pixel skipped or fit failed)
+%   dfit_col : Ndelays x 1 reconstructed model (zeros if skipped)
+%   nf_val   : normalisation factor (max(|yData|)) used during the fit
+%
+% Pixels whose data are all-NaN, all-zero, or contain Inf are skipped
+% silently. Fit failures are also caught so that one bad pixel does not
+% abort the whole loop.
+
+    pfit_row = nan(1, 8);
+    dfit_col = zeros(numel(delays), 1);
+    nf_val   = 1;
+
+    % --- Data sanity checks ---
+    if ~all(isfinite(yData))
+        return;   % NaN/Inf in column (e.g. masked pump scatter, dead detector)
+    end
+    nf_test = max(abs(yData));
+    if ~isfinite(nf_test) || nf_test == 0
+        return;   % Constant-zero column
+    end
+
+    nf_val  = nf_test;
+    yData_n = yData ./ nf_val;
+
+    % Make sure the initial guess is feasible
+    pnl0 = min(max(pnl0, LB_nl), UB_nl);
+    if any(~isfinite(pnl0))
+        return;
+    end
+
+    % --- Run VARPRO ---
+    try
+        pnl = lsqnonlin(@(p) varpro_resid(p, delays, yData_n, derivMask, useExp), ...
+                        pnl0, LB_nl, UB_nl, opts_nl);
+    catch
+        % Optimiser failed: keep pixel as NaN
+        return;
+    end
+
+    [~, A, amps] = varpro_resid(pnl, delays, yData_n, derivMask, useExp);
+
+    pfit_row     = zeros(1, 8);
+    pfit_row(1)  = pnl(1);    % t0
+    pfit_row(2)  = pnl(2);    % FWHM
+    pfit_row(7)  = pnl(3);    % tau_exp
+
+    ampIdx       = 1;
+    pfit_row(3)  = amps(ampIdx); ampIdx = ampIdx + 1;            % G0 amp
+    if derivMask(1)
+        pfit_row(4) = amps(ampIdx); ampIdx = ampIdx + 1;         % G1 amp
+    end
+    if derivMask(2)
+        pfit_row(5) = amps(ampIdx); ampIdx = ampIdx + 1;         % G2 amp
+    end
+    pfit_row(6)  = amps(ampIdx); ampIdx = ampIdx + 1;            % offset
+    if useExp
+        pfit_row(8) = amps(ampIdx);                              % exp amp
+    end
+
+    dfit_col = nf_val .* (A * amps);
+end
+
+function [t0_init, fwhm_init, tau_init] = computeSecondPassInits(Pfit, fitWL, ...
+    ChirpEquation, nCauchyTerms, CauchyLambdaRef, smoothWindow)
+% Build smoothed initial guesses for the 2nd VARPRO pass.
+%   t0_init    : from a fitted dispersion curve (Cauchy) or movmedian (else)
+%   fwhm_init  : moving-median smoothed FWHM
+%   tau_init   : moving-median smoothed tau_exp
+%
+% NaN entries in Pfit are excluded from medians (via 'omitnan') and from
+% the intermediate dispersion fit. Output vectors share the shape of fitWL.
+
+    fwhm_init = movmedian(Pfit(:,2), smoothWindow, 'omitnan');
+    tau_init  = movmedian(Pfit(:,7), smoothWindow, 'omitnan');
+
+    valid = isfinite(Pfit(:,1));
+
+    switch ChirpEquation
+        case 'Cauchy'
+            nTerms = max(1, round(nCauchyTerms));
+            if isempty(CauchyLambdaRef)
+                lambda_ref = mean(fitWL,'omitnan');
+            else
+                lambda_ref = CauchyLambdaRef;
+            end
+            expVec   = 2*(0:nTerms-1);
+            scaleVec = lambda_ref.^expVec;
+
+            chirpFun_local = @(p,L) reshape( ...
+                sum( (scaleVec .* reshape(p,1,[])) ./ (L(:).^expVec), 2 ), ...
+                size(L) );
+
+            C0 = [3,   zeros(1, nTerms-1)];
+            UB = [5,   1e2*ones(1, nTerms-1)];
+            LB = [-5, -1e2*ones(1, nTerms-1)];
+
+            opt2             = optimset(@lsqcurvefit);
+            opt2.TolFun      = 1e-10;
+            opt2.MaxIter     = 5e4;
+            opt2.MaxFunEvals = 5e4;
+            opt2.TolX        = 1e-10;
+            opt2.Display     = 'off';
+
+            if nnz(valid) >= nTerms
+                try
+                    Cfit_loc = robustlsqcurvefit(chirpFun_local, C0, ...
+                        fitWL(valid), Pfit(valid,1), LB, UB, 'bisquare', opt2);
+                    t0_init = chirpFun_local(Cfit_loc, fitWL);
+                catch
+                    % Robust fit failed; fall back to median smoothing
+                    t0_init = movmedian(Pfit(:,1), smoothWindow, 'omitnan');
+                end
+            else
+                % Not enough valid points for a parametric fit
+                t0_init = movmedian(Pfit(:,1), smoothWindow, 'omitnan');
+            end
+
+        otherwise
+            % Fallback: median-smooth t0 directly
+            t0_init = movmedian(Pfit(:,1), smoothWindow, 'omitnan');
+    end
+end
+
 function [resid, A, amps] = varpro_resid(pnl, t, y, derivMask, useExp)
 % VARPRO residual for the coherent-artefact model.
 %   pnl       = [t0, FWHM, tau_exp]
@@ -590,8 +777,8 @@ function [resid, A, amps] = varpro_resid(pnl, t, y, derivMask, useExp)
 
     if useExp
         % Numerically stable, piecewise-equivalent erf-broadened exponential.
-        % - For (t-t0) >= 0  : use the standard form (exp prefactor decays).
-        % - For (t-t0) <  0  : use the erfcx-based form (Gaussian prefactor decays).
+        %   For (t-t0) >= 0 : standard form (exp prefactor decays).
+        %   For (t-t0) <  0 : erfcx-based form (Gaussian prefactor decays).
         % Both forms are mathematically identical and continuous at t = t0.
         u    = t - t0;
         sgsq = sg.^2;
